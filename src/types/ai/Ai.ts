@@ -33,6 +33,7 @@ export interface AiSuggestion {
 export interface EngineStatus {
     ready: boolean
     error?: string
+    unsupported?: boolean
 
     localPath?: string | null
     downloadedModels?: string[]

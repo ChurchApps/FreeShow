@@ -72,11 +72,12 @@
         {/each}
     </div>
 
-    {#if $activeProfile && Object.keys($profiles).filter((a) => a !== "admin").length > 1}
-        <div class="info">
+    <div class="center">
+        <!-- info -->
+        {#if $activeProfile && Object.keys($profiles).filter((a) => a !== "admin").length > 1}
             <T id="profile.profile" />: {$profiles[$activeProfile]?.name || "—"}
-        </div>
-    {/if}
+        {/if}
+    </div>
 
     <div class="window">
         <Button on:click={() => sendMain(Main.MINIMIZE)} center>
@@ -104,13 +105,11 @@
         background-color: var(--primary-darkest);
         font-size: 0.9em;
         height: 25px;
-        -webkit-app-region: drag;
     }
 
     div,
     div :global(div) {
         display: flex;
-        -webkit-app-region: no-drag;
     }
 
     .window :global(button) {
@@ -146,7 +145,6 @@
         border-radius: 4px;
         padding: 8px 0;
         z-index: 6000;
-        -webkit-app-region: no-drag;
     }
 
     hr {
@@ -156,10 +154,12 @@
         background-color: var(--primary);
     }
 
-    /* info */
+    /* center */
 
-    .info {
-        pointer-events: none;
+    .center {
+        flex: 1;
+        justify-content: center;
+        -webkit-app-region: drag;
 
         font-size: 0.8em;
         opacity: 0.7;

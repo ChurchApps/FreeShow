@@ -15,7 +15,9 @@ export function httpsRequest(hostname: string, path: string, method: "POST" | "G
         callback(err, result)
     }
 
-    const cleanHostname = hostname.replace(/^https?:\/\//, "")
+    const [cleanHostname, ...base] = hostname.replace(/^https?:\/\//, "").replace(/\/+$/, "").split("/")
+    const fullPath = (base.length ? `/${base.join("/")}` : "") + (path.startsWith("/") ? path : `/${path}`)
+
     const headersObj = headers as Record<string, string>
     const isFormEncoded = headersObj["Content-Type"] === "application/x-www-form-urlencoded"
     let dataString = ""
@@ -27,7 +29,7 @@ export function httpsRequest(hostname: string, path: string, method: "POST" | "G
     const options = {
         hostname: cleanHostname,
         port: 443,
-        path,
+        path: fullPath,
         method,
         headers: {
             ...(dataString.length
@@ -63,7 +65,7 @@ export function httpsRequest(hostname: string, path: string, method: "POST" | "G
                 request.destroy()
 
                 try {
-                    const redirectUrl = new URL(response.headers.location, `https://${cleanHostname}${path}`)
+                    const redirectUrl = new URL(response.headers.location, `https://${cleanHostname}${fullPath}`)
                     return httpsRequest(redirectUrl.hostname, redirectUrl.pathname + redirectUrl.search, method, headers, content, cb, outputFilePath, onlyHeaders, timeoutMs, redirectCount + 1)
                 } catch (urlErr: any) {
                     return cb(urlErr, null)

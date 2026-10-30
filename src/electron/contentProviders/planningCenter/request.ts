@@ -23,6 +23,7 @@ type PCORequestData = {
     scope: PCOScopes
     endpoint: string
     params?: Record<string, string>
+    allPages?: boolean // a list endpoint returns 25 records per page: follow the pages
 }
 
 type SongSection = {
@@ -243,6 +244,12 @@ export async function pcoRequest(data: PCORequestData, attempt = 0): Promise<any
             // Convert to array for consistent handling
             if (!Array.isArray(resultData)) resultData = [resultData]
 
+            const nextOffset = data.allPages ? result.meta?.next?.offset : undefined
+            if (nextOffset !== undefined) {
+                pcoRequest({ ...data, params: { ...(data.params || {}), offset: String(nextOffset) } }).then((rest) => resolve(rest ? [...resultData, ...rest] : resultData))
+                return
+            }
+
             resolve(resultData)
         })
 
@@ -267,7 +274,7 @@ export async function pcoRequest(data: PCORequestData, attempt = 0): Promise<any
 const ONE_WEEK_MS = 604800000
 
 async function buildPcoTree(includePlans: boolean): Promise<PCOFolderTreeNode[]> {
-    const rawFolders = await pcoRequest({ scope: "services", endpoint: "folders" })
+    const rawFolders = await pcoRequest({ scope: "services", endpoint: "folders", allPages: true })
     const folderMap = new Map<string, PCOFolderTreeNode>()
     const rootNodes: PCOFolderTreeNode[] = []
 
@@ -286,7 +293,7 @@ async function buildPcoTree(includePlans: boolean): Promise<PCOFolderTreeNode[]>
     if (rawFolders?.length) {
         await Promise.all(
             rawFolders.map(async (f: PCOFolder) => {
-                const stList = await pcoRequest({ scope: "services", endpoint: `folders/${f.id}/service_types` })
+                const stList = await pcoRequest({ scope: "services", endpoint: `folders/${f.id}/service_types`, allPages: true })
                 if (!stList) return
                 await Promise.all(
                     stList.map(async (st: ServiceType) => {
@@ -300,7 +307,7 @@ async function buildPcoTree(includePlans: boolean): Promise<PCOFolderTreeNode[]>
         )
     }
 
-    const allServiceTypes = await pcoRequest({ scope: "services", endpoint: "service_types" })
+    const allServiceTypes = await pcoRequest({ scope: "services", endpoint: "service_types", allPages: true })
     if (allServiceTypes) {
         await Promise.all(
             allServiceTypes.map(async (st: ServiceType) => {
@@ -373,7 +380,7 @@ function expandFolderIds(allFolders: PCOFolder[], syncFolderIds: string[]): stri
 
 async function getServiceTypesForFolders(rawFolders: PCOFolder[], syncFolderIds: string[]): Promise<ServiceType[]> {
     const expandedIds = expandFolderIds(rawFolders, syncFolderIds)
-    const results = await Promise.all(expandedIds.map((id) => pcoRequest({ scope: "services", endpoint: `folders/${id}/service_types` })))
+    const results = await Promise.all(expandedIds.map((id) => pcoRequest({ scope: "services", endpoint: `folders/${id}/service_types`, allPages: true })))
     const seen = new Set<string>()
     return (results.flat() as ServiceType[]).filter((st) => st?.id && !seen.has(st.id) && !!seen.add(st.id))
 }
@@ -382,7 +389,7 @@ export async function pcoLoadServices(syncFolderIds?: string[]) {
     let serviceTypes: ServiceType[]
 
     if (syncFolderIds?.length) {
-        const rawFolders = await pcoRequest({ scope: "services", endpoint: "folders" })
+        const rawFolders = await pcoRequest({ scope: "services", endpoint: "folders", allPages: true })
         if (!rawFolders) {
             console.info("Could not fetch Planning Center folders")
             return
@@ -417,7 +424,8 @@ async function fetchServiceTypes() {
     const typesEndpoint = "service_types"
     const serviceTypes = await pcoRequest({
         scope: "services",
-        endpoint: typesEndpoint
+        endpoint: typesEndpoint,
+        allPages: true
     })
 
     if (!serviceTypes || !serviceTypes[0]?.id) {

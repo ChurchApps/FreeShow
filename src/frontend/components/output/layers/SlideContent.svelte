@@ -261,6 +261,10 @@
         scheduleAutoSizePrecompute(currentSlide.items)
 
         // get any items with no transition between the two slides
+        let oldItemTransitions = currentItems.map((a) => a.actions?.transition).filter(Boolean)
+        let newItemTransitions = currentSlide.items.map((a) => a.actions?.transition).filter(Boolean)
+        let hasItemLevelTransition = newItemTransitions.some((t) => t && t.type !== "none" && (t.duration === undefined || t.duration > 0)) || oldItemTransitions.some((t) => t && t.type !== "none" && (t.duration === undefined || t.duration > 0))
+
         let oldItemTransition = currentItems.find((a) => a.actions?.transition)?.actions?.transition
         let newItemTransition = currentSlide.items.find((a) => a.actions?.transition)?.actions?.transition
         let itemTransitionDuration: number | null = null
@@ -269,6 +273,8 @@
             if (oldItemTransition.type === "none") itemTransitionDuration = 0
             // find any item that should have no transition!
             else if (currentSlide.items.find((a) => a.actions?.transition?.duration === 0 || a.actions?.transition?.type === "none")) itemTransitionDuration = 0
+        } else if (newItemTransition && newItemTransition.duration !== undefined) {
+            itemTransitionDuration = newItemTransition.type === "none" ? 0 : newItemTransition.duration
         }
 
         let currentTransition = transition.between || transition.in || transition
@@ -276,7 +282,7 @@
 
         let currentTransitionDuration = transitionEnabled ? (itemTransitionDuration ?? currentTransition?.duration ?? 0) : 0
         let waitToShow = currentTransitionDuration * ((currentTransition?.fadeInOffset ?? 50) / 100)
-        const hasNoVisualTransition = currentTransitionDuration === 0
+        const hasNoVisualTransition = currentTransitionDuration === 0 && !hasItemLevelTransition
 
         // Identify if any item or text content needs transitioning
         const isSameSlideRefresh = !isTempSlide && current.currentSlide?.id === currentSlide?.id && current.outSlide?.id === outSlide?.id && current.outSlide?.layout === outSlide?.layout && current.outSlide?.index === outSlide?.index
@@ -460,7 +466,8 @@
 <!-- Render all items in original order to maintain z-index layering -->
 {#each currentItems as item, index}
     {#if item && shouldItemBeShown(item, [], showItemRef, conditionsUpdater) && (!item.clickReveal || current.outSlide?.itemClickReveal)}
-        {@const currentTransition = transition.between || transition.in || transition}
+        {@const itemTransition = item.actions?.transition}
+        {@const currentTransition = itemTransition || transition.between || transition.in || transition}
         {#if !transitionEnabled || currentTransition?.type === "none" || currentTransition?.duration === 0}
             <!-- No transition enabled: render directly without transition wrapper -->
             <Textbox

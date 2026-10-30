@@ -13,8 +13,10 @@ export function feedLTCFrame(audioframes: Buffer) {
 
     decoder.write(audioframes)
 
-    const frame = decoder.read()
-    if (frame !== undefined) {
+    let maxFrames = 32
+    while (maxFrames-- > 0) {
+        const frame = decoder.read()
+        if (!frame) break
         const time = frame.hours * 3600 + frame.minutes * 60 + frame.seconds + frame.frames / framerate
         processFrame(time * 1000)
     }
@@ -85,7 +87,7 @@ export function sendLTC(timeMs: number, framerate: number) {
     const seconds = Math.floor((timeMs / 1000) % 60)
     const frames = Math.floor(((timeMs % 1000) / 1000) * framerate)
 
-    encoder.setTimecode({ hours, minutes, seconds, frames })
+    encoder.setTimecode({ hours, minutes, seconds, frame: frames, frames } as any)
 
     // encoder.incrementTimecode();
 

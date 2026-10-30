@@ -91,6 +91,7 @@
     let closed: boolean = false
 
     let seconds = 0
+    let autoTimerText = ""
     let startTime = 0
     let startTimes: Record<number, number> = {}
 
@@ -159,6 +160,7 @@
                         startTime = data.startTime
                         startTimes = data.startTimes || {}
                         closed = data.closed
+                        autoTimerText = data.autoTimerText || ""
                     })
                 ]
             }
@@ -171,6 +173,7 @@
             seconds = 0
             startTime = 0
             startTimes = {}
+            autoTimerText = ""
         }
     }
 
@@ -228,6 +231,10 @@
 
             {#if !openedInteraction?.options?.allAtOnce}
                 <MaterialNumberInput label="interaction.max_time (conditions.seconds)" value={openedInteraction?.options?.maxTime ?? 0} defaultValue={0} on:change={(e) => setOption("maxTime", e.detail)} />
+                {#if (openedInteraction?.options?.maxTime ?? 0) > 0}
+                    <MaterialNumberInput label="interaction.time_until_next (conditions.seconds)" value={openedInteraction?.options?.timeUntilNext ?? 0} defaultValue={0} on:change={(e) => setOption("timeUntilNext", e.detail)} />
+                    <MaterialNumberInput label="interaction.max_time_answer (conditions.seconds)" value={openedInteraction?.options?.maxTimeAnswer ?? 0} defaultValue={0} on:change={(e) => setOption("maxTimeAnswer", e.detail)} />
+                {/if}
 
                 <InputRow>
                     <MaterialDropdown label="interaction.score_system" value={openedInteraction?.options?.scoreSystem || "incremental"} options={scoreSystems} on:change={(e) => setOption("scoreSystem", e.detail)} />
@@ -344,7 +351,9 @@
                                 <!-- timer -->
                                 {#if i === inputIndex}
                                     <span style="font-family: monospace; opacity: 0.8; margin-right: 8px;" class:closed>
-                                        {#if closed}
+                                        {#if autoTimerText}
+                                            {autoTimerText}
+                                        {:else if closed}
                                             CLOSED
                                         {:else if openedInteraction?.options?.maxTime && openedInteraction.options.maxTime > 0}
                                             {formatTimeInteraction(openedInteraction.options.maxTime - seconds)}

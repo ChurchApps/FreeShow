@@ -1752,6 +1752,8 @@
         "random_names": "Random names",
         "all_at_once": "All inputs at once",
         "max_time": "Max time per input",
+        "time_until_next": "Time until next",
+        "max_time_answer": "Max time per answer",
         "score_system": "Score system",
         "points": "Points"
     },

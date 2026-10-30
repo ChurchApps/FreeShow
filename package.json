@@ -1,6 +1,6 @@
 {
     "name": "freeshow",
-    "version": "1.6.8-beta.1",
+    "version": "1.6.8-beta.2",
     "private": true,
     "main": "build/electron/index.js",
     "description": "Show song lyrics and more for free!",
@@ -161,6 +161,6 @@
     },
     "optionalDependencies": {
         "libspotifyctl": "^0.3.4",
-        "sherpa-onnx-node": "^1.13.7"
+        "sherpa-onnx-node": "^2.0.1"
     }
 }

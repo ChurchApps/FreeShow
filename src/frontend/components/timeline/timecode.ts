@@ -109,7 +109,7 @@ export async function startListeningLTC() {
 
         listenerNode = new AudioWorkletNode(listenerCtx, "ltc-processor")
         listenerNode.port.onmessage = (e) => {
-            sendMain(Main.TIMECODE_AUDIO_DATA, e.data)
+            sendMain(Main.TIMECODE_AUDIO_DATA, { mode: "LTC", buffer: e.data })
         }
 
         source.connect(listenerNode)

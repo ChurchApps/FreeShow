@@ -4,7 +4,7 @@ import { activeInteractions, activePopup, alertMessage, interactions } from "../
 import { clone, keysToID } from "../../helpers/array"
 import { createInteractionDb, deleteInteractionDb, getInteractionDb, subscribeInteraction, updateInteractionDb } from "./firebaseUtils"
 
-let existingInteractions = new Map<string, Interaction>()
+const existingInteractions = new Map<string, Interaction>()
 
 function updateActiveInteractions() {
     activeInteractions.set(Array.from(existingInteractions.keys()))
@@ -54,7 +54,7 @@ export function getActiveInteractions() {
 }
 
 // only numbers
-function generateId(length: number = 5) {
+function generateId(length = 5) {
     let result = ""
     while (result.length < length) {
         result += Math.floor(Math.random() * 10).toString()
@@ -97,17 +97,20 @@ class Interaction {
     id: string
     dbid: string
     dbsecret: string
-    inputIndex: number = -1
+    inputIndex = -1
     currentAnswer: any = null
-    closed: boolean = false
-    seconds: number = 0
-    startTime: number = 0
+    closed = false
+    seconds = 0
+    startTime = 0
     startTimes: Record<number, number> = {}
     usedRandomNames: Set<string> = new Set()
     private timer: any = null
+    private autoTimer: any = null
+    private autoTimerTargetTime = 0
+    private autoTimerType: "next" | "answer" | null = null
     private unsubscribe: (() => void) | null = null
     private callbacks: ((data: { answers: any[]; clients: any; currentAnswer: any; inputIndex: number; closed: boolean }) => void)[] = []
-    private tickCallbacks: ((data: { seconds: number; startTime: number; startTimes: Record<number, number>; closed: boolean }) => void)[] = []
+    private tickCallbacks: ((data: { seconds: number; startTime: number; startTimes: Record<number, number>; closed: boolean; autoTimerText?: string }) => void)[] = []
     private lastData: { answers: any[]; clients: any; currentAnswer: any; inputIndex: number; closed: boolean } | null = null
 
     constructor(id: string) {
@@ -124,12 +127,21 @@ class Interaction {
         }
     }
 
-    onTick(callback: (data: { seconds: number; startTime: number; startTimes: Record<number, number>; closed: boolean }) => void) {
+    onTick(callback: (data: { seconds: number; startTime: number; startTimes: Record<number, number>; closed: boolean; autoTimerText?: string }) => void) {
         this.tickCallbacks.push(callback)
-        callback({ seconds: this.seconds, startTime: this.startTime, startTimes: this.startTimes, closed: this.closed })
+        callback(this.getTickData())
         return () => {
             this.tickCallbacks = this.tickCallbacks.filter((cb) => cb !== callback)
         }
+    }
+
+    private getTickData() {
+        return { seconds: this.seconds, startTime: this.startTime, startTimes: this.startTimes, closed: this.closed, autoTimerText: this.getAutoTimerText() }
+    }
+
+    private emitTick() {
+        const data = this.getTickData()
+        this.tickCallbacks.forEach((cb) => cb(data))
     }
 
     private getData(): InteractionData | null {
@@ -146,7 +158,7 @@ class Interaction {
             if (maxTime > 0 && this.seconds >= maxTime) {
                 this.closed = true
                 this.stopTimer()
-                this.tickCallbacks.forEach((cb) => cb({ seconds: this.seconds, startTime: this.startTime, startTimes: this.startTimes, closed: this.closed }))
+                this.emitTick()
                 if (this.lastData) {
                     this.lastData.closed = true
                     this.callbacks.forEach((cb) => cb(this.lastData!))
@@ -154,8 +166,20 @@ class Interaction {
 
                 const updatePayload = this.getDbPayload()
                 await updateInteractionDb(this.dbid, this.dbsecret, updatePayload)
+
+                const timeUntilNext = data?.options?.timeUntilNext ?? 0
+                if (data?.inputs && timeUntilNext > 0) {
+                    const input = data.inputs[this.inputIndex]
+                    const needsAnswer = hasAnswer(input) && (this.currentAnswer === null || this.currentAnswer === undefined || this.currentAnswer === "")
+                    const isLastInput = this.inputIndex >= data.inputs.length - 1
+                    if (needsAnswer) {
+                        this.startAutoTimer(timeUntilNext, "answer")
+                    } else if (!isLastInput) {
+                        this.startAutoTimer(timeUntilNext, "next")
+                    }
+                }
             } else {
-                this.tickCallbacks.forEach((cb) => cb({ seconds: this.seconds, startTime: this.startTime, startTimes: this.startTimes, closed: this.closed }))
+                this.emitTick()
             }
         }, 1000)
     }
@@ -165,6 +189,34 @@ class Interaction {
             clearInterval(this.timer)
             this.timer = null
         }
+    }
+
+    private stopAutoTimer() {
+        if (this.autoTimer) {
+            clearInterval(this.autoTimer)
+            this.autoTimer = null
+        }
+        this.autoTimerTargetTime = 0
+        this.autoTimerType = null
+    }
+
+    private startAutoTimer(durationSec: number, type: "next" | "answer") {
+        this.stopAutoTimer()
+        if (durationSec <= 0) return
+
+        this.autoTimerType = type
+        this.autoTimerTargetTime = Date.now() + durationSec * 1000
+        this.emitTick()
+
+        this.autoTimer = setInterval(async () => {
+            const remaining = Math.ceil((this.autoTimerTargetTime - Date.now()) / 1000)
+            if (remaining <= 0) {
+                this.stopAutoTimer()
+                await this.next()
+            } else {
+                this.emitTick()
+            }
+        }, 1000)
     }
 
     // Helper to format data for DB pushes
@@ -370,6 +422,7 @@ class Interaction {
         this.saveHistory()
 
         this.stopTimer()
+        this.stopAutoTimer()
 
         if (this.unsubscribe) {
             this.unsubscribe()
@@ -422,19 +475,20 @@ class Interaction {
     }
 
     private resetTimer() {
+        this.stopAutoTimer()
         if (this.inputIndex >= 0) {
             this.seconds = 0
             this.startTime = Date.now()
             this.startTimes[this.inputIndex] = this.startTime
             this.closed = false
-            this.tickCallbacks.forEach((cb) => cb({ seconds: this.seconds, startTime: this.startTime, startTimes: this.startTimes, closed: this.closed }))
+            this.emitTick()
             this.startTimer()
         } else {
             this.stopTimer()
             this.seconds = 0
             this.startTime = 0
             this.closed = false
-            this.tickCallbacks.forEach((cb) => cb({ seconds: this.seconds, startTime: this.startTime, startTimes: this.startTimes, closed: this.closed }))
+            this.emitTick()
         }
     }
 
@@ -508,6 +562,14 @@ class Interaction {
             ...scoreUpdates
         }
         await updateInteractionDb(this.dbid, this.dbsecret, updatePayload)
+
+        this.stopAutoTimer()
+        const maxTime = data.options?.maxTime ?? 0
+        const maxTimeAnswer = data.options?.maxTimeAnswer ?? 0
+        const isLastInput = this.inputIndex >= (data.inputs?.length || 0) - 1
+        if (maxTime > 0 && maxTimeAnswer > 0 && !isLastInput) {
+            this.startAutoTimer(maxTimeAnswer, "next")
+        }
     }
 
     private scoredPlayers: Set<string> = new Set()
@@ -667,6 +729,15 @@ class Interaction {
         return []
     }
 
+    getAutoTimerText() {
+        if (this.autoTimer && this.autoTimerTargetTime > 0) {
+            const remaining = Math.max(0, Math.ceil((this.autoTimerTargetTime - Date.now()) / 1000))
+            const prefix = this.autoTimerType === "answer" ? "Until answer: " : "Until next: "
+            return `${prefix}${formatTimeInteraction(remaining, true)}`
+        }
+        return ""
+    }
+
     getTime() {
         if (this.closed || this.inputIndex < 0) return ""
 
@@ -701,7 +772,7 @@ class Interaction {
         // sort by time
         const sortedAnswers = Object.values(answers[this.inputIndex] || {}).sort((a: any, b: any) => (a.time || 0) - (b.time || 0))
 
-        const latestAnswers = sortedAnswers.map((a: any) => String(Array.isArray(a.value) ? a.value.at(-1) : a.value)) as string[]
+        const latestAnswers = sortedAnswers.map((a: any) => String(Array.isArray(a.value) ? a.value.at(-1) : a.value))
         return latestAnswers[latestAnswers.length - 1] || ""
     }
 
@@ -742,9 +813,12 @@ class Interaction {
     }
 }
 
-export function formatTimeInteraction(s: number) {
+export function formatTimeInteraction(s: number, secondsOnly = false) {
     const sign = s < 0 ? "-" : ""
     s = Math.abs(s)
+
+    if (secondsOnly) return `${sign}${s < 10 ? "0" : ""}${s}s`
+
     const min = Math.floor(s / 60)
     const sec = s % 60
     return `${sign}${min}:${sec < 10 ? "0" : ""}${sec}`

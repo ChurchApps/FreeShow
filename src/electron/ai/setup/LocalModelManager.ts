@@ -57,7 +57,7 @@ export class LocalModelManager {
 
         if (engineId === "nemotron") {
             if (manager.isPlatformSupported && !manager.isPlatformSupported()) {
-                return { ready: false, error: "Nemotron transcription is not supported on Intel Mac" }
+                return { ready: false, unsupported: true, error: "Nemotron transcription is not supported on Intel Mac" }
             }
             const modelDir = this.getModelDir(engineId)
             const integrity = await manager.checkIntegrity(modelDir)
