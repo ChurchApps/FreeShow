@@ -143,12 +143,10 @@ describeIfFfmpeg("RTMP pipeline (real ffmpeg)", () => {
         await RtmpStreamer.start("test-output", { width: WIDTH, height: HEIGHT, fps: FPS, bitrate: 500, enableAudio: false, encoder: "x264" }, [{ id: "a", url: path.join(tmpDir, "listener.flv"), key: "", enabled: true }])
 
         const feeding = feed("test-output")
-        await new Promise((r) => setTimeout(r, 3200))
+        await vi.waitFor(() => expect(pushes.some((p) => p.states.includes("live"))).toBe(true), { timeout: 10000, interval: 100 })
         clearInterval(feeding)
 
-        expect(pushes.length).toBeGreaterThan(0)
         expect(pushes.every((p) => p.outputId === "test-output")).toBe(true)
-        expect(pushes.some((p) => p.states.includes("live"))).toBe(true)
 
         setRtmpStatusListener(() => {})
     }, 15000)
