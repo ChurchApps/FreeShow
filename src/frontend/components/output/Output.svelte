@@ -370,6 +370,8 @@
     let actualCurrentSlide: Slide | null = null
     let actualCurrentLineId: string | undefined = undefined
     let slideRemountCounter = 0
+    // a slide shown again after a clear mounts fresh: reviving the fading-out content lets its finished outro destroy it
+    let slideMountKey = 0
     let previousRefreshVersion = -1
     let pendingSlideRemounts = 0
     let isSlideClearing = false
@@ -389,7 +391,9 @@
         if (slideTimeout) clearTimeout(slideTimeout)
         slideTimeout = setTimeout(
             () => {
+                const wasShown = !!actualSlide
                 actualSlide = slideActive ? clone(slide) : null
+                if (!wasShown && actualSlide) slideMountKey++
                 actualSlideData = clone(slideData)
                 actualCurrentSlide = clone(currentSlide)
                 actualCurrentLineId = clone(currentLineId)
@@ -436,22 +440,24 @@
     {/if}
 
     <!-- slide -->
-    {#if actualSlide?.type === "pdf" && layers.includes("background")}
-        <span style="zoom: {1 / ratio};">
-            <PdfOutput slide={actualSlide} {currentStyle} transition={slideMediaTransition} />
-        </span>
-    {:else if actualSlide?.type === "ppt" && layers.includes("slide")}
-        <span style="zoom: {1 / ratio};">
-            {#if actualSlide?.screen?.id}
-                <Window id={actualSlide?.screen?.id} class="media" style="width: 100%;height: 100%;" />
-            {/if}
-        </span>
-    {:else if actualSlide && actualSlide?.type !== "pdf"}
-        <SlideContent {outputId} outSlide={actualSlide} isClearing={isSlideClearing} slideData={actualSlideData} currentSlide={actualCurrentSlide} {currentStyle} {animationData} currentLineId={actualCurrentLineId} {lines} {ratio} {mirror} {preview} transition={textTransition} transitionEnabled={!mirror || preview} styleIdOverride={styleIdOverride || sceneStyleId} refreshCounter={slideRemountCounter} />
+    {#key slideMountKey}
+        {#if actualSlide?.type === "pdf" && layers.includes("background")}
+            <span style="zoom: {1 / ratio};">
+                <PdfOutput slide={actualSlide} {currentStyle} transition={slideMediaTransition} />
+            </span>
+        {:else if actualSlide?.type === "ppt" && layers.includes("slide")}
+            <span style="zoom: {1 / ratio};">
+                {#if actualSlide?.screen?.id}
+                    <Window id={actualSlide?.screen?.id} class="media" style="width: 100%;height: 100%;" />
+                {/if}
+            </span>
+        {:else if actualSlide && actualSlide?.type !== "pdf"}
+            <SlideContent {outputId} outSlide={actualSlide} isClearing={isSlideClearing} slideData={actualSlideData} currentSlide={actualCurrentSlide} {currentStyle} {animationData} currentLineId={actualCurrentLineId} {lines} {ratio} {mirror} {preview} transition={textTransition} transitionEnabled={!mirror || preview} styleIdOverride={styleIdOverride || sceneStyleId} refreshCounter={slideRemountCounter} />
 
-        <!-- metadata -->
-        <Overlay overlay={{ items: currentMetadataItems }} isClearing={isMetadataClearing || isSlideClearing} {outputId} transition={textTransition} styleIdOverride={styleIdOverride || sceneStyleId} />
-    {/if}
+            <!-- metadata -->
+            <Overlay overlay={{ items: currentMetadataItems }} isClearing={isMetadataClearing || isSlideClearing} {outputId} transition={textTransition} styleIdOverride={styleIdOverride || sceneStyleId} />
+        {/if}
+    {/key}
 
     <!-- effects -->
     {#if effectsOverSlide && layers.includes("overlays")}
