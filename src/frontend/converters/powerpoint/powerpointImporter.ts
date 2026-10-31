@@ -8,7 +8,7 @@ import { translateText } from "../../utils/language"
 import { createCategory, setTempShows } from "../importHelpers"
 import { PowerPointPackage } from "./PowerPointHelper"
 
-// missing shapes/tables/graphs
+// missing charts/SmartArt
 // item/line background, some text color incorrect
 // extract embedded videos/audio
 
@@ -48,6 +48,8 @@ export function convertPowerpoint(files: any[]) {
                 if (!slide) return
 
                 const id = uid()
+                // hidden PowerPoint slides are disabled
+                const layoutData = { transition: { type: "none", duration: 0, easing: "linear" } as const, ...(slide.hidden ? { disabled: true } : {}) }
 
                 slides[id] = {
                     group: !firstSlideId ? "." : null,
@@ -56,8 +58,6 @@ export function convertPowerpoint(files: any[]) {
                     notes: slide.notes,
                     items: slide.items
                 }
-
-                const layoutData = { transition: { type: "none", duration: 0, easing: "linear" } as const }
 
                 if (!firstSlideId) {
                     firstSlideId = id
@@ -76,17 +76,15 @@ export function convertPowerpoint(files: any[]) {
             show.origin = "powerpoint"
             show.settings.customFonts = fonts
 
-            const meta: any = content["docProps/core.xml"]?.["cp:coreProperties"]
+            const meta = getCoreProperties(content["docProps/core.xml"])
             if (meta) {
                 show.meta = {
-                    title: meta["dc:title"]?.[0] || show.name,
-                    artist: meta["dc:creator"]?.[0] || ""
+                    title: meta["dc:title"] || show.name,
+                    artist: meta["dc:creator"] || ""
                 }
-                show.timestamps = {
-                    created: new Date(meta["dcterms:created"]?.[0]?._ || 0).getTime(),
-                    modified: new Date(meta["dcterms:modified"]?.[0]?._ || 0).getTime(),
-                    used: null
-                }
+                const created = new Date(meta["dcterms:created"] || 0).getTime()
+                const modified = new Date(meta["dcterms:modified"] || 0).getTime()
+                if (created || modified) show.timestamps = { created: created || modified, modified: modified || created, used: null }
             }
 
             show.slides = slides
@@ -97,6 +95,20 @@ export function convertPowerpoint(files: any[]) {
 
         setTempShows(tempShows)
     }, 10)
+}
+
+// docProps/core.xml (parsed with preserveOrder) -> { "dc:title": "..." }
+function getCoreProperties(json: any): { [key: string]: string } | null {
+    const props = Array.isArray(json) ? json.find((n) => n?.["cp:coreProperties"])?.["cp:coreProperties"] : null
+    if (!Array.isArray(props)) return null
+
+    const values: { [key: string]: string } = {}
+    props.forEach((prop) => {
+        const key = Object.keys(prop || {}).find((k) => k !== ":@")
+        const text = key ? prop[key]?.[0]?.["#text"] : null
+        if (key && text != null) values[key] = String(text)
+    })
+    return values
 }
 
 function getAllFontNames(contentPaths: Record<string, string>) {

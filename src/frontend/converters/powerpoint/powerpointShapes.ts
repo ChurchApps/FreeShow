@@ -1,12 +1,47 @@
 /* eslint-disable no-shadow */
-export function getPresetShapePath(prstGeom, x1, y1, width, height, adj = 0) {
+export function getPresetShapePath(prstGeom: string, x1: number, y1: number, width: number, height: number, adjustments: { [key: string]: number } = {}) {
     let path = ""
 
-    const normalizeX = (x) => (x - x1) / width
-    const normalizeY = (y) => (y - y1) / height
+    // lines can have a zero width/height
+    const normalizeX = (x) => (width ? (x - x1) / width : 0.5)
+    const normalizeY = (y) => (height ? (y - y1) / height : 0.5)
+
+    const x2 = x1 + width
+    const y2 = y1 + height
+    const hc = x1 + width / 2
+    const vc = y1 + height / 2
+    const ss = Math.min(width, height) || Math.max(width, height)
+
+    // adjustment value (in 1/100000) with the shape specific default
+    const getAdj = (def: number, name = "adj") => adjustments[name] ?? adjustments[name === "adj" ? "adj1" : name === "adj1" ? "adj" : name] ?? def
+    const adj = getAdj(50000)
+    const clampRadius = (r: number) => Math.max(0, Math.min(r, width / 2, height / 2))
 
     // Helper for simple polygons
     const pointsToPath = (points) => points.map((p, i) => `${i === 0 ? "M" : "L"} ${normalizeX(p.x)} ${normalizeY(p.y)}`).join(" ") + " Z"
+
+    // rectangle with individual corner radius (top-left, top-right, bottom-right, bottom-left)
+    const roundedRect = (tl: number, tr: number, br: number, bl: number) => {
+        const corner = (r: number, x: number, y: number) => (r ? `A ${r / width} ${r / height} 0 0 1 ${normalizeX(x)} ${normalizeY(y)}` : "")
+        return [`M ${normalizeX(x1 + tl)} ${normalizeY(y1)}`, `L ${normalizeX(x2 - tr)} ${normalizeY(y1)}`, corner(tr, x2, y1 + tr), `L ${normalizeX(x2)} ${normalizeY(y2 - br)}`, corner(br, x2 - br, y2), `L ${normalizeX(x1 + bl)} ${normalizeY(y2)}`, corner(bl, x1, y2 - bl), `L ${normalizeX(x1)} ${normalizeY(y1 + tl)}`, corner(tl, x1 + tl, y1), "Z"].filter(Boolean).join(" ")
+    }
+
+    const ellipsePath = (rx: number, ry: number) => {
+        if (!rx || !ry) return ""
+        const nrx = rx / width
+        const nry = ry / height
+        return `M ${normalizeX(hc + rx)} ${normalizeY(vc)} A ${nrx} ${nry} 0 1 1 ${normalizeX(hc - rx)} ${normalizeY(vc)} A ${nrx} ${nry} 0 1 1 ${normalizeX(hc + rx)} ${normalizeY(vc)} Z`
+    }
+
+    const starPath = (points: number, innerRatio: number) => {
+        const pts: { x: number; y: number }[] = []
+        for (let i = 0; i < points * 2; i++) {
+            const r = i % 2 === 0 ? 1 : innerRatio
+            const angle = (Math.PI / points) * i - Math.PI / 2
+            pts.push({ x: hc + (width / 2) * r * Math.cos(angle), y: vc + (height / 2) * r * Math.sin(angle) })
+        }
+        return pointsToPath(pts)
+    }
 
     // const pointsToCubicPath = (pts) => {
     //     // pts: array of {x, y, cx1, cy1, cx2, cy2} for each cubic segment
@@ -20,6 +55,226 @@ export function getPresetShapePath(prstGeom, x1, y1, width, height, adj = 0) {
     // }
 
     switch (prstGeom) {
+        case "triangle":
+        case "flowChartExtract":
+            path = pointsToPath([
+                { x: x1 + (width * getAdj(50000)) / 100000, y: y1 },
+                { x: x1, y: y1 + height },
+                { x: x1 + width, y: y1 + height }
+            ])
+            break
+        case "rect":
+        case "flowChartProcess":
+            path = roundedRect(0, 0, 0, 0)
+            break
+        case "roundRect":
+        case "flowChartAlternateProcess": {
+            const r = clampRadius((ss * getAdj(16667)) / 100000)
+            path = roundedRect(r, r, r, r)
+            break
+        }
+        case "round1Rect": {
+            const r = clampRadius((ss * getAdj(16667)) / 100000)
+            path = roundedRect(0, r, 0, 0)
+            break
+        }
+        case "round2SameRect": {
+            const r1 = clampRadius((ss * getAdj(16667, "adj1")) / 100000)
+            const r2 = clampRadius((ss * getAdj(0, "adj2")) / 100000)
+            path = roundedRect(r1, r1, r2, r2)
+            break
+        }
+        case "round2DiagRect": {
+            const r1 = clampRadius((ss * getAdj(16667, "adj1")) / 100000)
+            const r2 = clampRadius((ss * getAdj(0, "adj2")) / 100000)
+            path = roundedRect(r1, r2, r1, r2)
+            break
+        }
+        case "hexagon": {
+            const dx = (ss * getAdj(25000)) / 100000
+            path = pointsToPath([
+                { x: x1 + dx, y: y1 },
+                { x: x2 - dx, y: y1 },
+                { x: x2, y: vc },
+                { x: x2 - dx, y: y2 },
+                { x: x1 + dx, y: y2 },
+                { x: x1, y: vc }
+            ])
+            break
+        }
+        case "octagon": {
+            const d = (ss * getAdj(29289)) / 100000
+            path = pointsToPath([
+                { x: x1 + d, y: y1 },
+                { x: x2 - d, y: y1 },
+                { x: x2, y: y1 + d },
+                { x: x2, y: y2 - d },
+                { x: x2 - d, y: y2 },
+                { x: x1 + d, y: y2 },
+                { x: x1, y: y2 - d },
+                { x: x1, y: y1 + d }
+            ])
+            break
+        }
+        case "parallelogram": {
+            const a = (ss * getAdj(25000)) / 100000
+            path = pointsToPath([
+                { x: x1 + a, y: y1 },
+                { x: x2, y: y1 },
+                { x: x2 - a, y: y2 },
+                { x: x1, y: y2 }
+            ])
+            break
+        }
+        case "trapezoid": {
+            const a = (ss * getAdj(25000)) / 100000
+            path = pointsToPath([
+                { x: x1 + a, y: y1 },
+                { x: x2 - a, y: y1 },
+                { x: x2, y: y2 },
+                { x: x1, y: y2 }
+            ])
+            break
+        }
+        case "bevel": {
+            // Simple 3D beveled rectangle
+            const b = (ss * getAdj(12500)) / 100000
+            path = pointsToPath([
+                { x: x1 + b, y: y1 },
+                { x: x2 - b, y: y1 },
+                { x: x2, y: y1 + b },
+                { x: x2, y: y2 - b },
+                { x: x2 - b, y: y2 },
+                { x: x1 + b, y: y2 },
+                { x: x1, y: y2 - b },
+                { x: x1, y: y1 + b }
+            ])
+            break
+        }
+        case "frame": {
+            // rectangle with a hole (rendered with evenodd fill)
+            const border = (ss * getAdj(12500, "adj1")) / 100000
+            path =
+                pointsToPath([
+                    { x: x1, y: y1 },
+                    { x: x2, y: y1 },
+                    { x: x2, y: y2 },
+                    { x: x1, y: y2 }
+                ]) +
+                " " +
+                pointsToPath([
+                    { x: x1 + border, y: y1 + border },
+                    { x: x2 - border, y: y1 + border },
+                    { x: x2 - border, y: y2 - border },
+                    { x: x1 + border, y: y2 - border }
+                ])
+            break
+        }
+        case "donut": {
+            // Donut = outer ellipse minus inner ellipse (rendered with evenodd fill)
+            const thickness = (ss * getAdj(25000)) / 100000
+            path = ellipsePath(width / 2, height / 2) + " " + ellipsePath(Math.max(0, width / 2 - thickness), Math.max(0, height / 2 - thickness))
+            break
+        }
+        case "plus":
+        case "mathPlus": {
+            const d = (ss * getAdj(prstGeom === "plus" ? 25000 : 23520)) / 100000
+            path = pointsToPath([
+                { x: x1, y: y1 + d },
+                { x: x1 + d, y: y1 + d },
+                { x: x1 + d, y: y1 },
+                { x: x2 - d, y: y1 },
+                { x: x2 - d, y: y1 + d },
+                { x: x2, y: y1 + d },
+                { x: x2, y: y2 - d },
+                { x: x2 - d, y: y2 - d },
+                { x: x2 - d, y: y2 },
+                { x: x1 + d, y: y2 },
+                { x: x1 + d, y: y2 - d },
+                { x: x1, y: y2 - d }
+            ])
+            break
+        }
+        case "rightArrow":
+        case "leftArrow": {
+            const dy = (height * getAdj(50000, "adj1")) / 200000
+            const head = Math.min(width, (ss * getAdj(50000, "adj2")) / 100000)
+            const points = [
+                { x: x1, y: vc - dy },
+                { x: x2 - head, y: vc - dy },
+                { x: x2 - head, y: y1 },
+                { x: x2, y: vc },
+                { x: x2 - head, y: y2 },
+                { x: x2 - head, y: vc + dy },
+                { x: x1, y: vc + dy }
+            ]
+            path = pointsToPath(prstGeom === "leftArrow" ? points.map((p) => ({ x: x1 + x2 - p.x, y: p.y })) : points)
+            break
+        }
+        case "downArrow":
+        case "upArrow": {
+            const dx = (width * getAdj(50000, "adj1")) / 200000
+            const head = Math.min(height, (ss * getAdj(50000, "adj2")) / 100000)
+            const points = [
+                { x: hc - dx, y: y1 },
+                { x: hc + dx, y: y1 },
+                { x: hc + dx, y: y2 - head },
+                { x: x2, y: y2 - head },
+                { x: hc, y: y2 },
+                { x: x1, y: y2 - head },
+                { x: hc - dx, y: y2 - head }
+            ]
+            path = pointsToPath(prstGeom === "upArrow" ? points.map((p) => ({ x: p.x, y: y1 + y2 - p.y })) : points)
+            break
+        }
+        case "homePlate": {
+            const dx = Math.min(width, (ss * getAdj(50000)) / 100000)
+            path = pointsToPath([
+                { x: x1, y: y1 },
+                { x: x2 - dx, y: y1 },
+                { x: x2, y: vc },
+                { x: x2 - dx, y: y2 },
+                { x: x1, y: y2 }
+            ])
+            break
+        }
+        case "chevron": {
+            const dx = Math.min(width / 2, (ss * getAdj(50000)) / 100000)
+            path = pointsToPath([
+                { x: x1, y: y1 },
+                { x: x2 - dx, y: y1 },
+                { x: x2, y: vc },
+                { x: x2 - dx, y: y2 },
+                { x: x1, y: y2 },
+                { x: x1 + dx, y: vc }
+            ])
+            break
+        }
+        case "star":
+        case "star5":
+            path = starPath(5, getAdj(19098) / 50000)
+            break
+        case "star4":
+            path = starPath(4, getAdj(12500) / 50000)
+            break
+        case "star6":
+            path = starPath(6, getAdj(28868) / 50000)
+            break
+        case "star7":
+            path = starPath(7, getAdj(34601) / 50000)
+            break
+        case "star8":
+            path = starPath(8, getAdj(38250) / 50000)
+            break
+        case "star10":
+            path = starPath(10, getAdj(42533) / 50000)
+            break
+        case "star12":
+        case "star16":
+        case "star24":
+        case "star32":
+            path = starPath(Number(prstGeom.slice(4)), getAdj(37500) / 50000)
+            break
         case "diagStripe": {
             // ✓
             const a = adj / 100000
@@ -32,13 +287,6 @@ export function getPresetShapePath(prstGeom, x1, y1, width, height, adj = 0) {
             path = pointsToPath(points)
             break
         }
-        case "triangle":
-            path = pointsToPath([
-                { x: x1 + width / 2, y: y1 },
-                { x: x1, y: y1 + height },
-                { x: x1 + width, y: y1 + height }
-            ])
-            break
         case "rtTriangle":
             // should be right angle
 
@@ -54,42 +302,6 @@ export function getPresetShapePath(prstGeom, x1, y1, width, height, adj = 0) {
                 { x: x1, y: y1 },
                 { x: x1 + width, y: y1 + height }
             ])
-            break
-        case "round1Rect":
-            // path = pointsToPath([
-            //     { x: x1 + width * 0.1, y: y1 },
-            //     { x: x1 + width * 0.9, y: y1 },
-            //     { x: x1 + width, y: y1 + height * 0.1 },
-            //     { x: x1 + width, y: y1 + height * 0.9 },
-            //     { x: x1 + width * 0.9, y: y1 + height },
-            //     { x: x1 + width * 0.1, y: y1 + height },
-            //     { x: x1, y: y1 + height * 0.9 },
-            //     { x: x1, y: y1 + height * 0.1 }
-            // ])
-
-            const r = 0.2 // normalized radius (0..1)
-            const pathPoints = [
-                { x: r, y: 0 }, // start after top-left curve
-                { x: 1, y: 0 }, // top-right
-                { x: 1, y: 1 }, // bottom-right
-                { x: 0, y: 1 }, // bottom-left
-                { x: 0, y: r }, // left before curve
-                { x: 0, y: 0, q: true }, // top-left control point for quadratic curve
-                { x: r, y: 0 } // back to start
-            ]
-
-            // Convert to path with quadratic handling
-            path =
-                pathPoints
-                    .map((p, i) => {
-                        if (i === 0) return `M ${p.x} ${p.y}`
-                        if (p.q) {
-                            const prev = pathPoints[i - 1]
-                            return `Q ${prev.x} ${prev.y} ${p.x} ${p.y}`
-                        }
-                        return `L ${p.x} ${p.y}`
-                    })
-                    .join(" ") + " Z"
             break
         case "diamond":
             path = pointsToPath([
@@ -108,28 +320,6 @@ export function getPresetShapePath(prstGeom, x1, y1, width, height, adj = 0) {
                 { x: x1, y: y1 + 0.3771 * height }
             ])
             break
-        case "hexagon":
-            path = pointsToPath([
-                { x: x1 + 0.25 * width, y: y1 },
-                { x: x1 + 0.75 * width, y: y1 },
-                { x: x1 + width, y: y1 + height / 2 },
-                { x: x1 + 0.75 * width, y: y1 + height },
-                { x: x1 + 0.25 * width, y: y1 + height },
-                { x: x1, y: y1 + height / 2 }
-            ])
-            break
-        case "octagon":
-            path = pointsToPath([
-                { x: x1 + 0.29 * width, y: y1 },
-                { x: x1 + 0.71 * width, y: y1 },
-                { x: x1 + width, y: y1 + 0.29 * height },
-                { x: x1 + width, y: y1 + 0.71 * height },
-                { x: x1 + 0.71 * width, y: y1 + height },
-                { x: x1 + 0.29 * width, y: y1 + height },
-                { x: x1, y: y1 + 0.71 * height },
-                { x: x1, y: y1 + 0.29 * height }
-            ])
-            break
         case "ellipse":
             // path = `M ${normalizeX(x1 + width / 2)} ${normalizeY(y1)}
             //         A ${normalizeX(width / 2)} ${normalizeY(height / 2)} 0 1 0 ${normalizeX(x1 + width / 2)} ${normalizeY(y1 + height)}
@@ -146,65 +336,6 @@ export function getPresetShapePath(prstGeom, x1, y1, width, height, adj = 0) {
             }
             path = pointsToPath(pts) // pointsToPath will call normalizeX/normalizeY
             break
-        case "flowChartProcess":
-            path = pointsToPath([
-                { x: x1, y: y1 },
-                { x: x1 + width, y: y1 },
-                { x: x1 + width, y: y1 + height },
-                { x: x1, y: y1 + height }
-            ])
-            break
-        case "roundRect":
-        case "round2SameRect": {
-            const minDim = Math.min(width, height)
-            const cornerRadius = prstGeom === "roundRect" ? 16667 : 50000
-            const r = Math.min(minDim / 2, Math.max(0, ((adj || cornerRadius) / 100000) * minDim))
-            path = `M ${normalizeX(x1 + r)} ${normalizeY(y1)} 
-                    L ${normalizeX(x1 + width - r)} ${normalizeY(y1)}
-                    Q ${normalizeX(x1 + width)} ${normalizeY(y1)} ${normalizeX(x1 + width)} ${normalizeY(y1 + r)}
-                    L ${normalizeX(x1 + width)} ${normalizeY(y1 + height - r)}
-                    Q ${normalizeX(x1 + width)} ${normalizeY(y1 + height)} ${normalizeX(x1 + width - r)} ${normalizeY(y1 + height)}
-                    L ${normalizeX(x1 + r)} ${normalizeY(y1 + height)}
-                    Q ${normalizeX(x1)} ${normalizeY(y1 + height)} ${normalizeX(x1)} ${normalizeY(y1 + height - r)}
-                    L ${normalizeX(x1)} ${normalizeY(y1 + r)}
-                    Q ${normalizeX(x1)} ${normalizeY(y1)} ${normalizeX(x1 + r)} ${normalizeY(y1)}
-                    Z`
-            break
-        }
-        case "parallelogram": {
-            const a = (adj / 100000) * Math.min(width, height)
-            path = pointsToPath([
-                { x: x1 + a, y: y1 },
-                { x: x1 + width, y: y1 },
-                { x: x1 + width - a, y: y1 + height },
-                { x: x1, y: y1 + height }
-            ])
-            break
-        }
-        case "trapezoid": {
-            const a = (adj / 100000) * Math.min(width, height)
-            path = pointsToPath([
-                { x: x1 + a, y: y1 },
-                { x: x1 + width - a, y: y1 },
-                { x: x1 + width, y: y1 + height },
-                { x: x1, y: y1 + height }
-            ])
-            break
-        }
-        case "bevel": {
-            // Simple 3D beveled rectangle
-            const b = (adj / 100000) * Math.min(width, height)
-            path = `M ${normalizeX(x1 + b)} ${normalizeY(y1)}
-                L ${normalizeX(x1 + width - b)} ${normalizeY(y1)}
-                L ${normalizeX(x1 + width)} ${normalizeY(y1 + b)}
-                L ${normalizeX(x1 + width)} ${normalizeY(y1 + height - b)}
-                L ${normalizeX(x1 + width - b)} ${normalizeY(y1 + height)}
-                L ${normalizeX(x1 + b)} ${normalizeY(y1 + height)}
-                L ${normalizeX(x1)} ${normalizeY(y1 + height - b)}
-                L ${normalizeX(x1)} ${normalizeY(y1 + b)}
-                Z`
-            break
-        }
         case "can": {
             // Cylinder shape
             const r = width / 2
@@ -226,17 +357,6 @@ export function getPresetShapePath(prstGeom, x1, y1, width, height, adj = 0) {
                 C ${normalizeX(x1 + 0.9 * width)} ${normalizeY(y1 + 0.25 * height)} 
                   ${normalizeX(x1 + 0.9 * width)} ${normalizeY(y1 + 0.75 * height)} 
                   ${normalizeX(x1 + width)} ${normalizeY(y1 + height)}`
-            break
-        }
-        case "frame": {
-            // Picture frame or rectangle with thick border
-            const border = (adj / 100000) * Math.min(width, height)
-            path = pointsToPath([
-                { x: x1 + border, y: y1 + border },
-                { x: x1 + width - border, y: y1 + border },
-                { x: x1 + width - border, y: y1 + height - border },
-                { x: x1 + border, y: y1 + height - border }
-            ])
             break
         }
         case "pie": {
@@ -314,22 +434,6 @@ export function getPresetShapePath(prstGeom, x1, y1, width, height, adj = 0) {
                 L ${normalizeX(xStart)} ${normalizeY(yStart)} Z`
             break
         }
-        case "donut": {
-            // Donut = outer ellipse minus inner ellipse
-            const outerR = { rx: width / 2, ry: height / 2 }
-            const innerR = { rx: width / 4, ry: height / 4 }
-            const cx = x1 + width / 2
-            const cy = y1 + height / 2
-
-            path = `M ${normalizeX(cx + outerR.rx)} ${normalizeY(cy)}
-                A ${normalizeX(outerR.rx)} ${normalizeY(outerR.ry)} 0 1 1 ${normalizeX(cx - outerR.rx)} ${normalizeY(cy)}
-                A ${normalizeX(outerR.rx)} ${normalizeY(outerR.ry)} 0 1 1 ${normalizeX(cx + outerR.rx)} ${normalizeY(cy)}
-                M ${normalizeX(cx + innerR.rx)} ${normalizeY(cy)}
-                A ${normalizeX(innerR.rx)} ${normalizeY(innerR.ry)} 0 1 0 ${normalizeX(cx - innerR.rx)} ${normalizeY(cy)}
-                A ${normalizeX(innerR.rx)} ${normalizeY(innerR.ry)} 0 1 0 ${normalizeX(cx + innerR.rx)} ${normalizeY(cy)}
-                Z`
-            break
-        }
         case "blockArc": {
             // Arc with thickness
             const cx = x1 + width / 2
@@ -356,21 +460,6 @@ export function getPresetShapePath(prstGeom, x1, y1, width, height, adj = 0) {
                 Z`
             break
         }
-        case "star": {
-            // 5-pointed star
-            const cx = x1 + width / 2
-            const cy = y1 + height / 2
-            const rOuter = width / 2
-            const rInner = rOuter * 0.5
-            const pts: any[] = []
-            for (let i = 0; i < 10; i++) {
-                const r = i % 2 === 0 ? rOuter : rInner
-                const angle = (Math.PI / 5) * i - Math.PI / 2
-                pts.push({ x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) })
-            }
-            path = pts.map((p, i) => `${i === 0 ? "M" : "L"} ${normalizeX(p.x)} ${normalizeY(p.y)}`).join(" ") + " Z"
-            break
-        }
         case "banner": {
             // Simple top banner
             const hOffset = (adj / 100000) * height
@@ -380,39 +469,6 @@ export function getPresetShapePath(prstGeom, x1, y1, width, height, adj = 0) {
                 { x: x1 + width, y: y1 + height - hOffset },
                 { x: x1, y: y1 + height }
             ])
-            break
-        }
-        case "rightArrow": {
-            // ✓
-            // path = pointsToPath([
-            //     { x: 0, y: 0.25 },
-            //     { x: 0.75, y: 0.25 },
-            //     { x: 0.75, y: 0 },
-            //     { x: 1, y: 0.5 },
-            //     { x: 0.75, y: 1 },
-            //     { x: 0.75, y: 0.75 },
-            //     { x: 0, y: 0.75 }
-            // ].map(p => ({ x: x1 + p.x * width, y: y1 + p.y * height })))
-
-            const aspect = height / width // normalized height
-            const headFrac = Math.min(1, aspect) * 0.5 // head width = total height in x units
-
-            // Shaft thickness = 50% of height (parametrize if needed)
-            const shaftHeight = aspect * 0.5
-            const shaftTop = (aspect - shaftHeight) / 2
-            const shaftBottom = shaftTop + shaftHeight
-
-            const points = [
-                [0, shaftTop], // left-top shaft
-                [1 - headFrac, shaftTop], // before head, top
-                [1 - headFrac, 0], // head top
-                [1, aspect / 2], // tip
-                [1 - headFrac, aspect], // head bottom
-                [1 - headFrac, shaftBottom], // before head, bottom
-                [0, shaftBottom] // left-bottom shaft
-            ]
-
-            path = points.map((p, i) => (i === 0 ? `M${p[0]},${p[1]}` : `L${p[0]},${p[1]}`)).join(" ") + " Z"
             break
         }
         case "curvedUpArrow": {
@@ -426,26 +482,6 @@ export function getPresetShapePath(prstGeom, x1, y1, width, height, adj = 0) {
                 L ${normalizeX(cx)} ${normalizeY(y1 + height * 0.25)}
                 L ${normalizeX(x1 + width * 0.25)} ${normalizeY(y1 + height)}
                 Z`
-            break
-        }
-        case "plus":
-        case "mathPlus": {
-            // ✓
-            const adj = width * 0.3
-            path = pointsToPath([
-                { x: x1 + width / 2 - adj / 2, y: y1 },
-                { x: x1 + width / 2 + adj / 2, y: y1 },
-                { x: x1 + width / 2 + adj / 2, y: y1 + height / 2 - adj / 2 },
-                { x: x1 + width, y: y1 + height / 2 - adj / 2 },
-                { x: x1 + width, y: y1 + height / 2 + adj / 2 },
-                { x: x1 + width / 2 + adj / 2, y: y1 + height / 2 + adj / 2 },
-                { x: x1 + width / 2 + adj / 2, y: y1 + height },
-                { x: x1 + width / 2 - adj / 2, y: y1 + height },
-                { x: x1 + width / 2 - adj / 2, y: y1 + height / 2 + adj / 2 },
-                { x: x1, y: y1 + height / 2 + adj / 2 },
-                { x: x1, y: y1 + height / 2 - adj / 2 },
-                { x: x1 + width / 2 - adj / 2, y: y1 + height / 2 - adj / 2 }
-            ])
             break
         }
         case "downArrowCallout": {
@@ -517,23 +553,6 @@ export function getPresetShapePath(prstGeom, x1, y1, width, height, adj = 0) {
                 Z`
             break
         }
-        case "star4": {
-            // 4-pointed star
-            const cx = x1 + width / 2
-            const cy = y1 + height / 2
-            const rOuter = width / 2
-            const rInner = rOuter * 0.5
-            const pts = [
-                { x: cx, y: cy - rOuter },
-                { x: cx + rInner, y: cy },
-                { x: cx + rOuter, y: cy },
-                { x: cx, y: cy + rInner },
-                { x: cx - rOuter, y: cy },
-                { x: cx - rInner, y: cy }
-            ]
-            path = pointsToPath(pts)
-            break
-        }
         case "smileyFace": {
             const cx = x1 + width / 2
             const cy = y1 + height / 2
@@ -578,11 +597,14 @@ export function getPresetShapePath(prstGeom, x1, y1, width, height, adj = 0) {
     return path
 }
 
-export function getCustomShapePath(path: any[], size: { w: string; h: string }): { pathData: string; vbWidth: number; vbHeight: number } | null {
-    if (!path.length) return null
+// path list from <a:custGeom><a:pathLst>, each <a:path> has its own coordinate space (w/h)
+export function getCustomShapePath(pathList: any[], fallbackSize: { w: number; h: number }): { paths: { d: string; noFill?: boolean; noStroke?: boolean }[]; vbWidth: number; vbHeight: number } | null {
+    const pathNodes = pathList.filter((node) => node?.["a:path"])
+    if (!pathNodes.length) return null
 
-    const boxWidth = parseInt(size.w, 10)
-    const boxHeight = parseInt(size.h, 10)
+    const firstAttrs = pathNodes[0][":@"] || {}
+    const boxWidth = parseFloat(firstAttrs.w) || fallbackSize.w || 1
+    const boxHeight = parseFloat(firstAttrs.h) || fallbackSize.h || 1
     const aspect = boxWidth / boxHeight
     let vbWidth = 1
     let vbHeight = 1
@@ -594,87 +616,82 @@ export function getCustomShapePath(path: any[], size: { w: string; h: string }):
         vbHeight = 1
     }
 
-    let d = ""
+    const paths: { d: string; noFill?: boolean; noStroke?: boolean }[] = []
 
-    path.forEach((pathNode) => {
+    pathNodes.forEach((pathNode) => {
         const pathAttrs = pathNode[":@"] || {}
-        const pathGridW = pathAttrs.w ? parseFloat(pathAttrs.w) : boxWidth
-        const pathGridH = pathAttrs.h ? parseFloat(pathAttrs.h) : boxHeight
+        // path coordinates are in EMU when no size is defined
+        const pathGridW = parseFloat(pathAttrs.w) || parseFloat(firstAttrs.w) || fallbackSize.w * 9525 || 1
+        const pathGridH = parseFloat(pathAttrs.h) || parseFloat(firstAttrs.h) || fallbackSize.h * 9525 || 1
 
-        // Helper to normalize points to vbWidth/vbHeight range
-        function norm(x: string, y: string) {
-            let px = pathGridW ? parseFloat(x) / pathGridW : 0
-            let py = pathGridH ? parseFloat(y) / pathGridH : 0
-            // Scale to fit the viewBox
-            px *= vbWidth
-            py *= vbHeight
-            return { x: px.toFixed(4), y: py.toFixed(4) }
-        }
+        const scaleX = vbWidth / pathGridW
+        const scaleY = vbHeight / pathGridH
+        const fmt = (n: number) => Number(n.toFixed(5))
+        const point = (x: number, y: number) => `${fmt(x * scaleX)} ${fmt(y * scaleY)}`
+        const getPoints = (cmd: any[]) =>
+            (Array.isArray(cmd) ? cmd : [])
+                .map((pt) => pt?.[":@"])
+                .filter(Boolean)
+                .map((pt) => ({ x: parseFloat(pt.x) || 0, y: parseFloat(pt.y) || 0 }))
 
-        const customShape = {
-            // MoveTo
-            "a:moveTo": (a) => {
-                const pt = a[0]?.[":@"] || a[":@"]
-                if (!pt) return ""
+        // current point (in path units), needed for arcs
+        let current = { x: 0, y: 0 }
+        let start = { x: 0, y: 0 }
+        let d = ""
 
-                const { x, y } = norm(pt.x, pt.y)
-                return `M ${x} ${y} `
-            },
-            // LineTo
-            "a:lnTo": (a) => {
-                const items = Array.isArray(a) ? a : [a]
-                return items
-                    .map((item) => {
-                        const pt = item[":@"] || item
-                        if (!pt.x || !pt.y) return ""
+        for (const cmdNode of pathNode["a:path"] || []) {
+            const key = Object.keys(cmdNode || {}).find((k) => k !== ":@")
+            if (!key) continue
+            const cmd = cmdNode[key]
 
-                        const { x, y } = norm(pt.x, pt.y)
-                        return `L ${x} ${y} `
-                    })
-                    .join("")
-            },
-            // ArcTo (approximate as line for now)
-            "a:arcTo": (a) => {
-                const items = Array.isArray(a) ? a : [a]
-                const pts = items.map((arc) => arc[":@"] || arc)
-                if (!pts?.[1]) return ""
+            if (key === "a:moveTo") {
+                const [pt] = getPoints(cmd)
+                if (!pt) continue
+                current = start = pt
+                d += `M ${point(pt.x, pt.y)} `
+            } else if (key === "a:lnTo") {
+                const [pt] = getPoints(cmd)
+                if (!pt) continue
+                current = pt
+                d += `L ${point(pt.x, pt.y)} `
+            } else if (key === "a:quadBezTo") {
+                const pts = getPoints(cmd)
+                if (pts.length < 2) continue
+                current = pts[1]
+                d += `Q ${point(pts[0].x, pts[0].y)} ${point(pts[1].x, pts[1].y)} `
+            } else if (key === "a:cubicBezTo") {
+                const pts = getPoints(cmd)
+                if (pts.length < 3) continue
+                current = pts[2]
+                d += `C ${point(pts[0].x, pts[0].y)} ${point(pts[1].x, pts[1].y)} ${point(pts[2].x, pts[2].y)} `
+            } else if (key === "a:arcTo") {
+                const attrs = cmdNode[":@"] || {}
+                const wR = parseFloat(attrs.wR) || 0
+                const hR = parseFloat(attrs.hR) || 0
+                const stAng = ((parseFloat(attrs.stAng) || 0) / 60000) * (Math.PI / 180)
+                const swAng = ((parseFloat(attrs.swAng) || 0) / 60000) * (Math.PI / 180)
+                if (!wR || !hR || !swAng) continue
 
-                // const attr1 = pts[0]
-                const attr2 = pts[1]
-                const { x, y } = norm(attr2.x, attr2.y)
-                return `L ${x} ${y} `
-            },
-            // QuadBezierTo
-            "a:quadBezTo": (a) => {
-                const items = Array.isArray(a) ? a : [a]
-                const pts = items.map((quad) => quad[":@"] || quad)
-                if (pts.length < 2) return ""
+                // the current point is on the ellipse at the start angle
+                const cx = current.x - wR * Math.cos(stAng)
+                const cy = current.y - hR * Math.sin(stAng)
 
-                const c = norm(pts[0].x, pts[0].y)
-                const p = norm(pts[1].x, pts[1].y)
-                return `Q ${c.x} ${c.y}, ${p.x} ${p.y} `
-            },
-            // CubicBezierTo
-            "a:cubicBezTo": (a) => {
-                const items = Array.isArray(a) ? a : [a]
-                const pts = items.map((cubic) => cubic[":@"] || cubic)
-                if (pts.length < 3) return ""
-
-                const c1 = norm(pts[0].x, pts[0].y)
-                const c2 = norm(pts[1].x, pts[1].y)
-                const p = norm(pts[2].x, pts[2].y)
-                return `C ${c1.x} ${c1.y}, ${c2.x} ${c2.y}, ${p.x} ${p.y} `
-            },
-            // Close
-            "a:close": () => "Z "
-        }
-
-        Object.keys(pathNode).forEach((key) => {
-            if (customShape[key]) {
-                d += customShape[key](pathNode[key])
+                // split into max 180deg segments (svg can't draw a full ellipse with one arc)
+                const segments = Math.ceil(Math.abs(swAng) / Math.PI)
+                for (let i = 1; i <= segments; i++) {
+                    const angle = stAng + (swAng * i) / segments
+                    const end = { x: cx + wR * Math.cos(angle), y: cy + hR * Math.sin(angle) }
+                    d += `A ${fmt(wR * scaleX)} ${fmt(hR * scaleY)} 0 0 ${swAng > 0 ? 1 : 0} ${point(end.x, end.y)} `
+                    current = end
+                }
+            } else if (key === "a:close") {
+                current = start
+                d += "Z "
             }
-        })
+        }
+
+        if (d.trim()) paths.push({ d: d.trim(), noFill: pathAttrs.fill === "none", noStroke: pathAttrs.stroke === "0" || pathAttrs.stroke === "false" })
     })
 
-    return { pathData: d.trim(), vbWidth, vbHeight }
+    return { paths, vbWidth, vbHeight }
 }
