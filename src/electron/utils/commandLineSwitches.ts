@@ -13,6 +13,17 @@ export function applyCommandLineSwitches() {
     app.commandLine.appendSwitch("disable-background-media-suspend")
 
     if (process.platform === "linux") applyLinuxSwitches()
+    if (process.platform === "darwin") applyMacSwitches()
+}
+
+function applyMacSwitches() {
+    // Skia Graphite renders pixelated with hardware acceleration (since the Electron 37 -> 45 upgrade),
+    // so use the Ganesh backend. FS_MAC_GRAPHITE=1 keeps Graphite for testing newer Electron versions.
+    if (process.env.FS_MAC_GRAPHITE === "1") {
+        console.info("[MAC] FS_MAC_GRAPHITE=1: Skia Graphite kept enabled")
+        return
+    }
+    app.commandLine.appendSwitch("disable-features", "SkiaGraphite")
 }
 
 function applyLinuxSwitches() {
