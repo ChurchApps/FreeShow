@@ -48,6 +48,7 @@
         "test": "npm-run-all -s test:unit test:playwright test:format test:svelte",
         "test:unit": "vitest run --config config/testing/vitest.config.ts",
         "test:playwright": "npx playwright test --config config/testing/playwright.config.ts",
+        "test:outputs": "npx playwright test --config config/testing/outputs/playwright.config.ts",
         "test:format": "npx prettier --config config/formatting/.prettierrc.yaml --check src scripts",
         "test:svelte": "svelte-check",
         "format:prettier": "npx prettier --config config/formatting/.prettierrc.yaml --write src scripts",
