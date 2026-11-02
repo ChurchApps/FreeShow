@@ -390,7 +390,7 @@
             hide = !getProjectProvider($activeProject || "")
         },
         unlink_provider: () => {
-            menu = { ...menu, label: translateText("actions.unlink_from", null, [getProviderName(getShowProvider($selected.data[0]?.id) || "")]), translate: false }
+            menu = { ...menu, label: translateText("actions.unlink_from_library", null, [getProviderName(getShowProvider($selected.data[0]?.id) || "")]), translate: false }
         },
         mark_played: () => {
             const projectId = $activeProject

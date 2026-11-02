@@ -110,10 +110,10 @@
 
     <div class="right">
         {#if isProviderItem}
-            <MaterialButton style="width: 32px;height: 100%;padding: 0.3em 0.5em;" title="actions.replace" on:click={() => linkProjectItem(itemIndex)}>
+            <MaterialButton style="width: 32px;height: 100%;padding: 0.3em 0.5em;" title="actions.replace_linked_show<br>tooltip.replace_linked_show" on:click={() => linkProjectItem(itemIndex)}>
                 <Icon size={0.8} id="search" white />
             </MaterialButton>
-            <MaterialButton style="width: 32px;height: 100%;padding: 0.3em 0.5em;" title="actions.unlink_show" on:click={() => unlinkProjectItem(itemIndex)}>
+            <MaterialButton style="width: 32px;height: 100%;padding: 0.3em 0.5em;" title="actions.remove_linked_show<br>tooltip.remove_linked_show" on:click={() => unlinkProjectItem(itemIndex)}>
                 <Icon size={0.8} id="unbind" white />
             </MaterialButton>
         {/if}
