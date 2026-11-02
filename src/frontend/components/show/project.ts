@@ -4,6 +4,7 @@ import type { Project, ProjectShowRef } from "../../../types/Projects"
 import { similarity } from "../../converters/txt"
 import { activeEdit, activeProject, activeShow, projects, projectView, saved, showRecentlyUsedProjects, shows, showsCache } from "../../stores"
 import { generateScriptureShowFromReference } from "../drawer/bible/scripture"
+import { getDefaultLayout, setActiveLayout } from "../helpers/arrangements"
 import { keysToID, sortByTimeNew } from "../helpers/array"
 import { history } from "../helpers/history"
 
@@ -41,19 +42,15 @@ export function openProjectItem(id: string, index: number = 0) {
 
     activeShow.set({ ...item, index })
 
-    // open stored layout
-    if ((item.type || "show") === "show" && item.layout) {
+    // open the item's arrangement, else the show's default
+    if ((item.type || "show") === "show") {
         // wait until loaded
         setTimeout(() => {
-            let storedLayout = item.layout || ""
             const show = get(showsCache)[item.id]
             if (!show?.settings) return
-            if (!show.layouts?.[storedLayout]) return
 
-            showsCache.update((a) => {
-                a[item.id].settings.activeLayout = storedLayout
-                return a
-            })
+            const layoutId = item.layout && show.layouts?.[item.layout] ? item.layout : getDefaultLayout(show)
+            if (layoutId) setActiveLayout(item.id, layoutId)
         }, 50)
     }
 

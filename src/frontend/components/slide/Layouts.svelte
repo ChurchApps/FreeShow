@@ -6,6 +6,7 @@
     import { translateText } from "../../utils/language"
     import { getAccess } from "../../utils/profile"
     import { getActionIcon, runAction } from "../actions/actions"
+    import { selectArrangement } from "../helpers/arrangements"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import { keysToID, sortByName } from "../helpers/array"
@@ -78,31 +79,6 @@
             store.update((a) => {
                 if (a[projectId!]?.shows?.[showIndex!]) {
                     a[projectId!].shows[showIndex!].layoutInfo = { name: newName }
-                }
-                return a
-            })
-        }
-    }
-
-    function setLayout(id: string, layoutInfo) {
-        if (!$showsCache[showId]) return
-
-        showsCache.update((a) => {
-            if (a[showId]) {
-                if (!a[showId].settings) a[showId].settings = { activeLayout: "", template: null }
-                a[showId].settings.activeLayout = id
-            }
-            return a
-        })
-
-        // set active layout in project
-        if (sortedLayouts?.length < 2) return
-        const showIndex = $activeShow?.index
-        if (($activeShow?.type === undefined || $activeShow?.type === "show") && showIndex !== undefined && projectId && project?.shows?.[showIndex]) {
-            store.update((a) => {
-                if (a[projectId!]?.shows?.[showIndex]) {
-                    a[projectId!].shows[showIndex].layout = id
-                    a[projectId!].shows[showIndex].layoutInfo = layoutInfo
                 }
                 return a
             })
@@ -206,7 +182,7 @@
                             <MaterialButton
                                 class={isLocked ? "" : "context #layout"}
                                 on:click={() => {
-                                    if (!edit) setLayout(layout.id, { name: layout.name })
+                                    if (!edit) selectArrangement(showId, layout.id)
                                 }}
                                 isActive={activeLayout === layout.id}
                             >

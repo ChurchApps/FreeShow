@@ -4,6 +4,7 @@
     import { activeFocus, activeShow, focusMode, outLocked, outputs, playingVideoState, presentationData, showsCache } from "../../../stores"
     import { triggerClickOnEnterSpace } from "../../../utils/clickable"
     import { translateText } from "../../../utils/language"
+    import { setActiveLayout } from "../../helpers/arrangements"
     import Icon from "../../helpers/Icon.svelte"
     import { getFileName, removeExtension } from "../../helpers/media"
     import T from "../../helpers/T.svelte"
@@ -25,13 +26,7 @@
     function openShow() {
         if (!slide || slide.id === "temp") return
 
-        if (slide?.layout && $showsCache[slide.id]) {
-            showsCache.update((a) => {
-                if (!a[slide.id].settings) a[slide.id].settings = { activeLayout: "", template: null }
-                a[slide.id].settings.activeLayout = slide.layout!
-                return a
-            })
-        }
+        if (slide?.layout && $showsCache[slide.id]) setActiveLayout(slide.id, slide.layout)
 
         if ($focusMode) activeFocus.set({ id: slide?.id, type: slide?.type || "show" })
         else activeShow.set({ id: slide?.id, type: slide?.type || "show" })

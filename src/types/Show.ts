@@ -29,6 +29,7 @@ export interface Show {
     }
     settings: {
         activeLayout: ID
+        defaultLayout?: ID // project items open on this arrangement
         // resolution?: Resolution
         template: null | ID
         customAction?: string // special custom trigger

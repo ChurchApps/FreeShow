@@ -6,6 +6,7 @@ import AiModelManager from "../ai/components/popups/AiModelManager.svelte"
 import About from "../components/main/popups/About.svelte"
 import Action from "../components/main/popups/Action.svelte"
 import ActionHistory from "../components/main/popups/ActionHistory.svelte"
+import Arrangements from "../components/main/popups/Arrangements.svelte"
 import AddAudioEffect from "../components/main/popups/AddAudioEffect.svelte"
 import Alert from "../components/main/popups/Alert.svelte"
 import AspectRatio from "../components/main/popups/AspectRatio.svelte"
@@ -110,6 +111,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     delete_duplicated_shows: DeleteDuplicatedShows,
     icon: ChangeIcon,
     manage_groups: ManageGroups,
+    arrangements: Arrangements,
     manage_fonts: ManageFonts,
     manage_icons: ManageIcons,
     manage_colors: ManageColors,

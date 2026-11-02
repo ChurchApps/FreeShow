@@ -6,6 +6,8 @@
     import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
     import { allOutputsHasStyleTemplate, getFirstActiveOutput } from "../helpers/output"
+    import { getDefaultLayout, selectArrangement } from "../helpers/arrangements"
+    import { keysToID, sortByName } from "../helpers/array"
     import { removeTemplatesFromShow } from "../helpers/show"
     import T from "../helpers/T.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
@@ -46,10 +48,11 @@
     }
 
     function mousedown(e) {
-        if (!e.target.closest(".showDropdown") && !e.target.closest(".header .right")) showDropdown = false
+        if (!e.target.closest(".showDropdown") && !e.target.closest(".header .right")) showDropdown = arrangementDropdown = false
     }
 
     let showDropdown = false
+    let arrangementDropdown = false
     let listScrollY = 0
 
     function toggleShowLock() {
@@ -79,6 +82,12 @@
     $: showTemplateId = currentShow?.settings?.template || ""
     $: showTemplateIcon = !!(showTemplateId && $templates[showTemplateId])
     $: enableShowTemplate = showTemplateIcon && (!referenceType || referenceType === "scripture" || open)
+
+    // ARRANGEMENTS
+
+    $: arrangements = sortByName(keysToID(layouts || {}))
+    $: activeArrangement = currentShow?.settings?.activeLayout
+    $: defaultArrangement = getDefaultLayout(currentShow)
 </script>
 
 <svelte:window on:mousedown={mousedown} />
@@ -118,12 +127,37 @@
             <Icon size={0.9} id="zoomIn" white />
         </MaterialButton> -->
 
+        {#if !hideOptions && arrangements.length && !referenceType}
+            <MaterialButton style="width: 32px;height: 100%;padding: 0.3em 0.5em;" title="show.arrangements" on:click={() => ((arrangementDropdown = !arrangementDropdown), (showDropdown = false))}>
+                <Icon size={0.8} id="rearrange" white={!arrangementDropdown} />
+            </MaterialButton>
+        {/if}
+
         {#if !hideOptions}
             <!-- show more -->
-            <MaterialButton style="width: 32px;height: 100%;padding: 0.3em 0.5em;border-bottom-right-radius: 10px;{showDropdown ? '' : 'opacity: 0.8;'}" title="create_show.more_options" icon="more" on:click={() => (showDropdown = !showDropdown)} white={!showDropdown}>
+            <MaterialButton style="width: 32px;height: 100%;padding: 0.3em 0.5em;border-bottom-right-radius: 10px;{showDropdown ? '' : 'opacity: 0.8;'}" title="create_show.more_options" icon="more" on:click={() => ((showDropdown = !showDropdown), (arrangementDropdown = false))} white={!showDropdown}>
                 <!-- prevent force "white" -->
                 <span style="display: none;"></span>
             </MaterialButton>
+        {/if}
+
+        {#if arrangementDropdown && currentShow}
+            <div class="showDropdown" transition:fade={{ duration: 100 }} role="none" on:click={() => (arrangementDropdown = false)}>
+                {#each arrangements as arrangement}
+                    <MaterialButton on:click={() => selectArrangement(showId, arrangement.id)}>
+                        <Icon id="check" size={0.7} white style="visibility: {arrangement.id === activeArrangement ? 'visible' : 'hidden'};" />
+                        <p>{arrangement.name || translateText("main.unnamed")}</p>
+                        {#if arrangement.id === defaultArrangement}<Icon id="star" size={0.7} white />{/if}
+                    </MaterialButton>
+                {/each}
+
+                <div class="DIVIDER"></div>
+
+                <MaterialButton title="show.edit_arrangements" on:click={() => activePopup.set("arrangements")}>
+                    <Icon id="edit" white />
+                    <p><T id="show.edit_arrangements" /></p>
+                </MaterialButton>
+            </div>
         {/if}
 
         {#if showDropdown && currentShow}

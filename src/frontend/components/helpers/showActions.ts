@@ -64,6 +64,7 @@ import { clone, keysToID, sortByName } from "./array"
 import { downloadOnlineMedia, encodeFilePath, getExtension, getFileName, getMedia, getMediaStyle, getMediaType, locateMediaFile, removeExtension } from "./media"
 import { defaultLayers, getActiveOutputs, getAllActiveOutputIds, getAllNormalOutputs, getAllStageOutputs, getFirstActiveOutput, getFirstOutput, getWindowOutputId, isOutCleared, refreshOut, resolveOutputId, resolveOutputIds, setOutput, startFolderTimer } from "./output"
 import { OutputHelper } from "./OutputHelper"
+import { getDefaultLayout, setActiveLayout } from "./arrangements"
 import { getSetChars } from "./randomValue"
 import { loadShows } from "./setShow"
 import { getCustomMetadata, getGroupName, getLayoutRef } from "./show"
@@ -129,15 +130,10 @@ export function swichProjectItem(pos: number, id: string) {
     if (!get(showsCache)[id]?.layouts || !get(store)[projectId!]?.shows?.[pos] || get(focusMode)) return
     let projectLayout: string = get(store)[projectId!].shows[pos].layout || ""
 
-    // set active layout from project if it exists
-    if (projectLayout) {
-        if (!get(showsCache)[id].layouts[projectLayout]) projectLayout = Object.keys(get(showsCache)[id].layouts)[0]
-        showsCache.update((a) => {
-            if (!a[id].settings) a[id].settings = { activeLayout: "", template: null }
-            a[id].settings.activeLayout = projectLayout
-            return a
-        })
-    }
+    // set active layout from project if it exists, else the show's default
+    if (projectLayout && !get(showsCache)[id].layouts[projectLayout]) projectLayout = Object.keys(get(showsCache)[id].layouts)[0]
+    if (!projectLayout) projectLayout = getDefaultLayout(get(showsCache)[id])
+    if (projectLayout) setActiveLayout(id, projectLayout)
 
     // set project layout
     if (Object.keys(get(showsCache)[id].layouts)?.length > 1) {

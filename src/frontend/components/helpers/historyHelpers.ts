@@ -9,6 +9,7 @@ import { EMPTY_CATEGORY, EMPTY_EFFECT, EMPTY_EVENT, EMPTY_LAYOUT, EMPTY_PLAYER_V
 import { getWeekNumber } from "../drawer/calendar/calendar"
 import { audioFolders, categories, mediaFolders, outputs, overlayCategories, templateCategories, templates } from "./../../stores"
 import { clone, keysToID, sortByName } from "./array"
+import { setActiveLayout } from "./arrangements"
 import { addToPos } from "./mover"
 import { isOutCleared } from "./output"
 import { saveTextCache } from "./setShow"
@@ -464,7 +465,7 @@ export const _updaters = {
             return data
         },
         select: (id: string, { subkey }: any, initializing: boolean) => {
-            _show(id).set({ key: "settings.activeLayout", value: subkey })
+            setActiveLayout(id, subkey)
 
             // set active layout in project / template
             const isTemplate = !!get(editingProjectTemplate)

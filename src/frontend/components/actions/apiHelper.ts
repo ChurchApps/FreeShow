@@ -25,6 +25,7 @@ import { setRandomValue } from "../helpers/randomValue"
 import { loadShows, setShow } from "../helpers/setShow"
 import { getLabelId, getLayoutRef } from "../helpers/show"
 import { playNextGroup, selectProjectShow, updateOut } from "../helpers/showActions"
+import { setActiveLayout } from "../helpers/arrangements"
 import { _show } from "../helpers/shows"
 import { VideoPlayer } from "../media/video/videoPlayer"
 import { clearBackground, clearSlide } from "../output/clear"
@@ -569,12 +570,7 @@ export function stopTimerByName(name: string) {
 
 export async function changeShowLayout(data: API_layout) {
     await loadShows([data.showId])
-    showsCache.update((a) => {
-        if (!a[data.showId]?.layouts[data.layoutId]) return a
-
-        a[data.showId].settings.activeLayout = data.layoutId
-        return a
-    })
+    setActiveLayout(data.showId, data.layoutId)
 }
 
 export async function setShowAPI(id: string, value: string) {
