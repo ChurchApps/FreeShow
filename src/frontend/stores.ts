@@ -54,6 +54,7 @@ export const contextActive: Writable<boolean> = writable(false)
 export const topContextActive: Writable<boolean> = writable(false)
 export const quickSearchActive: Writable<boolean> = writable(false)
 export const focusMode: Writable<boolean> = writable(false)
+export const continuousView: Writable<boolean> = writable(false) // all project items in one scrolling list
 export const activeFocus: Writable<{ id: string; index?: number; type?: ShowType }> = writable({ id: "" })
 export const activeShow: Writable<null | ShowRef> = writable(null)
 export const activeEdit: Writable<ActiveEdit> = writable({ items: [] })

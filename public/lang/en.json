@@ -729,6 +729,7 @@
         "startSpeaking": "Start Speaking",
         "stopSpeaking": "Stop Speaking",
         "focus_mode": "Toggle Focus mode",
+        "continuous_view": "Toggle Continuous view",
         "fullscreen": "Toggle Fullscreen",
         "resetZoom": "Reset Zoom",
         "zoom": "Zoom",

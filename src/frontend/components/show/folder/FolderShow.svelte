@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount } from "svelte"
+    import { getContext, onMount } from "svelte"
     import { Main } from "../../../../types/IPC/Main"
     import type { ShowType } from "../../../../types/Show"
     import { clearAudio } from "../../../audio/audioFading"
@@ -78,6 +78,10 @@
 
     $: timer = data?.timer ?? 10
     let totalTime = 0
+
+    // laid out as one item of a project list (focus mode or continuous view)
+    const inStackedList = !!getContext("stackedList")
+    $: stacked = $focusMode || inStackedList
 </script>
 
 <div class="grid">
@@ -124,7 +128,7 @@
     {/if}
 </div>
 
-{#if !$focusMode}
+{#if !stacked}
     <FloatingInputs side="left" onlyOne>
         <MaterialButton icon="folder" on:click={() => sendMain(Main.OPEN_FOLDER_PATH, path)}>
             <T id="main.open" />

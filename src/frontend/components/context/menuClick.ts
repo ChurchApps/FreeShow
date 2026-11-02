@@ -48,6 +48,7 @@ import {
     eventEdit,
     events,
     focusMode,
+    continuousView,
     forceClock,
     guideActive,
     interactions,
@@ -172,11 +173,22 @@ const clickActions = {
         if (firstItem) activeFocus.set({ id: firstItem.id, index: 0, type: firstItem.type })
 
         activePage.set("show")
+        continuousView.set(false)
         focusMode.set(!get(focusMode))
 
         if (!get(focusMode) && get(cloudSyncData).enabled) {
             showsCache.set({})
         }
+    },
+    continuous_view: () => {
+        if (!get(continuousView) && !get(projects)[get(activeProject) || ""]?.shows?.length) {
+            newToast("empty.project_select")
+            return
+        }
+
+        if (get(focusMode)) menuClick("focus_mode")
+        activePage.set("show")
+        continuousView.set(!get(continuousView))
     },
     fullscreen: () => sendMain(Main.FULLSCREEN),
     // edit

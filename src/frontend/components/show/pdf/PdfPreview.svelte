@@ -1,6 +1,6 @@
 <script lang="ts">
     import { getDocument, GlobalWorkerOptions, type PDFDocumentLoadingTask } from "pdfjs-dist"
-    import { onDestroy, onMount } from "svelte"
+    import { getContext, onDestroy, onMount } from "svelte"
     import { Main } from "../../../../types/IPC/Main"
     import { sendMain } from "../../../IPC/main"
     import { activePopup, activeProject, focusMode, labelsDisabled, outLocked, outputs, popupData, projects, slidesOptions, styles } from "../../../stores"
@@ -187,6 +187,10 @@
 
     $: timer = data?.timer || 0
     $: totalTime = pageCount * timer
+
+    // laid out as one item of a project list (focus mode or continuous view)
+    const inStackedList = !!getContext("stackedList")
+    $: stacked = $focusMode || inStackedList
 </script>
 
 <div class="grid">
@@ -219,7 +223,7 @@
     {/if}
 </div>
 
-{#if !$focusMode}
+{#if !stacked}
     <!-- <FloatingInputs side="left">
     <span style="min-width: 60px;display: flex;align-items: center;justify-content: center;opacity: 0.8;">PDF</span>
 </FloatingInputs> -->

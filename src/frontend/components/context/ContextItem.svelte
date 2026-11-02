@@ -10,6 +10,7 @@
         activeShow,
         categories,
         colorbars,
+        continuousView,
         dictionary,
         disabledServers,
         drawerTabsData,
@@ -68,6 +69,7 @@
 
     const conditions = {
         // slide views
+        continuous_view: () => ($continuousView ? (enabled = true) : ""),
         view_grid: () => ($slidesOptions.mode === "grid" ? (enabled = true) : ""),
         view_simple: () => ($slidesOptions.mode === "simple" ? (enabled = true) : ""),
         view_groups: () => ($slidesOptions.mode === "groups" ? (enabled = true) : ""),

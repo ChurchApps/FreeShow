@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onDestroy } from "svelte"
+    import { getContext, onDestroy } from "svelte"
     import type { Unsubscriber } from "svelte/store"
     import { uid } from "uid"
     import { Main } from "../../../types/IPC/Main"
@@ -142,7 +142,7 @@
         hasLoaded = true
         if (videoData.paused) return
 
-        if ($focusMode) {
+        if (stacked) {
             // set right after loaded
             setTimeout(() => {
                 videoData.paused = true
@@ -160,7 +160,7 @@
     // player
     $: if (type === "player") playerLoad()
     function playerLoad() {
-        if (!$focusMode) return
+        if (!stacked) return
 
         // timeout for loading, because if the video is not loaded in time it will start playing, but that's fine
         setTimeout(() => {
@@ -359,6 +359,10 @@
 
     let softLoopAudioTime: number | undefined
     $: effectiveSoftLoopOpacity = softLoopSync.update(softLoopOpacity, videoTime, fromTime, softLoopValue, video || null, softLoopVideo, videoData.paused, toTime, softLoopAudioTime)
+
+    // laid out as one item of a project list (focus mode or continuous view)
+    const inStackedList = !!getContext("stackedList")
+    $: stacked = $focusMode || inStackedList
 </script>
 
 {#key mediaPath || showId}
@@ -389,7 +393,7 @@
     </div>
 {/key}
 
-{#if !$focusMode}
+{#if !stacked}
     {#if !playingInOutput && !manageSubtitles && !timeMarkersEnabled}
         <FloatingInputs side="left">
             <MaterialButton title={"media._loop" + (shouldLoop ? ": settings.enabled" : "")} on:click={toggleLoop}>

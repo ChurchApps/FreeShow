@@ -15,13 +15,16 @@
     import StageLayouts from "./components/stage/StageLayouts.svelte"
     import Resizeable from "./components/system/Resizeable.svelte"
     import Timeline from "./components/timeline/Timeline.svelte"
-    import { activeEdit, activePage, activeProfile, activeProject, activeShow, activeStage, ai, currentWindow, editMode, focusMode, loaded, os, projectView, resized, showChangeProfileMenu, showsCache, special } from "./stores"
+    import { activeEdit, activePage, activeProfile, activeProject, activeShow, activeStage, ai, continuousView, currentWindow, editMode, focusMode, loaded, os, projectView, resized, showChangeProfileMenu, showsCache, special } from "./stores"
     import { DEFAULT_WIDTH } from "./utils/common"
 
     $: page = $activePage
     $: isWindows = !$currentWindow && $os.platform === "win32"
 
     let previousId = ""
+    // a show opened from outside the project shows on its own
+    $: continuousList = $continuousView && !!$activeProject && (!$activeShow || $activeShow.index !== undefined)
+
     $: if ($activeShow?.id !== previousId) showOpened()
     function showOpened() {
         if (!$activeShow?.id || $activeShow?.type !== "show") return
@@ -59,6 +62,8 @@
             {#if page === "show"}
                 {#if $focusMode}
                     <LazyLoad component={() => import("./components/show/focus/FocusMode.svelte")} show={$focusMode} />
+                {:else if continuousList}
+                    <LazyLoad component={() => import("./components/show/ContinuousView.svelte")} show={continuousList} />
                 {:else}
                     <Show />
                 {/if}

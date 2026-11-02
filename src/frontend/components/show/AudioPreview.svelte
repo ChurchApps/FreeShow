@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onDestroy } from "svelte"
+    import { getContext, onDestroy } from "svelte"
     import { AudioAnalyser } from "../../audio/audioAnalyser"
     import { clearAudio } from "../../audio/audioFading"
     import { AudioPlayer } from "../../audio/audioPlayer"
@@ -159,9 +159,13 @@
     }
 
     let fullLength = false
+
+    // laid out as one item of a project list (focus mode or continuous view)
+    const inStackedList = !!getContext("stackedList")
+    $: stacked = $focusMode || inStackedList
 </script>
 
-{#if !$focusMode}
+{#if !stacked}
     <!-- analyzer -->
     <canvas bind:this={canvas} />
 {/if}

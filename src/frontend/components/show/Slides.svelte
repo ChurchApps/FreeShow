@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onDestroy, onMount } from "svelte"
+    import { getContext, onDestroy, onMount } from "svelte"
     import { activeEdit, activeFocus, activePage, activePopup, alertMessage, cachedShowsData, categories, focusMode, groups, lessonsLoaded, notFound, outLocked, outputs, outputSlideCache, showsCache, slidesOptions, special, templates } from "../../stores"
     import { hasNewerUpdate, wait } from "../../utils/common"
     import { getAccess } from "../../utils/profile"
@@ -25,6 +25,10 @@
     export let showId: string
     export let layout = ""
     export let projectIndex = -1
+
+    // laid out as one item of a project list (focus mode or continuous view)
+    const inStackedList = !!getContext("stackedList")
+    $: stacked = $focusMode || inStackedList
 
     $: currentShow = $showsCache[showId]
     $: activeLayout = layout || $showsCache[showId]?.settings?.activeLayout
@@ -446,7 +450,7 @@
             if (isDestroyed) return
 
             // start small (e.g. 4) and double each step up to a max batch size of 32 (or 128 in focusMode)
-            const currentBatch = lazyLoader === 0 ? 4 : Math.min($focusMode ? 128 : 32, lazyLoader * 2)
+            const currentBatch = lazyLoader === 0 ? 4 : Math.min(stacked ? 128 : 32, lazyLoader * 2)
             lazyLoader += currentBatch
             if (timeout && typeof timeout !== "boolean") clearTimeout(timeout)
             timeout = null
@@ -497,11 +501,11 @@
 
 <svelte:window on:keydown={keydown} on:keyup={keyup} on:mousedown={keyup} on:blur={blurred} />
 
-<div class="main" class:padding={!$focusMode} style="display: contents;">
-    <Autoscroll class={$focusMode || isLocked ? "" : "context #shows__close"} {offset} disabled={disableAutoScroll} {shouldSkipSmooth} bind:scrollElem style="display: flex;">
+<div class="main" class:padding={!stacked} style="display: contents;">
+    <Autoscroll class={stacked || isLocked ? "" : "context #shows__close"} {offset} disabled={disableAutoScroll} {shouldSkipSmooth} bind:scrollElem style="display: flex;">
         <DropArea id="all_slides" selectChildren>
             <DropArea id="slides" hoverTimeout={0} selectChildren>
-                {#if !$focusMode}
+                {#if !stacked}
                     <ShowHeader {showId} hideOptions={!layoutSlides?.length} />
                 {/if}
 
@@ -514,7 +518,7 @@
                         {/if}
                     </Center>
                 {:else}
-                    <div class="grid" style={$focusMode ? "" : "padding-bottom: 60px;"}>
+                    <div class="grid" style={stacked ? "" : "padding-bottom: 60px;"}>
                         {#if layoutSlides.length}
                             {#each layoutSlides as slide, i}
                                 {@const currentSlide = currentShow?.slides?.[slide.id] || (slide.id === "fake_empty" ? { group: null, color: null, settings: {}, notes: "", items: [] } : undefined)}
@@ -529,7 +533,7 @@
                             {/each}
                         {:else}
                             <!-- a list item has no fixed height to center in -->
-                            <Center absolute={!$focusMode} padding={$focusMode ? 20 : 0}>
+                            <Center absolute={!stacked} padding={stacked ? 20 : 0}>
                                 <span style="opacity: 0.5;font-size: 2em;margin-bottom: 10px;"><T id="empty.slides" /></span>
 
                                 <MaterialButton variant="outlined" disabled={isLocked} icon="add" title="tooltip.project" style="justify-content: start;padding: 8px 14px;" on:click={createSlide}>
