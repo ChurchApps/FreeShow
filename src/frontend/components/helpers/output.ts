@@ -1179,7 +1179,7 @@ export async function checkFFmpeg(): Promise<boolean> {
     const res = await requestMain(Main.FFMPEG_CHECK)
     if (res?.installed) return true
 
-    if (await confirmCustom("To create an RTMP output, FreeShow needs to download and install FFmpeg. Do you want to proceed?")) {
+    if (await confirmCustom("To record or stream outputs, FreeShow needs to download and install FFmpeg. Do you want to proceed?")) {
         const downloadRes = await requestMain(Main.FFMPEG_DOWNLOAD)
         if (downloadRes?.success) {
             newToast("FFmpeg installed successfully!")

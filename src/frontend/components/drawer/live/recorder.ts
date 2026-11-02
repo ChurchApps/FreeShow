@@ -5,6 +5,7 @@ import { sendMain } from "../../../IPC/main"
 import { activeRecording, currentRecordingStream, outputs, special } from "../../../stores"
 import { newToast } from "../../../utils/common"
 import { send } from "../../../utils/request"
+import { checkFFmpeg } from "../../helpers/output"
 
 let mediaRecorder: MediaRecorder | null = null
 let recordedChunks: Blob[] = []
@@ -122,6 +123,8 @@ export async function startOutputRecording(outputId: string): Promise<void> {
         await stopMediaRecorder()
         return
     }
+
+    if (!(await checkFFmpeg())) return
 
     const output = get(outputs)[outputId]
     if (!output) {
