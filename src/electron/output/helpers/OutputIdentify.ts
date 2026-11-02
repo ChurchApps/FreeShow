@@ -1,5 +1,6 @@
 import { BrowserWindow, type Rectangle } from "electron"
 import { screenIdentifyOptions } from "../../utils/windowOptions"
+import { setOutputAlwaysOnTop } from "./OutputAlwaysOnTop"
 
 export class OutputIdentify {
     // create numbered outputs for each screen
@@ -23,6 +24,8 @@ export class OutputIdentify {
     private static createIdentifyScreen(screen: { bounds: Rectangle }, i: number) {
         const window = new BrowserWindow(screenIdentifyOptions)
         window.setBounds(screen.bounds)
+        setOutputAlwaysOnTop(window, true)
+        window.moveTop()
         window.loadFile("public/identify.html")
 
         window.webContents.on("did-finish-load", sendNumberToScreen)
