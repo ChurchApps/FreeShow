@@ -528,7 +528,8 @@
                                 {/if}
                             {/each}
                         {:else}
-                            <Center absolute>
+                            <!-- a list item has no fixed height to center in -->
+                            <Center absolute={!$focusMode} padding={$focusMode ? 20 : 0}>
                                 <span style="opacity: 0.5;font-size: 2em;margin-bottom: 10px;"><T id="empty.slides" /></span>
 
                                 <MaterialButton variant="outlined" disabled={isLocked} icon="add" title="tooltip.project" style="justify-content: start;padding: 8px 14px;" on:click={createSlide}>
