@@ -114,26 +114,54 @@ const isLinux = os.platform() === "linux"
 let bridge: ChildProcess | null = null
 let initialized = false
 let pending: ((s: SpotifyState | null) => void) | null = null
+let crashCount = 0
+let lastCrashTime = 0
+let currentBackoffMs = 60000 // Start with 1 minute backoff
+const MAX_BACKOFF_MS = 600000 // Max backoff capped at 10 minutes
+let hasLoggedCrash = false
 
 export function initSpotify() {
     if (initialized || !isWin) return
+
+    if (crashCount > 0) {
+        const elapsed = Date.now() - lastCrashTime
+        if (elapsed < currentBackoffMs) return
+    }
+
     initialized = true
     try {
         bridge = fork(__filename, [], { env: { ...process.env, SPOTIFY_BRIDGE: "true" }, stdio: ["ignore", "inherit", "inherit", "ipc"] })
         bridge
             .on("message", (msg: any) => {
-                if (msg.type === "state" && pending) {
+                if (msg.type === "ready") {
+                    crashCount = 0
+                    currentBackoffMs = 60000
+                    hasLoggedCrash = false
+                } else if (msg.type === "state" && pending) {
                     const r = msg.state
                     pending(r?.title ? { isPlaying: r.statusName === "PLAYING", title: r.title, artist: r.artist, albumArt: r.albumArtBase64, positionSec: (r.positionMs || 0) / 1000, durationSec: (r.durationMs || 0) / 1000, volume: r.appVolume ?? 1, platform: "win32" } : null)
                     pending = null
-                } else if (msg.type === "error") console.error("[Spotify] Bridge error:", msg.error)
+                } else if (msg.type === "error") {
+                    console.error("[Spotify] Bridge error:", msg.error)
+                }
             })
-            .on("exit", () => {
+            .on("exit", (code, signal) => {
                 initialized = false
                 bridge = null
+                if (code !== 0 || signal) {
+                    crashCount++
+                    lastCrashTime = Date.now()
+                    if (!hasLoggedCrash) {
+                        hasLoggedCrash = true
+                        console.warn(`[Spotify] Bridge failed (code: ${code}, signal: ${signal}). Waiting ${Math.round(currentBackoffMs / 1000)}s before retry.`)
+                    }
+                    // Exponential backoff for subsequent attempts (up to 10 minutes)
+                    currentBackoffMs = Math.min(currentBackoffMs * 2, MAX_BACKOFF_MS)
+                }
             })
             .send({ type: "init" })
     } catch (e) {
+        initialized = false
         console.error("[Spotify] Failed to start bridge:", e)
     }
 }
