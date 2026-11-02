@@ -142,14 +142,14 @@ export class BibleSearchDetector {
         return total ? covered / total : 0
     }
 
-    // Calculates a bonus/penalty multiplier based on sequential phrase / n-gram match between input tokens and verse tokens
-    private computePhraseBonus(verseId: number, queryWordIds: number[]): number {
-        if (queryWordIds.length < 2) return 1.0
+    // Calculates sequential phrase / n-gram match between input tokens and verse tokens
+    private computePhraseMatch(verseId: number, queryWordIds: number[]): { bonus: number; maxRun: number; matchingBigrams: number } {
+        if (queryWordIds.length < 2) return { bonus: 1.0, maxRun: queryWordIds.length, matchingBigrams: 0 }
 
         const start = this.cacheData.verseTokensOffsets[verseId]
         const end = this.cacheData.verseTokensOffsets[verseId + 1]
         const verseLen = end - start
-        if (verseLen === 0) return 1.0
+        if (verseLen === 0) return { bonus: 1.0, maxRun: 0, matchingBigrams: 0 }
 
         const qLen = queryWordIds.length
 
@@ -167,15 +167,6 @@ export class BibleSearchDetector {
             }
         }
 
-        // Exact full phrase match
-        if (maxRun === qLen) return 1.6
-
-        // Substantial contiguous phrase match (e.g. 3+ contiguous words matching)
-        if (maxRun >= 3) {
-            const runRatio = maxRun / qLen
-            return 1.2 + runRatio * 0.3
-        }
-
         // Count matching bigrams (adjacent word pairs)
         let matchingBigrams = 0
         const totalBigrams = qLen - 1
@@ -190,15 +181,24 @@ export class BibleSearchDetector {
             }
         }
 
+        // Exact full phrase match
+        if (maxRun === qLen) return { bonus: 1.6, maxRun, matchingBigrams }
+
+        // Substantial contiguous phrase match (e.g. 3+ contiguous words matching)
+        if (maxRun >= 3) {
+            const runRatio = maxRun / qLen
+            return { bonus: 1.2 + runRatio * 0.3, maxRun, matchingBigrams }
+        }
+
         if (matchingBigrams > 0) {
             const bigramRatio = matchingBigrams / totalBigrams
-            return 1.0 + bigramRatio * 0.4
+            return { bonus: 1.0 + bigramRatio * 0.4, maxRun, matchingBigrams }
         }
 
         // For short queries (<= 5 tokens) where words are scattered with 0 adjacent bigrams, apply a penalty
-        if (qLen >= 3 && qLen <= 5) return 0.65
+        if (qLen >= 3 && qLen <= 5) return { bonus: 0.65, maxRun, matchingBigrams }
 
-        return 1.0
+        return { bonus: 1.0, maxRun, matchingBigrams }
     }
 
     private parseReference(refStr: string): { book: string; chapter: number; verse: number } | null {
@@ -252,8 +252,7 @@ export class BibleSearchDetector {
         const upcomingVerseMap = this.getUpcomingVerseMap(currentlyOutputted || "", 3)
 
         const allTokens = this.tokenizeText(cleanInput)
-        // Allow shorter phrases to match if distinct (e.g. "In the beginning God")
-        if (allTokens.length < 3) return null
+        if (allTokens.length < 4) return null
 
         const windowSizes = [20, 60, 80, 120]
         let bestResult: { match: MatchResult | null; hasAnyCandidates: boolean; isAmbiguous: boolean } | null = null
@@ -374,16 +373,15 @@ export class BibleSearchDetector {
             scoreRatio = Math.min(scoreRatio, 1.0)
 
             // Bonus for phrase / consecutive word matches vs scattered words
-            const phraseBonus = this.computePhraseBonus(verseId, queryWordIds)
-            scoreRatio *= phraseBonus
+            const phraseMatch = this.computePhraseMatch(verseId, queryWordIds)
+            scoreRatio *= phraseMatch.bonus
 
-            // a handful of common words can match a long verse completely; the match is worth what it covers of the verse,
-            // but for short distinct phrases (e.g. 2-4 words), require less total verse coverage to not penalize long verses.
-            const isShortQuery = queryWords.size <= 4
-            if (!isShortQuery) {
-                const coverageTarget = Math.min(0.25, Math.max(0.06, queryWords.size * 0.03))
-                scoreRatio *= Math.min(1, this.verseCoverage(verseId, queryWords) / coverageTarget)
-            }
+            // For short inputs (e.g. 4 tokens like "In the beginning God"), require consecutive phrase match (at least 3 contiguous tokens or exact match)
+            if (allTokens.length <= 4 && phraseMatch.maxRun < 3 && !isCurrent) continue
+
+            // a handful of common words can match a long verse completely; the match is worth what it covers of the verse
+            const coverageTarget = Math.min(0.25, Math.max(0.08, queryWords.size * 0.03))
+            scoreRatio *= Math.min(1, this.verseCoverage(verseId, queryWords) / coverageTarget)
             const candidateParsed = this.parseReference(ref)
 
             if (isCurrent) {
@@ -407,7 +405,7 @@ export class BibleSearchDetector {
                 }
             }
 
-            const threshold = isCurrent || upcomingDist === 1 ? 0.18 : isShortQuery ? 0.2 : 0.28
+            const threshold = isCurrent || upcomingDist === 1 ? 0.18 : 0.28
             if (scoreRatio >= threshold) {
                 evaluatedCandidates.push({
                     verseId,
@@ -455,9 +453,9 @@ export class BibleSearchDetector {
 
         let baseConfidence = topMatch.finalScore * 100 * ambiguityPenalty * uniquenessMultiplier
 
-        // If a candidate uniquely stands out with minimal ambiguity, ensure high confidence so it can suggest/autoplay
-        if (!isAmbiguous && uniquenessMultiplier > 1.0 && topMatch.finalScore >= 0.35) {
-            baseConfidence = Math.max(baseConfidence, 85)
+        // If a candidate uniquely stands out with high score and minimal ambiguity, ensure high confidence so it can suggest/autoplay
+        if (!isAmbiguous && uniquenessMultiplier > 1.0 && topMatch.finalScore >= 0.5) {
+            baseConfidence = Math.max(baseConfidence, 80)
         }
 
         const confidence = Math.min(Math.max(Math.round(baseConfidence), 51), 98)
@@ -520,10 +518,8 @@ export class BibleSearchDetector {
 
         if (this.DEBUG_MODE) console.log("[DETECTION] Best content match:", bestContentMatch)
 
-        if (refMatch && refMatch.confidence >= 75) {
-            if (bestContentMatch && bestContentMatch.confidence >= 80) return bestContentMatch
-            return refMatch
-        }
+        // explicit book/chapter/verse reference has priority
+        if (refMatch && refMatch.confidence >= 75) return refMatch
 
         return bestContentMatch || null
     }
