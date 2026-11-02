@@ -17,7 +17,8 @@ export function openProject(id: string, openFirstItem: boolean = true) {
     activeProject.set(id)
     markProjectAsUsed(id)
 
-    if (openFirstItem) openProjectItem(id)
+    const showAlreadyInProject = get(projects)[id]?.shows?.some((a) => a.id === get(activeShow)?.id)
+    if (openFirstItem && !showAlreadyInProject) openProjectItem(id)
 }
 
 function markProjectAsUsed(id: string) {
