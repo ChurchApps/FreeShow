@@ -22,9 +22,9 @@
     let profile = getAccess("shows")
     $: isLocked = !!show?.locked || profile.global === "read" || profile[show?.category || ""] === "read"
 
-    // the show's groups, named and numbered as in the Groups tab
+    // the show's groups, named, numbered and colored as in the slide grid
     $: showGroups = (getSlideGroups(showId, $showsCache, $cachedShowsData) as any[]).filter((a) => a.group !== ".")
-    $: groupInfo = Object.fromEntries(showGroups.map((a) => [a.id, { name: a.group || "—", color: show?.slides?.[a.id]?.color || $groups[show?.slides?.[a.id]?.globalGroup || ""]?.color || "" }]))
+    $: groupInfo = Object.fromEntries(showGroups.map((a) => [a.id, { name: a.group || "—", color: $groups[show?.slides?.[a.id]?.globalGroup || ""]?.color || show?.slides?.[a.id]?.color || "" }]))
     // slide order is creation order, so the palette stays put while the arrangement changes
     $: paletteOrder = Object.keys(show?.slides || {}).filter((id) => groupInfo[id])
 
@@ -124,7 +124,7 @@
             <p class="tip"><T id="show.arrangement_groups_tip" /></p>
             <div class="chips">
                 {#each paletteOrder as slideId}
-                    <button class="chip" style="--color: {groupInfo[slideId]?.color || 'var(--secondary)'};" draggable={!isLocked} disabled={isLocked} on:click={() => addGroup(slideId)} on:dragstart={(e) => dragStart(e, "palette", slideId)} on:dragend={dragEnd}>
+                    <button class="chip" style="--color: {groupInfo[slideId]?.color || 'transparent'};" draggable={!isLocked} disabled={isLocked} on:click={() => addGroup(slideId)} on:dragstart={(e) => dragStart(e, "palette", slideId)} on:dragend={dragEnd}>
                         {groupInfo[slideId]?.name}
                     </button>
                 {/each}
@@ -134,7 +134,7 @@
             <p class="tip"><T id="show.arrangement_order_tip" /></p>
             <div class="chips sequence" class:dragging={!!dragged} role="list" on:dragover={(e) => dragOver(e, -1)} on:drop={drop}>
                 {#each sequence as ref, i}
-                    <div class="chip" class:dropBefore={dropIndex === i} class:disabledSlide={ref.disabled} style="--color: {groupInfo[ref.id]?.color || 'var(--secondary)'};" role="listitem" draggable={!isLocked} on:dragstart={(e) => dragStart(e, "sequence", ref.id, i)} on:dragend={dragEnd} on:dragover|stopPropagation={(e) => dragOver(e, i)}>
+                    <div class="chip" class:dropBefore={dropIndex === i} class:disabledSlide={ref.disabled} style="--color: {groupInfo[ref.id]?.color || 'transparent'};" role="listitem" draggable={!isLocked} on:dragstart={(e) => dragStart(e, "sequence", ref.id, i)} on:dragend={dragEnd} on:dragover|stopPropagation={(e) => dragOver(e, i)}>
                         <span>{groupInfo[ref.id]?.name || "—"}</span>
                         {#if !isLocked}
                             <button class="remove" data-title={translateText("actions.remove")} on:click={() => removeAt(i)}><Icon id="close" size={0.7} white /></button>
