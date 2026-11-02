@@ -5,6 +5,7 @@ import { sendMain } from "../../../IPC/main"
 import { activeRecording, currentRecordingStream, outputs, special } from "../../../stores"
 import { newToast } from "../../../utils/common"
 import { send } from "../../../utils/request"
+import { AudioAnalyser } from "../../../audio/audioAnalyser"
 import { checkFFmpeg } from "../../helpers/output"
 
 let mediaRecorder: MediaRecorder | null = null
@@ -65,6 +66,7 @@ export function toggleMediaRecorder(): boolean {
 export function stopMediaRecorder(): Promise<void> {
     if (outputRecording) {
         if (!outputRecording.paused) recordOutput(false)
+        AudioAnalyser.recorderDeactivate()
         outputRecording = null
         newToast("toast.recording_stopped")
         currentRecordingStream.set(null)
@@ -136,5 +138,6 @@ export async function startOutputRecording(outputId: string): Promise<void> {
     recordOutput(true)
     currentRecordingStream.set(null)
     activeRecording.set({ outputId, isOutput: true, type: "output" })
+    AudioAnalyser.recorderActivate()
     newToast("toast.recording_started")
 }
