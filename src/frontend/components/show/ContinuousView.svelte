@@ -1,7 +1,7 @@
 <!-- All items of the active project in one scrolling list, otherwise working as the normal show view -->
 
 <script lang="ts">
-    import { onMount, setContext } from "svelte"
+    import { onMount, setContext, tick } from "svelte"
     import type { ProjectShowRef } from "../../../types/Projects"
     import { activeProject, activeShow, projects } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
@@ -25,9 +25,28 @@
         projectItemsList = project?.shows || []
     }
 
+    // selected inside the list: it is already in view
+    let selectedInList = false
     function selectItem(item: ProjectShowRef, index: number) {
         if ($activeShow?.index === index && $activeShow?.id === item.id) return
+        selectedInList = true
         activeShow.set({ ...item, index })
+    }
+
+    // selected elsewhere (e.g. the project list): scroll to it
+    let listElem: HTMLElement | undefined
+    let scrollTarget = -1
+    $: if ($activeShow?.index !== undefined) itemSelected($activeShow.index)
+    function itemSelected(index: number) {
+        if (selectedInList) selectedInList = false
+        else scrollTarget = index
+    }
+    $: if (listElem && scrollTarget > -1) scrollToItem()
+    async function scrollToItem() {
+        const index = scrollTarget
+        scrollTarget = -1
+        await tick()
+        listElem?.querySelector("#continuous_" + index)?.scrollIntoView({ block: "start" })
     }
 </script>
 
@@ -37,13 +56,16 @@
     </Center>
 {:then list}
     {#if list.length}
-        <div class="list">
+        <div class="list" bind:this={listElem}>
             {#each list as item, i}
-                <div class="listItem" class:active={$activeShow?.index === i} role="none" on:mousedown={() => selectItem(item, i)}>
-                    <div class="name" style={item.color ? `border-bottom: 2px solid ${item.color}` : ""}>
-                        <Icon id={item.icon || "noIcon"} custom={(item.type || "show") === "show"} white right />
-                        <p>{item.name}</p>
-                    </div>
+                <div id="continuous_{i}" class="listItem" class:active={$activeShow?.index === i} role="none" on:mousedown={() => selectItem(item, i)}>
+                    <!-- shows have their own title bar -->
+                    {#if (item.type || "show") !== "show"}
+                        <div class="name" style={item.color ? `border-bottom: 2px solid ${item.color}` : ""}>
+                            <Icon id={item.icon || "noIcon"} custom={false} white right />
+                            <p>{item.name}</p>
+                        </div>
+                    {/if}
                     <FocusItem show={{ ...item, index: i }} />
                 </div>
             {/each}

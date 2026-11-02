@@ -505,7 +505,7 @@
     <Autoscroll class={stacked || isLocked ? "" : "context #shows__close"} {offset} disabled={disableAutoScroll} {shouldSkipSmooth} bind:scrollElem style="display: flex;">
         <DropArea id="all_slides" selectChildren>
             <DropArea id="slides" hoverTimeout={0} selectChildren>
-                {#if !stacked}
+                {#if !$focusMode}
                     <ShowHeader {showId} hideOptions={!layoutSlides?.length} />
                 {/if}
 
