@@ -497,6 +497,9 @@ export const mainResponses: MainResponses = {
             return projectBase
         }
 
+        const allProjects = get(projects)
+        const createdProjectIds: string[] = []
+
         data.projects.forEach((currentProject) => {
             // CREATE PROJECT FOLDER
             const folderId = currentProject.folderId
@@ -519,13 +522,14 @@ export const mainResponses: MainResponses = {
             project.shows = project.shows.map((a) => ({ ...a, id: replaceIds[a.id] || a.id }))
 
             const projectId = currentProject.id
+            if (!allProjects[projectId] || allProjects[projectId].deleted) createdProjectIds.push(projectId)
             history({ id: "UPDATE", newData: { data: project }, oldData: { id: projectId }, location: { page: "show", id: "project" } })
         })
 
-        // open closest to today
-        const nextProjectId = data.projects.sort((a, b) => a.scheduledTo - b.scheduledTo)[0]?.id
-        if (nextProjectId) {
-            activeProject.set(nextProjectId)
+        // open closest to today (if newly created)
+        const nextProject = data.projects.sort((a, b) => a.scheduledTo - b.scheduledTo)[0]
+        if (nextProject && createdProjectIds.includes(nextProject.id)) {
+            activeProject.set(nextProject.id)
             projectView.set(false)
         }
 
