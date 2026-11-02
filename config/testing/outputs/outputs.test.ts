@@ -52,8 +52,11 @@ class Probe {
     rate = (address: string, ms: number) => this.request<{ frames: number; unique: number }>("rate", { address, ms })
 
     async stop() {
-        await Promise.race([this.request("stop"), new Promise((r) => setTimeout(r, 5000))]).catch(() => {})
+        await Promise.race([this.request("stop"), new Promise((r) => setTimeout(r, 2000))]).catch(() => {})
         this.process.kill()
+        if (process.platform === "win32" && this.process.pid) {
+            try { execFileSync("taskkill", ["/pid", String(this.process.pid), "/T", "/F"], { stdio: "ignore" }) } catch {}
+        }
     }
 }
 
@@ -198,7 +201,7 @@ let probe: Probe | null = null
 
 test.afterEach(async ({}, testInfo) => {
     if (testInfo.status !== testInfo.expectedStatus && app && probe) {
-        for (const [id, address] of Object.entries(app.outputs)) await probe.request("png", { address, file: path.join(OUT_DIR, "failed", `${testInfo.title}-${id}.png`) })
+        for (const [id, address] of Object.entries(app.outputs)) await Promise.race([probe.request("png", { address, file: path.join(OUT_DIR, "failed", `${testInfo.title}-${id}.png`) }), new Promise((r) => setTimeout(r, 2000))]).catch(() => {})
     }
     await probe?.stop()
     await app?.close()
@@ -248,6 +251,7 @@ test("outputs show the right content", async () => {
 
     await test.step("outputs with the same content match, and split as soon as it differs", async () => {
         await app!.rest("change_output_style", { outputId: "b", styleId: "" })
+        await new Promise((r) => setTimeout(r, 500))
         await app!.rest("start_show", { id: showId })
         await waitFor(
             "identical outputs",
