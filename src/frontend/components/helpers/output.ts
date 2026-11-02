@@ -1060,7 +1060,8 @@ export function updateOutputWebrtcData(outputId: string, key: string, value: any
     return newData
 }
 
-export function startRtmpStreaming(outputId: string = "") {
+export async function startRtmpStreaming(outputId: string = "") {
+    if (!(await checkFFmpeg())) return
     const resolvedId = outputId ? resolveOutputId(outputId) || outputId : ""
     const outputIds = resolvedId ? [resolvedId] : getAllActiveOutputIds()
     outputIds.forEach((id) => updateOutputRtmpData(id, "streaming", true))
