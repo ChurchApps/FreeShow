@@ -304,26 +304,44 @@ export function getValidFileName(filePath: string) {
 
 // SELECT DIALOGS
 
+const lastOpenedPaths: { [type: string]: string } = {}
+
 export async function selectFilesDialog(title = "", filters: Electron.FileFilter, multiple = true, initialPath = ""): Promise<string[]> {
     // crashes if empty in electron v37
     if (!filters.extensions?.length) filters.extensions = ["*"]
 
+    const dialogTypeKey = (filters.extensions || []).slice().sort().join(",") || "all"
+    const defaultPath = initialPath || lastOpenedPaths[dialogTypeKey] || ""
+
     const options: Electron.OpenDialogOptions = { properties: ["openFile"], filters: [{ name: filters.name, extensions: filters.extensions }] }
     if (title) options.title = title
     if (multiple) options.properties!.push("multiSelections")
-    if (initialPath) options.defaultPath = initialPath
-
-    const result = await dialog.showOpenDialog(mainWindow!, options)
-    return result.canceled ? [] : result.filePaths || []
-}
-
-export async function selectFolderDialog(title = "", defaultPath = ""): Promise<string> {
-    const options: Electron.OpenDialogOptions = { properties: ["openDirectory"] }
-    if (title) options.title = title
     if (defaultPath) options.defaultPath = defaultPath
 
     const result = await dialog.showOpenDialog(mainWindow!, options)
-    return result.canceled || !result.filePaths.length ? "" : result.filePaths[0]
+    if (result.canceled || !result.filePaths?.length) return []
+
+    const selectedPath = result.filePaths[0]
+    if (selectedPath) lastOpenedPaths[dialogTypeKey] = path.dirname(selectedPath)
+
+    return result.filePaths || []
+}
+
+export async function selectFolderDialog(title = "", defaultPath = ""): Promise<string> {
+    const dialogTypeKey = "folder"
+    const chosenDefaultPath = defaultPath || lastOpenedPaths[dialogTypeKey] || ""
+
+    const options: Electron.OpenDialogOptions = { properties: ["openDirectory"] }
+    if (title) options.title = title
+    if (chosenDefaultPath) options.defaultPath = chosenDefaultPath
+
+    const result = await dialog.showOpenDialog(mainWindow!, options)
+    if (result.canceled || !result.filePaths?.length) return ""
+
+    const selectedFolder = result.filePaths[0]
+    if (selectedFolder) lastOpenedPaths[dialogTypeKey] = selectedFolder
+
+    return selectedFolder
 }
 
 // DATA FOLDERS
