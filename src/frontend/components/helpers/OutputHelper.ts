@@ -130,6 +130,9 @@ export class OutputHelper {
     private static changeProjectItem(outputId: string, item: OutSlide | ShowRef | null = null, next: boolean, options: Options) {
         if (!get(focusMode) && get(special).nextItemOnLastSlide === false) return
 
+        // if any active output can still advance within the active show, wait for output(s) to reach end of active show before changing project item
+        if (this.canAnyOutputAdvanceInActiveShow(next, options)) return
+
         const projectItems = this.getProjectItems()
         const projectItemIndex = this.getProjectItemIndex(item)
         let newIndex = projectItemIndex + (next ? 1 : -1)
@@ -188,6 +191,16 @@ export class OutputHelper {
                 this.playItem(outputId, newItem, next, options)
             }
         }
+    }
+
+    private static canAnyOutputAdvanceInActiveShow(next: boolean, options: Options): boolean {
+        const activeItem = this.getActiveItem()
+        if (!activeItem) return false
+
+        return getAllActiveOutputIds().some((id) => {
+            const show = this.getShow(id, next, options)
+            return show?.id === activeItem.id && !!this.getSubsequent(id, show, next)
+        })
     }
 
     private static runSectionAction(item: ProjectShowRef | undefined) {
