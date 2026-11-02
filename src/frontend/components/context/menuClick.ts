@@ -114,7 +114,7 @@ import { defaultOutput, getCurrentStyle, getFirstActiveOutput, isOutputBound, re
 import { select } from "../helpers/select"
 import { bindSlidesToOutput, checkName, formatToFileName, getLayoutRef, openShow, removeTemplatesFromShow, updateShowsList } from "../helpers/show"
 import { sendMidi } from "../helpers/showActions"
-import { linkProjectItem, unlinkProjectItem } from "../helpers/projectItemLink"
+import { linkProjectItem, providerLinkKeys, unlinkProjectItem } from "../helpers/projectItemLink"
 import { _show } from "../helpers/shows"
 import { getMenuTagId, openTagManager, toggleSelectionTags, toggleTagFilter } from "../helpers/tags"
 import { clearSlide } from "../output/clear"
@@ -1122,19 +1122,19 @@ const clickActions = {
             return a
         })
     },
-    unlink_pco: (obj: ObjData) => {
+    unlink_provider: (obj: ObjData) => {
         if (!obj.sel) return
 
+        const unlink = (quickAccess: any) => Object.values(providerLinkKeys).forEach((key) => delete quickAccess?.[key])
         showsCache.update((a) => {
             obj.sel!.data.forEach((b) => {
-                if (!a[b.id]) return
-                delete a[b.id].quickAccess.pcoLink
+                if (a[b.id]) unlink(a[b.id].quickAccess)
             })
             return a
         })
         shows.update((a) => {
             obj.sel!.data.forEach((b) => {
-                delete a[b.id].quickAccess.pcoLink
+                if (a[b.id]) unlink(a[b.id].quickAccess)
             })
             return a
         })

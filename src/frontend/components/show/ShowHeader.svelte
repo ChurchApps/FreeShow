@@ -2,10 +2,11 @@
     import { fade } from "svelte/transition"
     import { Main } from "../../../types/IPC/Main"
     import { sendMain } from "../../IPC/main"
-    import { activePopup, autoOpenedTimeline, openToolsTab, outputs, showNotesActive, shows, showsCache, special, styles, templates } from "../../stores"
+    import { activePopup, activeProject, activeShow, autoOpenedTimeline, contentProviderData, editingProjectTemplate, openToolsTab, outputs, projects, showNotesActive, shows, showsCache, special, styles, templates } from "../../stores"
     import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
     import { allOutputsHasStyleTemplate, getFirstActiveOutput } from "../helpers/output"
+    import { getProjectProvider, linkProjectItem, unlinkProjectItem } from "../helpers/projectItemLink"
     import { removeTemplatesFromShow } from "../helpers/show"
     import T from "../helpers/T.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
@@ -79,6 +80,12 @@
     $: showTemplateId = currentShow?.settings?.template || ""
     $: showTemplateIcon = !!(showTemplateId && $templates[showTemplateId])
     $: enableShowTemplate = showTemplateIcon && (!referenceType || referenceType === "scripture" || open)
+
+    // PROVIDER PROJECT ITEM
+
+    $: itemIndex = $activeShow?.index ?? -1
+    $: projectItem = !$editingProjectTemplate && itemIndex > -1 ? $projects[$activeProject || ""]?.shows?.[itemIndex] : null
+    $: isProviderItem = !!projectItem && projectItem.id === showId && (projectItem.type || "show") === "show" && !!getProjectProvider($activeProject || "", $projects, $contentProviderData)
 </script>
 
 <svelte:window on:mousedown={mousedown} />
@@ -102,6 +109,15 @@
     </div>
 
     <div class="right">
+        {#if isProviderItem}
+            <MaterialButton style="width: 32px;height: 100%;padding: 0.3em 0.5em;" title="actions.replace" on:click={() => linkProjectItem(itemIndex)}>
+                <Icon size={0.8} id="search" white />
+            </MaterialButton>
+            <MaterialButton style="width: 32px;height: 100%;padding: 0.3em 0.5em;" title="actions.unlink_show" on:click={() => unlinkProjectItem(itemIndex)}>
+                <Icon size={0.8} id="unbind" white />
+            </MaterialButton>
+        {/if}
+
         <!-- template icon -->
         {#if enableStylePreview}
             <MaterialButton style="width: 32px;height: 100%;padding: 0.3em 0.5em;" title="formats.template: <b>{$templates[outputStyleTemplate]?.name || ''}</b>" on:click={() => activePopup.set("template_info")}>

@@ -48,6 +48,7 @@
     import { keysToID } from "../helpers/array"
     import Icon from "../helpers/Icon.svelte"
     import { getExtension, getMediaType } from "../helpers/media"
+    import { getProjectProvider, getProviderName, getShowProvider } from "../helpers/projectItemLink"
     import { getLayoutRef, getSlideHighlightIndexes } from "../helpers/show"
     import { _show } from "../helpers/shows"
     import T from "../helpers/T.svelte"
@@ -381,6 +382,15 @@
                 menu.label = "actions.start_recording"
                 menu.icon = "record"
             }
+        },
+        link_item: () => {
+            hide = !getProjectProvider($activeProject || "")
+        },
+        unlink_item: () => {
+            hide = !getProjectProvider($activeProject || "")
+        },
+        unlink_provider: () => {
+            menu = { ...menu, label: translateText("actions.unlink_from", null, [getProviderName(getShowProvider($selected.data[0]?.id) || "")]), translate: false }
         },
         mark_played: () => {
             const projectId = $activeProject

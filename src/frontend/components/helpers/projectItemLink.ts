@@ -1,8 +1,41 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
+import { Main } from "../../../types/IPC/Main"
 import type { ProjectShowRef } from "../../../types/Projects"
-import { activePopup, activeProject, activeShow, popupData, projects, shows } from "../../stores"
+import { requestMain } from "../../IPC/main"
+import { activePopup, activeProject, activeShow, contentProviderData, popupData, projects, shows } from "../../stores"
 import { history } from "./history"
+
+// the show's quickAccess key that maps it to a provider's item
+export const providerLinkKeys: { [providerId: string]: string } = { planningcenter: "pcoLink", churchApps: "chumsLink", amazinglife: "alLink", onstage: "onstageLink" }
+
+/** the content provider a project syncs from */
+export function getProjectProvider(projectId: string, projectsVal = get(projects), providerData = get(contentProviderData)): string | null {
+    const project = projectsVal[projectId]
+    if (project?.origin) return project.origin === "pco" ? "planningcenter" : project.origin
+
+    // pre 1.6.6 projects have no origin
+    if (projectId.startsWith("onstage_")) return "onstage"
+    const plans = providerData?.planningcenter?.availablePlans as { planId: string }[] | undefined
+    if (plans?.some((p) => p.planId === projectId)) return "planningcenter"
+    return null
+}
+
+/** the provider whose item this show is linked to */
+export function getShowProvider(showId: string): string | null {
+    const quickAccess = get(shows)[showId]?.quickAccess || {}
+    return Object.keys(providerLinkKeys).find((id) => quickAccess[providerLinkKeys[id]]) || null
+}
+
+let providerNames: { [providerId: string]: string } = {}
+export async function loadProviderNames() {
+    if (Object.keys(providerNames).length) return
+    const providers: { providerId: string; displayName: string }[] = (await requestMain(Main.GET_CONTENT_PROVIDERS)) || []
+    providerNames = Object.fromEntries(providers.map((p) => [p.providerId, p.displayName]))
+}
+export function getProviderName(providerId: string) {
+    return providerNames[providerId] || providerId
+}
 
 // Linking or unlinking a project item by hand marks it manual, so a provider re-sync keeps the choice.
 

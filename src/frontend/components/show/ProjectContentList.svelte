@@ -13,6 +13,7 @@
     import { clone } from "../helpers/array"
     import { brightenDarkColor, fadeColor, getContrast } from "../helpers/color"
     import { history } from "../helpers/history"
+    import { loadProviderNames, providerLinkKeys } from "../helpers/projectItemLink"
     import Icon from "../helpers/Icon.svelte"
     import { getExtension, getFileName, getMediaType, removeExtension } from "../helpers/media"
     import T from "../helpers/T.svelte"
@@ -163,6 +164,8 @@
     }
 
     onMount(() => {
+        loadProviderNames()
+
         // convert section times in title to actual times
         projects.update((a) => {
             if (!a[$activeProject || ""]?.shows) return a
@@ -275,7 +278,7 @@
                         {#each splittedItemsList.items as show, i}
                             {@const index = show.index}
                             {@const triggerAction = show.data?.settings?.triggerAction || $special.sectionTriggerAction}
-                            {@const pcoLink = !!$shows[show.id]?.quickAccess?.pcoLink}
+                            {@const providerLink = Object.values(providerLinkKeys).some((key) => $shows[show.id]?.quickAccess?.[key])}
                             {@const isFirst = i === 0}
                             {@const isLast = i === splittedItemsList.items.length - 1}
                             {@const borderRadiusStyle = `${isFirst ? "border-top-right-radius: 10px;" : ""}${isLast ? "border-bottom-right-radius: 10px;" : ""}`}
@@ -340,7 +343,7 @@
                                             {/if}
                                         </MaterialButton>
                                     {:else}
-                                        <ShowButton id={show.id} {show} {index} class={projectReadOnly ? "" : `context #${pcoLink ? "pco_item__" : ""}project_${getContextMenuId(show.type)}`} style={borderRadiusStyle} icon isProject />
+                                        <ShowButton id={show.id} {show} {index} class={projectReadOnly ? "" : `context #${providerLink ? "provider_item__" : ""}project_${getContextMenuId(show.type)}`} style={borderRadiusStyle} icon isProject />
                                     {/if}
                                 </SelectElem>
                             {/if}

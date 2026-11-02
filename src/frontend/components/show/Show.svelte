@@ -18,7 +18,6 @@
     import OverlayPreview from "./overlay/OverlayPreview.svelte"
     import PdfPreview from "./pdf/PdfPreview.svelte"
     import ProjectShowPlaceholder from "./placeholder/ProjectShowPlaceholder.svelte"
-    import ProjectItemHeader from "./ProjectItemHeader.svelte"
     import PowerPointPreview from "./ppt/PowerPointPreview.svelte"
     import Section from "./Section.svelte"
     import ShowNotes from "./ShowNotes.svelte"
@@ -62,8 +61,6 @@
 </script>
 
 <div class="double">
-    <ProjectItemHeader />
-
     <div id="showArea" class="main" class:highlight={$templateApplied}>
         {#if show}
             {#if show.type === "video" || show.type === "image" || show.type === "player"}
