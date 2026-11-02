@@ -246,7 +246,9 @@
         if (forceRemount) handledRefreshCounter = refreshCounter
 
         const isTempSlide = outSlide?.id === "temp" || outSlide?.id === "tempText"
-        const isDifferentSlide = isTempSlide || current.currentSlide?.id !== currentSlide?.id || current.outSlide?.index !== outSlide?.index || current.outSlide?.id !== outSlide?.id
+        const isSilentIndexUpdate = !!outSlide?.silentIndexUpdate && current.currentSlide?.id === currentSlide?.id && current.outSlide?.id === outSlide?.id
+        if (outSlide?.silentIndexUpdate) delete outSlide.silentIndexUpdate
+        const isDifferentSlide = !isSilentIndexUpdate && (isTempSlide || current.currentSlide?.id !== currentSlide?.id || current.outSlide?.index !== outSlide?.index || current.outSlide?.id !== outSlide?.id)
         // Same-slide refreshes (line reveal / dynamic values / metadata churn) should update in place.
         // Running the full hide/show transition cycle here can briefly output an empty frame.
         if (!isDifferentSlide && !forceRemount) {
