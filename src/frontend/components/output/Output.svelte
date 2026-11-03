@@ -369,6 +369,7 @@
     let actualSlideData: SlideData | null = null
     let actualCurrentSlide: Slide | null = null
     let actualCurrentLineId: string | undefined = undefined
+    let actualTextTransition: Transition = noTransition
     let slideRemountCounter = 0
     let previousRefreshVersion = -1
     let pendingSlideRemounts = 0
@@ -393,6 +394,7 @@
                 actualSlideData = clone(slideData)
                 actualCurrentSlide = clone(currentSlide)
                 actualCurrentLineId = clone(currentLineId)
+                actualTextTransition = clone(textTransition)
                 if (pendingSlideRemounts) {
                     slideRemountCounter += pendingSlideRemounts
                     pendingSlideRemounts = 0
@@ -447,10 +449,10 @@
             {/if}
         </span>
     {:else if actualSlide && actualSlide?.type !== "pdf"}
-        <SlideContent {outputId} outSlide={actualSlide} isClearing={isSlideClearing} slideData={actualSlideData} currentSlide={actualCurrentSlide} {currentStyle} {animationData} currentLineId={actualCurrentLineId} {lines} {ratio} {mirror} {preview} transition={textTransition} transitionEnabled={!mirror || preview} styleIdOverride={styleIdOverride || sceneStyleId} refreshCounter={slideRemountCounter} />
+        <SlideContent {outputId} outSlide={actualSlide} isClearing={isSlideClearing} slideData={actualSlideData} currentSlide={actualCurrentSlide} {currentStyle} {animationData} currentLineId={actualCurrentLineId} {lines} {ratio} {mirror} {preview} transition={actualTextTransition} transitionEnabled={!mirror || preview} styleIdOverride={styleIdOverride || sceneStyleId} refreshCounter={slideRemountCounter} />
 
         <!-- metadata -->
-        <Overlay overlay={{ items: currentMetadataItems }} isClearing={isMetadataClearing || isSlideClearing} {outputId} transition={textTransition} styleIdOverride={styleIdOverride || sceneStyleId} />
+        <Overlay overlay={{ items: currentMetadataItems }} isClearing={isMetadataClearing || isSlideClearing} {outputId} transition={actualTextTransition} styleIdOverride={styleIdOverride || sceneStyleId} />
     {/if}
 
     <!-- effects -->
