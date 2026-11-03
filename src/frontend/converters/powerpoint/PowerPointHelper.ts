@@ -15,7 +15,7 @@ import type { Item, Line } from "../../../types/Show"
 import { getItemText } from "../../components/edit/scripts/textStyle"
 import { clone } from "../../components/helpers/array"
 import { hexToHSL, hexToRgb, hslToHex } from "../../components/helpers/color"
-import { getCustomShapePath, getPresetShapePath } from "./powerpointShapes"
+import { getCustomShapePath, getPresetShapePath, getPresetShapePaths, scalePath, type ShapePath } from "./powerpointShapes"
 
 export interface Relationship {
     id: string // rIdX
@@ -1077,23 +1077,36 @@ export class PowerPointPackage {
 
             let svgAttributes = `fill="${fill}"`
             if (stroke !== "none") svgAttributes += ` stroke="${stroke}"`
-            if (strokeWidth && stroke !== "none") svgAttributes += ` stroke-width="${strokeWidth}" vector-effect="non-scaling-stroke"`
+            if (strokeWidth && stroke !== "none") svgAttributes += ` stroke-width="${strokeWidth}"`
             if (strokeDasharray) svgAttributes += ` stroke-dasharray="${strokeDasharray}"`
             if (strokeLinecap) svgAttributes += ` stroke-linecap="${strokeLinecap}"`
             if (strokeLinejoin) svgAttributes += ` stroke-linejoin="${strokeLinejoin}"`
             if (strokeMiterlimit) svgAttributes += ` stroke-miterlimit="${strokeMiterlimit}"`
 
-            const wrapSvg = (shapeName: string, viewBox: string, paths: { d: string; noFill?: boolean; noStroke?: boolean }[], fillRule = "") => {
+            // the svg is drawn in slide pixels, so the stroke scales with the slide like in PowerPoint
+            // (lines with zero width/height get a minimum item size later)
+            const minSize = Math.max(strokeWidth, 4)
+            const svgWidth = round(pos.width * ctx.scale.x) || minSize
+            const svgHeight = round(pos.height * ctx.scale.y) || minSize
+
+            const wrapSvg = (shapeName: string, shapeViewBox: string, shapePaths: ShapePath[], fillRule = "") => {
                 const ruleAttr = fillRule ? ` fill-rule="${fillRule}"` : ""
+
+                const [, , shapeW, shapeH] = shapeViewBox.split(" ").map(Number)
+                const paths = shapePaths.map((p) => ({ ...p, d: scalePath(p.d, svgWidth / (shapeW || 1), svgHeight / (shapeH || 1)) }))
+                const viewBox = `0 0 ${svgWidth} ${svgHeight}`
+                const svgStyle = "position: absolute; width: 100%; height: 100%; overflow: visible;"
 
                 if (!image) {
                     const pathElems = paths.map((p) => {
                         let attrs = svgAttributes
                         if (p.noFill) attrs = attrs.replace(/^fill="[^"]*"/, 'fill="none"')
                         if (p.noStroke) attrs = attrs.replace(/ stroke="[^"]*"/, "")
-                        return `<path ${attrs}${ruleAttr} d="${p.d}"></path>`
+                        // darker/lighter parts of the shape (e.g. the folds of a ribbon)
+                        const shade = p.shade && fill !== "none" && !p.noFill ? `<path fill="${p.shade.color}" fill-opacity="${p.shade.opacity}"${ruleAttr} d="${p.d}"></path>` : ""
+                        return `<path ${attrs}${ruleAttr} d="${p.d}"></path>${shade}`
                     })
-                    return `<svg data-shape="${shapeName}" xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" preserveAspectRatio="none" style="position: absolute; width: 100%; height: 100%;">${gradientDefs}${pathElems.join("")}</svg>`
+                    return `<svg data-shape="${shapeName}" xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" preserveAspectRatio="none" style="${svgStyle}">${gradientDefs}${pathElems.join("")}</svg>`
                 }
 
                 // image clipped to the shape
@@ -1135,12 +1148,12 @@ export class PowerPointPackage {
                     imgY = -srcT * imgH
                 }
 
-                const [vbX, vbY, vbW, vbH] = viewBox.split(" ").map(Number)
+                const [vbX, vbY, vbW, vbH] = [0, 0, svgWidth, svgHeight]
                 const uniqueId = `clip_${uid(5)}`
                 const pathData = paths.map((p) => p.d).join(" ")
                 const outline = stroke !== "none" ? `<path ${svgAttributes.replace(/^fill="[^"]*"/, 'fill="none"')} d="${pathData}"></path>` : ""
 
-                return `<svg data-shape="${shapeName}" xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" preserveAspectRatio="none" style="position: absolute; width: 100%; height: 100%;">
+                return `<svg data-shape="${shapeName}" xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" preserveAspectRatio="none" style="${svgStyle}">
                         <defs>
                             <clipPath id="${uniqueId}">
                                 <path${ruleAttr} d="${pathData}"></path>
@@ -1171,10 +1184,15 @@ export class PowerPointPackage {
                 if (name && typeof fmla === "string" && fmla.startsWith("val ")) adjustments[name] = parseFloat(fmla.slice(4))
             })
 
+            // shape definitions from the spec, with the older approximations as fallback
+            const presetFillRule = ["frame", "donut", "noSmoking"].includes(prstGeom) ? "evenodd" : ""
+            const presetPaths = getPresetShapePaths(prstGeom, pos.width, pos.height, adjustments)
+            if (presetPaths) return wrapSvg(prstGeom, "0 0 1 1", presetPaths, presetFillRule)
+
             const path = getPresetShapePath(prstGeom, pos.left, pos.top, pos.width, pos.height, adjustments)
             if (!path) return null
 
-            return wrapSvg(prstGeom, "0 0 1 1", [{ d: path }], ["frame", "donut", "noSmoking"].includes(prstGeom) ? "evenodd" : "")
+            return wrapSvg(prstGeom, "0 0 1 1", [{ d: path }], presetFillRule)
         }
 
         let blipFill = getValue(shape.shape, "p:blipFill")
@@ -1300,6 +1318,8 @@ export class PowerPointPackage {
         // padding: default 91440 EMU (0.1 in) left/right, 45720 EMU (0.05 in) top/bottom for text shapes
         const isText = (shape.name === "p:sp" || svgText) && !svgShape
         const getPad = (key: string, defEmu: number, scale = 1) => {
+            // text insets don't apply to shapes/media (the svg/image fills the item box)
+            if (!isText) return 0
             const raw = bodyPrs.map((b) => b[key]).find((v) => v != null && v !== "")
             const emu = raw != null && !isNaN(Number(raw)) ? Number(raw) : isText ? (svgText && (key === "tIns" || key === "bIns") ? 0 : defEmu) : 0
             return round(emuToPixels(emu) * scale)
