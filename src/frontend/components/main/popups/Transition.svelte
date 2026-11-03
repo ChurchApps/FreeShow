@@ -3,7 +3,7 @@
     import { get } from "svelte/store"
     import { OUTPUT } from "../../../../types/Channels"
     import type { Transition } from "../../../../types/Show"
-    import { activeEdit, activeShow, overlays, popupData, selected, showsCache, styles, templates, transitionData } from "../../../stores"
+    import { activeEdit, activePopup, activeShow, overlays, popupData, selected, showsCache, styles, templates, transitionData } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { send } from "../../../utils/request"
     import { easings, transitionTypes } from "../../../utils/transitions"
@@ -249,12 +249,26 @@
         media: { type: "fade", duration: 800, easing: "sine", custom: {} }
     }
     function reset() {
+        // delete any custom slide transitions
+        if (isSlide) {
+            let type = selectedType === "text" ? "transition" : "mediaTransition"
+            let indexes = $selected.data.map((a) => a.index)
+            let override = "show#" + $activeShow?.id + "layout#" + _show().get("settings.activeLayout") + "indexes#" + indexes.join(",") + type
+            if (selectedType === "text") slideTextTransition = {}
+            else slideMediaTransition = {}
+
+            history({ id: "SHOW_LAYOUT", newData: { key: type, data: undefined, indexes }, location: { page: "show", override } })
+
+            setTimeout(() => activePopup.set(null))
+            return
+        }
+
         const defaults = DEFAULT_TRANSITIONS[selectedType]
 
         Object.keys(defaults).forEach((key) => {
             let defaultValue = defaults[key]
             // @ts-ignore
-            changeTransition(selectedType, key, isSlide || isItem ? $transitionData[selectedType][key] || defaultValue : defaultValue, true)
+            changeTransition(selectedType, key, isItem ? $transitionData[selectedType][key] || defaultValue : defaultValue, true)
         })
     }
 
