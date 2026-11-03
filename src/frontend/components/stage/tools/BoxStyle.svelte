@@ -142,9 +142,6 @@
         setBoxInputValue(stageSections, "default", "clock.seconds", "hidden", clockType === "custom" || (clockType === "digital" && item.clock?.showTime === false && dateFormat !== "none"))
         setBoxInputValue(stageSections, "default", "clock.customFormat", "hidden", clockType !== "custom")
         setBoxInputValue(stageSections, "default", "clock.offsetDays", "hidden", !showOffsetDays)
-
-        // show seconds by default on stage
-        setBoxInputValue(stageSections, "default", "clock.seconds", "value", true)
     }
 
     function setValue(input: any) {

@@ -140,7 +140,6 @@ export function stageItemToItem(item: StageItem) {
 
     // type, align, auto, src, timer, clock, tracker, variable, etc.
     if (item.chords) newItem.chords = typeof item.chords === "boolean" ? { enabled: item.chords, ...((item as any).chordsData || {}) } : item.chords
-    // if (item.clock) newItem.clock = { seconds: true, ...item.clock }
 
     return { ...item, ...newItem } as Item
 }

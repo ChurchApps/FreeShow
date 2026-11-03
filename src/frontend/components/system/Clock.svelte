@@ -16,7 +16,7 @@
     export let customFormat = "hh:mm a"
     export let offsetDays = 0
     export let showTime = true
-    export let seconds = true
+    export let seconds = false
 
     $: twelve = $timeFormat === "12"
 

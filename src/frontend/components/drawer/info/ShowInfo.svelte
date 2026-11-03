@@ -136,7 +136,7 @@
         <InfoMetadata title={show?.name} {info} />
     {:else}
         <Center>
-            <Clock />
+            <Clock seconds />
             <Date />
         </Center>
     {/if}
