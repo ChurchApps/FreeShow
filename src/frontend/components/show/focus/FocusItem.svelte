@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { setContext } from "svelte"
+    import { writable } from "svelte/store"
     import type { ProjectShowRef } from "../../../../types/Projects"
     import { outputs, showsCache } from "../../../stores"
     import { getActiveOutputs } from "../../helpers/output"
@@ -12,6 +14,11 @@
 
     export let show: ProjectShowRef
     $: type = show.type
+
+    // the project item this view belongs to, for controls inside it (like the show title bar)
+    const projectItemIndex = writable(show.index ?? -1)
+    setContext("projectItemIndex", projectItemIndex)
+    $: projectItemIndex.set(show.index ?? -1)
 
     $: outputId = getActiveOutputs($outputs)[0]
     $: currentOutput = $outputs[outputId] || {}

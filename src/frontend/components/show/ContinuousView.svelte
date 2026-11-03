@@ -66,7 +66,8 @@
                             <p>{item.name}</p>
                         </div>
                     {/if}
-                    <FocusItem show={{ ...item, index: i }} />
+                    <!-- current item data, so changes to it (like its arrangement) show right away -->
+                    <FocusItem show={{ ...item, ...(project?.shows?.[i] || {}), index: i }} />
                 </div>
             {/each}
         </div>
