@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { AUDIO } from "../../types/Channels"
 import { keysToID } from "../components/helpers/array"
 import { getFirstActiveOutput } from "../components/helpers/output"
-import { audioRouting, currentWindow, disabledServers, outputs, serverData, special } from "../stores"
+import { audioRouting, currentWindow, activeRecording, disabledServers, outputs, serverData, special } from "../stores"
 import { send } from "../utils/request"
 
 export class AudioSender {
@@ -252,6 +252,9 @@ export class AudioSender {
             }
         }
 
+        const recId = get(activeRecording)?.outputId;
+        if (recId) targets.add(recId);
+
         const rawOutputs = keysToID(get(outputs) || {})
         for (let i = 0; i < rawOutputs.length; i++) {
             const out = rawOutputs[i]
@@ -344,6 +347,8 @@ export class AudioSender {
                 if (connections[i].to.includes("icecast")) return true
             }
         }
+
+        if (get(activeRecording)?.isOutput) return true;
 
         const outputList = keysToID(get(outputs) || {})
         for (let i = 0; i < outputList.length; i++) {

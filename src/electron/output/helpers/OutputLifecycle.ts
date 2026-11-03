@@ -200,10 +200,11 @@ export class OutputLifecycle {
     static pageBusy(sender: Electron.WebContents, data: { id: string; busy: boolean; dom?: string; seq?: number }) {
         const output = data?.id ? OutputHelper.getOutput(data.id) : null
         if (!output || OutputHelper.renderWindow(output)?.webContents !== sender) return
+        const settled = RenderGroups.isBusy(data.id) && !data.busy
         RenderGroups.setPageState(data.id, !!data.busy, data.dom || "", data.seq || 0)
         // ensure the settled post-animation frame is painted on offscreen renderers even if the
         // compositor dropped or coalesced the final animation frame
-        if (!data.busy && output.osr && RenderGroups.isRenderer(data.id)) {
+        if (settled && output.osr && RenderGroups.isRenderer(data.id)) {
             this.requestRepaint(data.id)
         }
     }

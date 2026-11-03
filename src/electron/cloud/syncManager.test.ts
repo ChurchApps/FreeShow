@@ -302,6 +302,11 @@ describe("syncManager tests", () => {
             fs.rmSync(h.tempDir, { recursive: true, force: true })
             fs.mkdirSync(h.tempDir, { recursive: true })
         }
+        // clear entire userDataDir across all test device IDs to avoid test pollution
+        if (fs.existsSync(h.userDataDir)) {
+            fs.rmSync(h.userDataDir, { recursive: true, force: true })
+            fs.mkdirSync(h.userDataDir, { recursive: true })
+        }
         // clear local data directories to have a clean slate for each test
         const showsDir = getDataFolderPath("shows")
         const scripturesDir = getDataFolderPath("scriptures")

@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import type { History, HistoryNew, HistoryTypes } from "../../../types/History"
-import { activePage, activeProject, activeShow, contextActive, historyCacheCount, isDev, projects, undoHistory } from "../../stores"
+import { activePage, activeProject, activeShow, contextActive, historyCacheCount, isDev, outputs, projects, undoHistory } from "../../stores"
 import { redoHistory } from "./../../stores"
 import { areObjectsEqual, clone } from "./array"
 import { historyActions } from "./historyActions"
@@ -96,11 +96,14 @@ export function history(obj: History, shouldUndo: null | boolean = null) {
                 }
                 break
             case "slide":
+                const prevLayoutRef = _show(showID).layouts([obj.location.layout!]).ref()[0] || []
                 old = {
                     slides: _show(showID).set({ key: "slides", value: obj.newData.slides }),
                     layout: _show(showID).layouts([obj.location.layout!]).set({ key: "slides", value: obj.newData.layout })[0]?.value,
                     media: _show(showID).set({ key: "media", value: obj.newData.media || _show(showID).get("media") || {} })
                 }
+                const newLayoutRef = _show(showID).layouts([obj.location.layout!]).ref()[0] || []
+                updateOutputSlideIndexes(showID, obj.location.layout!, prevLayoutRef, newLayoutRef)
                 break
 
             // show
@@ -365,3 +368,29 @@ export const redo = () => {
 //   fromState: 2,
 //   page: "shows",
 // },
+
+// change outputted slide indexes when show layout changes, so it reflects the new layout slides position correctly
+function updateOutputSlideIndexes(showId: string | undefined, layoutId: string, prevRef: any[], newRef: any[]) {
+    if (!showId || !prevRef.length || !newRef.length) return
+
+    outputs.update((a) => {
+        Object.keys(a).forEach((outputId) => {
+            const outSlide = a[outputId]?.out?.slide
+            if (!outSlide || outSlide.id !== showId || outSlide.layout !== layoutId || outSlide.index === undefined) return
+
+            const targetSlideId = prevRef[outSlide.index]?.id
+            if (!targetSlideId) return
+
+            // find the correct slide index in case there are multiple slides with the same ID
+            const occurrence = prevRef.slice(0, outSlide.index).filter((item) => item?.id === targetSlideId).length
+            const newMatches = newRef.map((item, i) => (item?.id === targetSlideId ? i : -1)).filter((i) => i !== -1)
+            const newIndex = newMatches[occurrence] ?? newMatches[0]
+
+            if (newIndex !== undefined && newIndex !== outSlide.index) {
+                outSlide.index = newIndex
+                outSlide.silentIndexUpdate = true
+            }
+        })
+        return a
+    })
+}

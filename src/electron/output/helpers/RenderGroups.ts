@@ -110,6 +110,10 @@ export class RenderGroups {
         return seq
     }
 
+    static isBusy(id: string): boolean {
+        return this.busy.has(id)
+    }
+
     static setPageState(id: string, busy: boolean, content: string, seq: number) {
         this.applied.set(id, seq)
         if (busy) this.busy.add(id)

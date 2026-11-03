@@ -3,10 +3,10 @@ import fs from "fs"
 import os from "os"
 import path from "path"
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
-import { buildEncoderCommand } from "./encoderProfiles"
+import { buildEncoderCommand, type EncoderId } from "./encoderProfiles"
 
 // only encoder resolution is faked; the ffmpeg processes are real
-const mocked = vi.hoisted(() => ({ encoder: "x264" }))
+const mocked = vi.hoisted(() => ({ encoder: "x264" as EncoderId }))
 vi.mock("./encoderDetection", () => ({
     resolveEncoder: async () => mocked.encoder,
     getRtmpEncoderSetting: () => mocked.encoder
@@ -14,7 +14,7 @@ vi.mock("./encoderDetection", () => ({
 vi.mock("./ffmpegManager", () => ({ resolveFfmpegPath: async () => "ffmpeg" }))
 
 const { RtmpStreamer, setRtmpStatusListener, setRtmpNoticeListener, setRtmpResolvers } = await import("./RtmpStreamer")
-setRtmpResolvers({ resolveFfmpegPath: async () => "ffmpeg", resolveEncoder: async () => "x264" })
+setRtmpResolvers({ resolveFfmpegPath: async () => "ffmpeg", resolveEncoder: async (enc): Promise<EncoderId> => (enc as EncoderId) || mocked.encoder })
 
 function hasFfmpeg(): boolean {
     try {
@@ -86,10 +86,10 @@ describeIfFfmpeg("RTMP pipeline (real ffmpeg)", () => {
         for (let i = 0; i < FPS; i++) ffmpeg.stdin.write(bgraFrame(i * 8))
         ffmpeg.stdin.end()
 
-        // wait for encoding to finish buffered frames then stop
-        await new Promise((r) => setTimeout(r, 600))
-        ffmpeg.kill("SIGTERM")
-        await new Promise((resolve) => ffmpeg.on("exit", resolve))
+        const exitPromise = new Promise((resolve) => ffmpeg.on("exit", resolve))
+        await Promise.race([exitPromise, new Promise((r) => setTimeout(r, 600))])
+        ffmpeg.kill()
+        await exitPromise
 
         const output = Buffer.concat(chunks)
         expect(output.length).toBeGreaterThan(0)
@@ -143,12 +143,10 @@ describeIfFfmpeg("RTMP pipeline (real ffmpeg)", () => {
         await RtmpStreamer.start("test-output", { width: WIDTH, height: HEIGHT, fps: FPS, bitrate: 500, enableAudio: false, encoder: "x264" }, [{ id: "a", url: path.join(tmpDir, "listener.flv"), key: "", enabled: true }])
 
         const feeding = feed("test-output")
-        await new Promise((r) => setTimeout(r, 3200))
+        await vi.waitFor(() => expect(pushes.some((p) => p.states.includes("live"))).toBe(true), { timeout: 10000, interval: 100 })
         clearInterval(feeding)
 
-        expect(pushes.length).toBeGreaterThan(0)
         expect(pushes.every((p) => p.outputId === "test-output")).toBe(true)
-        expect(pushes.some((p) => p.states.includes("live"))).toBe(true)
 
         setRtmpStatusListener(() => {})
     }, 15000)

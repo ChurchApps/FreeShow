@@ -56,7 +56,7 @@ export class OutputVisibility {
         const bounds: Rectangle = this.resolveOutputBounds(output, autoPosition)
 
         const windowCoveringMain = this.amountCovered(bounds, mainWindow!.getBounds()) > 0.5
-        const invalidWindowPosition = windowCoveringMain && autoPosition && window.isAlwaysOnTop() === true
+        const invalidWindowPosition = windowCoveringMain && !output.boundsLocked && (autoPosition || autoStartup || window.isAlwaysOnTop() === true)
 
         if (state === true && !invalidWindowPosition) {
             this.showWindow(window, output.alwaysOnTop !== false)

@@ -130,7 +130,7 @@
         let muted = videoType === "background" ? true : false
 
         const ignoreLayer = videoType === "foreground"
-        if (ignoreLayer) clearSlide()
+        if (ignoreLayer) clearSlide(true)
 
         // get style per output
         activeOutputs.forEach((output) => {

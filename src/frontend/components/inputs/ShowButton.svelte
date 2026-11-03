@@ -170,7 +170,7 @@
             if (!located) return
 
             const ignoreLayer = videoType === "foreground" || (videoType !== "background" && (type === "image" || !shouldLoop))
-            if (ignoreLayer) clearSlide()
+            if (ignoreLayer) clearSlide(true)
 
             let out = { path: located.path, muted: shouldBeMuted, loop: shouldLoop, startAt: 0, type, ...mediaStyle, ignoreLayer }
 

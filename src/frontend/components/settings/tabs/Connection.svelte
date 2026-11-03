@@ -121,7 +121,8 @@
                 }
             }
 
-            sendMain(Main.PROVIDER_LOAD_SERVICES, { providerId, cloudOnly: cloudOnly[providerId] || false })
+            const data = providerId === "planningcenter" ? { syncFolderIds: $contentProviderData.planningcenter?.syncFolderIds || [] } : undefined
+            sendMain(Main.PROVIDER_LOAD_SERVICES, { providerId, cloudOnly: cloudOnly[providerId] || false, data })
         } else {
             if ($cloudSyncData.enabled && providerId === $cloudSyncData.id) {
                 // should remain connected to cloud

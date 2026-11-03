@@ -3,9 +3,14 @@
     import autosize, { getAutoSizeOptions, type AutosizeTypes } from "../../../common/util/autosize"
     import { createVirtualBreaks } from "../../../common/util/show"
     import { getStyles } from "../../../common/util/style"
+    import { send } from "../../util/socket"
     import { mediaCache } from "../../util/stores"
 
     export let item: Item
+
+    $: if (item?.type === "media" && item.src && !$mediaCache[item.src]) {
+        send("API:get_thumbnail", { path: item.src })
+    }
 
     $: lineGap = item?.specialStyle?.lineGap
     $: lineRadius = item?.specialStyle?.lineRadius || 0

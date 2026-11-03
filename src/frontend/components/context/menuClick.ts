@@ -1690,7 +1690,7 @@ const clickActions = {
         const videoType = getMediaLayerType(path, mediaStyle)
 
         const ignoreLayer = videoType === "foreground"
-        if (ignoreLayer) clearSlide()
+        if (ignoreLayer) clearSlide(true)
 
         const type = getMediaType(getExtension(path))
         setOutput("background", { path, ...mediaStyle, type, loop: false, muted: false, ignoreLayer })

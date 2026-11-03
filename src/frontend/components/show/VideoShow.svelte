@@ -192,7 +192,7 @@
         let muted = shouldBeMuted
 
         const ignoreLayer = videoType === "foreground" || (videoType !== "background" && (type === "image" || !shouldLoop))
-        if (ignoreLayer) clearSlide()
+        if (ignoreLayer) clearSlide(true)
 
         let bg: any = { type, startAt, muted, loop, ...mediaStyle, ignoreLayer }
 
