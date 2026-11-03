@@ -527,6 +527,10 @@
                                     <SkeletonSlide slide={currentSlide} index={i} color={slide.color} columns={$slidesOptions.columns} active={activeSlides[i] !== undefined} on:click={(e) => slideClick(e, i)} />
                                 {/if}
                             {/each}
+                        {:else if $focusMode}
+                            <Center faded>
+                                <T id="empty.slides" />
+                            </Center>
                         {:else}
                             <Center absolute>
                                 <span style="opacity: 0.5;font-size: 2em;margin-bottom: 10px;"><T id="empty.slides" /></span>
