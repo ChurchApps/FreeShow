@@ -700,8 +700,10 @@ export class PowerPointPackage {
 
             // outline
             const ln = rLevels.map((l) => l.children.find((n) => n?.["a:ln"])).find(Boolean)
-            const lnColor = ln ? resolveColor(getValue(ln["a:ln"], "a:solidFill"), ctx.colors) : ""
-            const lnWPx = lnColor ? round(emuToPixels(ln[":@"]?.w || 12700) * ctx.scale.factor) : 0
+            const lnFill = ln ? getValue(ln["a:ln"], "a:solidFill") : []
+            const lnColor = ln ? resolveColor(lnFill.length ? lnFill : getValue(ln["a:ln"], "a:gradFill", "a:gsLst")[0]?.["a:gs"], ctx.colors) : ""
+            // PowerPoint default outline is 0.75pt
+            const lnWPx = lnColor ? Math.max(1, round(emuToPixels(ln[":@"]?.w || 9525) * ctx.scale.factor)) : 0
 
             const highlight = resolveColor(getValue(rPr?.children || [], "a:highlight"), ctx.colors)
 
@@ -722,7 +724,8 @@ export class PowerPointPackage {
             if (highlight) style += `background-color: ${highlight};`
             style += getShadowStyle(effects)
             if (blEm) style += `vertical-align: calc(${blEm}em + 10px);`
-            if (lnWPx) style += `-webkit-text-stroke-width: ${lnWPx}px;paint-order: stroke fill;-webkit-text-stroke-color: ${lnColor};`
+            // PowerPoint draws the outline centered on top of the fill (FreeShow default is behind)
+            if (lnWPx) style += `-webkit-text-stroke-width: ${lnWPx}px;paint-order: normal;-webkit-text-stroke-color: ${lnColor};`
             if (cap === "all") style += "text-transform: uppercase;"
             if (cap === "small") style += "font-variant: small-caps;"
 
