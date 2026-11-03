@@ -41,17 +41,17 @@ export function setDefaultLayout(showId: string, layoutId: string) {
     })
 }
 
-/** use the arrangement for the open show, and for its project item when it is one */
-export function selectArrangement(showId: string, layoutId: string) {
+/** use the arrangement for a project item (the open one unless given), and for the show while that item is open */
+export function selectArrangement(showId: string, layoutId: string, index = get(activeShow)?.index) {
     const show = get(showsCache)[showId]
     if (!show?.layouts?.[layoutId]) return
-    setActiveLayout(showId, layoutId)
+    const open = get(activeShow)
+    if (index === undefined || (open?.id === showId && open.index === index)) setActiveLayout(showId, layoutId)
 
     if (Object.keys(show.layouts).length < 2) return
     const isTemplate = !!get(editingProjectTemplate)
     const projectId = isTemplate ? get(editingProjectTemplate) : get(activeProject)
     const store = isTemplate ? projectTemplates : projects
-    const index = get(activeShow)?.index
     const item = index !== undefined && projectId ? get(store)[projectId]?.shows?.[index] : null
     if (!item || item.id !== showId || (item.type || "show") !== "show") return
 

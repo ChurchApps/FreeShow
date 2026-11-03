@@ -1,8 +1,10 @@
 <script lang="ts">
+    import { getContext } from "svelte"
+    import { readable, type Readable } from "svelte/store"
     import { fade } from "svelte/transition"
     import { Main } from "../../../types/IPC/Main"
     import { sendMain } from "../../IPC/main"
-    import { activePopup, autoOpenedTimeline, openToolsTab, outputs, showNotesActive, shows, showsCache, special, styles, templates } from "../../stores"
+    import { activePopup, activeProject, autoOpenedTimeline, openToolsTab, outputs, popupData, projects, showNotesActive, shows, showsCache, special, styles, templates } from "../../stores"
     import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
     import { allOutputsHasStyleTemplate, getFirstActiveOutput } from "../helpers/output"
@@ -85,9 +87,19 @@
 
     // ARRANGEMENTS
 
+    // in a list of project items the bar belongs to its own item, else to the open one
+    const listItemIndex: Readable<number> = getContext("projectItemIndex") || readable(-1)
+    $: inList = $listItemIndex > -1
+    $: listItem = inList ? $projects[$activeProject || ""]?.shows?.[$listItemIndex] : null
+
     $: arrangements = sortByName(keysToID(layouts || {}))
-    $: activeArrangement = currentShow?.settings?.activeLayout
     $: defaultArrangement = getDefaultLayout(currentShow)
+    $: activeArrangement = inList ? (listItem?.layout && layouts?.[listItem.layout] ? listItem.layout : defaultArrangement) : currentShow?.settings?.activeLayout
+
+    function editArrangements() {
+        popupData.set({ showId, projectIndex: inList ? $listItemIndex : undefined })
+        activePopup.set("arrangements")
+    }
 </script>
 
 <svelte:window on:mousedown={mousedown} />
@@ -144,7 +156,7 @@
         {#if arrangementDropdown && currentShow}
             <div class="showDropdown" transition:fade={{ duration: 100 }} role="none" on:click={() => (arrangementDropdown = false)}>
                 {#each arrangements as arrangement}
-                    <MaterialButton on:click={() => selectArrangement(showId, arrangement.id)}>
+                    <MaterialButton on:click={() => selectArrangement(showId, arrangement.id, inList ? $listItemIndex : undefined)}>
                         <Icon id="check" size={0.7} white style="visibility: {arrangement.id === activeArrangement ? 'visible' : 'hidden'};" />
                         <p>{arrangement.name || translateText("main.unnamed")}</p>
                         {#if arrangement.id === defaultArrangement}<Icon id="star" size={0.7} white />{/if}
@@ -153,7 +165,7 @@
 
                 <div class="DIVIDER"></div>
 
-                <MaterialButton title="show.edit_arrangements" on:click={() => activePopup.set("arrangements")}>
+                <MaterialButton title="show.edit_arrangements" on:click={editArrangements}>
                     <Icon id="edit" white />
                     <p><T id="show.edit_arrangements" /></p>
                 </MaterialButton>

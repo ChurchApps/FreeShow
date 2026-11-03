@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { SlideData } from "../../../../types/Show"
-    import { activeRename, activeShow, cachedShowsData, groups, showsCache } from "../../../stores"
+    import { activeProject, activeRename, activeShow, cachedShowsData, groups, popupData, projects, showsCache } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { getAccess } from "../../../utils/profile"
     import { createArrangement, deleteArrangement, getDefaultLayout, renameArrangement, selectArrangement, setArrangementSlides, setDefaultLayout } from "../../helpers/arrangements"
@@ -11,11 +11,14 @@
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import { getSlideGroups } from "../../show/tools/groups"
 
-    $: showId = $activeShow?.id || ""
+    // opened for a project item in a list, or for the open show
+    const projectIndex: number | undefined = $popupData.projectIndex
+    const showId: string = $popupData.showId || $activeShow?.id || ""
     $: show = $showsCache[showId]
     $: arrangements = sortByName(keysToID(show?.layouts || {}))
-    $: activeId = show?.settings?.activeLayout || ""
     $: defaultId = getDefaultLayout(show)
+    $: itemLayout = projectIndex !== undefined ? $projects[$activeProject || ""]?.shows?.[projectIndex]?.layout : ""
+    $: activeId = projectIndex !== undefined ? (itemLayout && show?.layouts?.[itemLayout] ? itemLayout : defaultId) : show?.settings?.activeLayout || ""
     $: arrangement = show?.layouts?.[activeId]
     $: sequence = (arrangement?.slides || []) as SlideData[]
 
@@ -43,7 +46,8 @@
 
     function newArrangement(copy = false) {
         const name = copy ? `${arrangement?.name || translateText("main.unnamed")} 2` : translateText("show.new_arrangement")
-        createArrangement(showId, name, copy ? activeId : "")
+        const id = createArrangement(showId, name, copy ? activeId : "")
+        if (projectIndex !== undefined) selectArrangement(showId, id, projectIndex)
         // named here, not in the bottom bar
         activeRename.set(null)
     }
@@ -91,7 +95,7 @@
 <div class="arrangements">
     <div class="list">
         {#each arrangements as layout}
-            <MaterialButton class="arrangement" isActive={layout.id === activeId} on:click={() => selectArrangement(showId, layout.id)}>
+            <MaterialButton class="arrangement" isActive={layout.id === activeId} on:click={() => selectArrangement(showId, layout.id, projectIndex)}>
                 <p>{layout.name || translateText("main.unnamed")}</p>
                 {#if layout.id === defaultId}<span class="star" data-title={translateText("show.default_arrangement")}><Icon id="star" size={0.8} white /></span>{/if}
             </MaterialButton>

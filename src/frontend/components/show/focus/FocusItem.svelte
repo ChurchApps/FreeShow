@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { ProjectShowRef } from "../../../../types/Projects"
     import { outputs, showsCache } from "../../../stores"
+    import { getDefaultLayout } from "../../helpers/arrangements"
     import { getActiveOutputs } from "../../helpers/output"
     import AudioPreview from "../AudioPreview.svelte"
     import FolderShow from "../folder/FolderShow.svelte"
@@ -41,7 +42,8 @@
 {:else if type === "folder"}
     <FolderShow path={show.id} index={show.index || 0} />
 {:else}
-    <Slides showId={show.id} layout={show.layout} projectIndex={show.index} />
+    <!-- the item's arrangement, else the show's default as when opening it -->
+    <Slides showId={show.id} layout={show.layout && $showsCache[show.id]?.layouts?.[show.layout] ? show.layout : getDefaultLayout($showsCache[show.id])} projectIndex={show.index} />
 
     <!-- WIP change layout??? -->
     <!-- <Layouts /> -->
