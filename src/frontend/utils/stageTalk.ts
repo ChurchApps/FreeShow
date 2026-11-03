@@ -161,6 +161,11 @@ export const receiveSTAGE = {
         Object.values(show.media || {}).forEach(async (media) => {
             sendMediaData(media.path)
         })
+        Object.values(show.slides || {}).forEach((slide) => {
+            slide.items?.forEach((item) => {
+                if (item.type === "media" && item.src) sendMediaData(item.src)
+            })
+        })
 
         return { id: outSlideId, show }
     },

@@ -7,11 +7,12 @@
     import { createVirtualBreaks } from "../../common/util/show"
     import { getStyles } from "../../common/util/style"
     import { getDynamicValue, replaceDynamicValues } from "../helpers/show"
-    import Clock from "../items/Clock.svelte"
-    import { send } from "../util/socket"
-    import { dictionary, updateTransposed, variables } from "../util/stores"
-    import { _getDynamicValue } from "../util/itemHelpers"
     import { getItemText } from "../helpers/textStyle"
+    import Clock from "../items/Clock.svelte"
+    import { _getDynamicValue } from "../util/itemHelpers"
+    import { send } from "../util/socket"
+    import { dictionary, media, updateTransposed, variables } from "../util/stores"
+    import MediaOutput from "./MediaOutput.svelte"
 
     export let showId: string
     export let item: Item
@@ -566,16 +567,8 @@
                 {/each}
             </div>
         </div>
-        <!-- {:else if item?.type === "media"}
-        {#if item.src}
-            {#if getMediaType(getExtension(item.src)) === "video"}
-                <video src={item.src} muted={true}>
-                    <track kind="captions" />
-                </video>
-            {:else}
-                <Image src={item.src} alt="" style="width: 100%;height: 100%;object-fit: {item.fit || 'contain'};filter: {item.filter};{item.flipped ? 'transform: scaleX(-1);' : ''}" />
-            {/if}
-        {/if} -->
+    {:else if item?.type === "media" && item.src}
+        <MediaOutput path={item.src?.includes("NowPlayingCover") ? item.src : $media[item.src] || item.src} mediaStyle={item} />
         <!-- {:else if item?.type === "camera"} -->
         <!-- {:else if item?.type === "timer"}
         <Timer {item} id={item.timerId || ""} {today} style="font-size: {fontSize}px;" /> -->
