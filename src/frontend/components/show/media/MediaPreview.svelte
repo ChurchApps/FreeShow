@@ -67,7 +67,7 @@
                         if ($outLocked) return
 
                         const type = getMediaLayerType(mediaPath, mediaStyle)
-                        if (type === "foreground" || type !== "background") clearSlide()
+                        if (type === "foreground" || type !== "background") clearSlide(true)
 
                         setOutput("background", { path: mediaPath, ...mediaStyle })
                     }}

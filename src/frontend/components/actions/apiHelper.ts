@@ -174,7 +174,7 @@ export async function startProjectItemByName(name: string) {
         const shouldBeMuted = videoType === "background" ? item.muted || true : false
 
         const ignoreLayer = videoType === "foreground" || (videoType !== "background" && (item.type === "image" || !shouldLoop))
-        if (ignoreLayer) clearSlide()
+        if (ignoreLayer) clearSlide(true)
 
         let out = { path: item.id, muted: shouldBeMuted, loop: shouldLoop, startAt: 0, type: item.type, ...mediaStyle, ignoreLayer }
 

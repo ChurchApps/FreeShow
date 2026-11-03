@@ -429,7 +429,7 @@
                 const videoType = getMediaLayerType(file.path, mediaStyle)
 
                 const ignoreLayer = videoType === "foreground"
-                if (ignoreLayer) clearSlide()
+                if (ignoreLayer) clearSlide(true)
 
                 const type = getMediaType(getExtension(file.path))
                 setOutput("background", { path: file.path, ...mediaStyle, type, loop: false, muted: false, ignoreLayer })

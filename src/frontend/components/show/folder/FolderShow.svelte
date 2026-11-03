@@ -69,7 +69,7 @@
         let muted = videoType === "background" ? true : false
 
         const ignoreLayer = videoType === "foreground" || (videoType !== "background" && (file.type === "image" || !loop))
-        if (ignoreLayer) clearSlide()
+        if (ignoreLayer) clearSlide(true)
 
         setOutput("background", { path: file.path, type: file.type, loop, muted, startAt: 0, ...mediaStyle, ignoreLayer })
 

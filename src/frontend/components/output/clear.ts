@@ -96,7 +96,9 @@ export function clearBackground(specificOutputId = "") {
 
 // shouldClearAll = don't keep cached previous slide
 export function clearSlide(shouldClearAll = false) {
-    if (!shouldClearAll) {
+    if (shouldClearAll) {
+        outputSlideCache.set({})
+    } else {
         // store position
         const slideCache: { [key: string]: OutSlide } = {}
         const activeOutputs = getAllActiveOutputs()
