@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { getContext } from "svelte"
+    import { readable, type Readable } from "svelte/store"
     import { fade } from "svelte/transition"
     import { Main } from "../../../types/IPC/Main"
     import { sendMain } from "../../IPC/main"
@@ -83,7 +85,9 @@
 
     // PROVIDER PROJECT ITEM
 
-    $: itemIndex = $activeShow?.index ?? -1
+    // in a list of project items the bar belongs to its own item, else to the open one
+    const listItemIndex: Readable<number> = getContext("projectItemIndex") || readable(-1)
+    $: itemIndex = $listItemIndex > -1 ? $listItemIndex : ($activeShow?.index ?? -1)
     $: projectItem = !$editingProjectTemplate && itemIndex > -1 ? $projects[$activeProject || ""]?.shows?.[itemIndex] : null
     $: isProviderItem = !!projectItem && projectItem.id === showId && (projectItem.type || "show") === "show" && !!getProjectProvider($activeProject || "", $projects, $contentProviderData)
 </script>
