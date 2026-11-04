@@ -229,6 +229,10 @@
         if (betweenClearingTransition?.type === "none") betweenClearingTransition.duration = 0
 
         if (!currentSlideItems?.length) {
+            updateGeneration++
+            if (timeout) clearTimeout(timeout)
+            timeout = null
+            show = false
             scheduleAutoSizePrecompute([])
             currentItems = []
             current = {
