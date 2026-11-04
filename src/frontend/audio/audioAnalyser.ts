@@ -262,6 +262,8 @@ export class AudioAnalyser {
         try {
             processor?.dispose()
         } catch {}
+
+        const targetGainNode = this.gainNodes[key]
         try {
             this.gainNodes[key]?.disconnect()
         } catch {}
@@ -281,7 +283,7 @@ export class AudioAnalyser {
         }
 
         try {
-            if (isShared) source.disconnect(this.gainNodes[key])
+            if (isShared && targetGainNode) source.disconnect(targetGainNode)
             else source.disconnect()
         } catch {}
     }
