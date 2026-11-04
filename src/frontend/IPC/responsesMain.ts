@@ -92,6 +92,7 @@ import { setupCloudSync } from "../utils/cloudSync"
 import { newToast } from "../utils/common"
 import { translateText } from "../utils/language"
 import { confirmCustom } from "../utils/popup"
+import { getProviderItemLink, setProviderItemLink, syncProviderItemLinks } from "../utils/providerItemLinks"
 import { initializeClosing, saveComplete } from "../utils/save"
 import { invalidateSearchIndex } from "../utils/searchFast"
 import { updateSettings, updateSyncedSettings, updateThemeValues } from "../utils/updateSettings"
@@ -367,8 +368,10 @@ export const mainResponses: MainResponses = {
         const replaceIds: { [key: string]: string } = {}
         const allShows = keysToID(get(shows))
         const songOrigin = get(contentProviderData)[data.providerId]?.songOrigin
-        const linkKey = data.providerId === "planningcenter" ? "pcoLink" : data.providerId === "churchApps" ? "chumsLink" : data.providerId === "amazinglife" ? "alLink" : data.providerId === "onstage" ? "onstageLink" : ""
         const origin = data.providerId === "planningcenter" ? "pco" : data.providerId
+
+        // migrate legacy links & remove links to deleted shows
+        await syncProviderItemLinks(data.providerId)
 
         function updateExistingShow(showId: string) {
             shows.update((a) => {
@@ -381,10 +384,6 @@ export const mainResponses: MainResponses = {
             // update showsCache directly in case it's not yet saved to a local file
             showsCache.update((a) => {
                 if (!a[showId]) return a
-
-                // we should not set link when requesting to use local show, that way it will ask next time as well
-                // if (!a[showId].quickAccess) a[showId].quickAccess = {}
-                // if (linkKey) a[showId].quickAccess[linkKey] = originId
 
                 a[showId].origin = origin
                 return a
@@ -414,7 +413,8 @@ export const mainResponses: MainResponses = {
             const providerName = data.providerId === "planningcenter" ? "Planning Center" : data.providerId === "churchApps" ? "ChurchApps" : data.providerId === "onstage" ? "OnStage" : "the cloud"
 
             // first find any shows linked to the id
-            const linkedShow = linkKey ? allShows.find(({ quickAccess, id: showId }) => quickAccess?.[linkKey] === id || showId === id) : null
+            const link = getProviderItemLink(data.providerId, id)
+            const linkedShow = allShows.find(({ id: showId }) => showId === (link?.showId || id))
             // if provider item name is a scripture reference, and the name has changed, we should always use the provider version
             const changedName = isScriptureShow && linkedShow?.name !== show.name
             if (linkedShow && !changedName) {
@@ -424,9 +424,12 @@ export const mainResponses: MainResponses = {
                 // so if the name in provider changes, it will update (mostly for updating scripture references)
                 await loadShows([linkedShow.id])
                 const showData = get(showsCache)[linkedShow.id]
-                const hasSlides = Object.keys(showData.slides || {}).length > 0
+                const hasSlides = Object.keys(showData?.slides || {}).length > 0
 
-                const useLocal = !hasSlides || songOrigin === "online" ? false : songOrigin === "local" || (await confirmCustom(`This show already exists: ${linkedShow.name}.<br><br>Would you like to use the local version instead of the one from ${providerName}?`))
+                // global song origin setting has priority, then the stored link mode, otherwise ask (and remember)
+                const mode = !hasSlides ? "online" : songOrigin || link?.mode
+                const useLocal = mode ? mode === "local" : await confirmCustom(`This show already exists: ${linkedShow.name}.<br><br>Would you like to use the local version instead of the one from ${providerName}?`)
+                if (!mode) setProviderItemLink(data.providerId, id, linkedShow.id, useLocal ? "local" : "online")
                 if (useLocal) continue
 
                 downloadShow(linkedShow.id)
@@ -440,6 +443,7 @@ export const mainResponses: MainResponses = {
             if (existingShow && songOrigin !== "online") {
                 const useLocal = songOrigin === "local" || (await confirmCustom(`There is an existing show with the same name: ${existingShow.name}.<br><br>Would you like to use the local version instead of the one from ${providerName}?`))
                 if (useLocal) {
+                    if (!songOrigin) setProviderItemLink(data.providerId, id, existingShow.id, "local")
                     replaceIds[id] = existingShow.id
                     updateExistingShow(existingShow.id)
                     continue
@@ -451,8 +455,7 @@ export const mainResponses: MainResponses = {
 
             if ((existingShow && songOrigin !== "local") || songOrigin === "online") {
                 // set link so we will automatically update from the provider in the future
-                if (!show.quickAccess) show.quickAccess = {}
-                show.quickAccess[linkKey] = id
+                setProviderItemLink(data.providerId, id, targetId, "online")
             }
 
             downloadShow(targetId)

@@ -42,6 +42,7 @@ export type SaveListSyncedSettings =
     | "effects"
     | "deletedDefaults"
     | "syncedOutputs"
+    | "providerItemLinks"
 
 export type SaveListSettings =
     | "initialized"

@@ -407,6 +407,7 @@ export const disabledServers: Writable<any> = writable({ remote: false, stage: f
 export const serverData: Writable<{ [key: string]: ServerData }> = writable({}) // {}
 export const maxConnections: Writable<number> = writable(10) // 10
 export const contentProviderData: Writable<{ [key in ContentProviderId]?: any }> = writable({}) // {}
+export const providerItemLinks: Writable<{ [key: string]: { showId: string; mode: "online" | "local" } }> = writable({}) // {}
 export const obsData: Writable<{ enabled?: boolean; connected?: boolean; ip?: string; port?: number; password?: string }> = writable({}) // {}
 
 // CLOUD
