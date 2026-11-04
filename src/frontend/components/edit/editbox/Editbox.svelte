@@ -168,10 +168,10 @@
 
         if (e.ctrlKey || e.metaKey || e.target.closest(".item") === itemElem || !$activeEdit.items.includes(index) || e.target.closest(".item")) return
 
-        if (window.getSelection()) window.getSelection()?.removeAllRanges()
-
-        // timeout to allow inputs (like CSS and font size) to update selected items first if any
+        // timeout to allow inputs (like CSS and font size) to update selected items/text first if any
         setTimeout(() => {
+            if (window.getSelection()) window.getSelection()?.removeAllRanges()
+
             activeEdit.update((ae) => {
                 ae.items = []
                 return ae
