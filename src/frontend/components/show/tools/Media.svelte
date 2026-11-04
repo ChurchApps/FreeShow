@@ -16,7 +16,7 @@
     import { clone, sortByName } from "../../helpers/array"
     import { encodeFilePath, getExtension, getMedia, getMediaStyle, getMediaType, isMediaExtension, mediaSize } from "../../helpers/media"
     import { findMatchingOut, getActiveOutputs, getCurrentStyle, getResolution, setOutput } from "../../helpers/output"
-    import { _show } from "../../helpers/shows"
+    import { _show, touchShowModified } from "../../helpers/shows"
     import Button from "../../inputs/Button.svelte"
     import HoverButton from "../../inputs/HoverButton.svelte"
     import Textbox from "../../slide/Textbox.svelte"
@@ -134,7 +134,7 @@
         mics = Object.values(tempMics)
     } else mics = []
 
-    function setBG(id: string, key: string, value: boolean) {
+    function setBG(id: string, key: string, value: any) {
         if (show.locked) {
             alertMessage.set("show.locked")
             activePopup.set("alert")
@@ -149,13 +149,7 @@
             return
         }
 
-        showsCache.update((a) => {
-            let bgs = a[$activeShow!.id].media
-            if (!bgs[id]) return a // old media
-            if (value) delete bgs[id][key]
-            else bgs[id][key] = value
-            return a
-        })
+        _show().media([id]).set({ key, value })
     }
 
     let actions: SlideAction[] = []
@@ -227,11 +221,16 @@
                         {/if}
 
                         {#if background.type === "video"}
-                            <Button style="flex: 0;padding: 14px 5px;" center title={translateText("media._loop" + (background.loop !== false ? ": settings.enabled" : ""))} on:click={() => setBG(background.id || "", "loop", background.loop === false)} dark>
+                            <Button style="flex: 0;padding: 14px 5px;" center title={translateText("media._loop" + (background.loop !== false ? ": settings.enabled" : ""))} on:click={() => setBG(background.id || "", "loop", background.loop === false ? undefined : false)} dark>
                                 <Icon id="loop" white={background.loop === false} size={1.2} />
                             </Button>
-                            <Button style="flex: 0;padding: 14px 5px;" center title={translateText(background.muted !== false ? "actions.unmute" : "actions.mute")} on:click={() => setBG(background.id || "", "muted", background.muted === false)} dark>
+                            <Button style="flex: 0;padding: 14px 5px;" center title={translateText(background.muted !== false ? "actions.unmute" : "actions.mute")} on:click={() => setBG(background.id || "", "muted", background.muted === false ? undefined : false)} dark>
                                 <Icon id={background.muted !== false ? "muted" : "volume"} white={background.muted !== false} size={1.2} />
+                            </Button>
+                        {:else if background.type === "image"}
+                            {@const isForeground = background.videoType === "foreground"}
+                            <Button style="flex: 0;padding: 14px 5px;" center title={translateText(isForeground ? "preview.foreground" : "preview.background")} on:click={() => setBG(background.id || "", "videoType", isForeground ? undefined : "foreground")} dark>
+                                <Icon id={isForeground ? "type_foreground" : "type_background"} white size={1.2} />
                             </Button>
                         {/if}
                     </div>

@@ -64,8 +64,7 @@
             }
 
             const mediaData = a.background && show.media[a.background]
-            // WIP getMediaLayerType - use what is set in show only
-            if (mediaData && (mediaData?.loop === false || $media[mediaData?.path || ""]?.videoType === "foreground")) ghostBackground = null
+            if (mediaData && (mediaData?.loop === false || mediaData?.videoType === "foreground")) ghostBackground = null
         })
     }
 

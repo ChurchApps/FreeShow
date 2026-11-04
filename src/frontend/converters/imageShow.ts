@@ -48,7 +48,7 @@ export function createImageShow({ images, name }: { images: string[]; name: stri
     show.layouts[layoutId].slides = layoutShows
 
     backgrounds.forEach(([id, path]) => {
-        const media = { path, name: removeExtension(getFileName(path)) }
+        const media = { path, name: removeExtension(getFileName(path)), videoType: "foreground" }
         show.media[id] = media
     })
 

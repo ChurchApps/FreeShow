@@ -457,6 +457,7 @@ export interface Media {
     path?: string
     cameraGroup?: string
     type?: MediaType
+    videoType?: "foreground" | "background" // currently used for images, videos are determined by the set "loop" state
     muted?: boolean
     loop?: boolean
     filters?: string
