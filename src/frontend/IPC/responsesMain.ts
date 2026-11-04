@@ -416,9 +416,12 @@ export const mainResponses: MainResponses = {
             const link = getProviderItemLink(data.providerId, id)
             const linkedShow = allShows.find(({ id: showId }) => showId === (link?.showId || id))
             // if provider item name is a scripture reference, and the name has changed, we should always use the provider version
-            const changedName = isScriptureShow && linkedShow?.name !== show.name
+            const changedName = link?.mode !== "manual" && isScriptureShow && linkedShow?.name !== show.name
             if (linkedShow && !changedName) {
                 replaceIds[id] = linkedShow.id
+
+                // if linked manually, always keep the chosen show
+                if (link?.mode === "manual") continue
 
                 // no need to use local show if it doesn't have any slide content
                 // so if the name in provider changes, it will update (mostly for updating scripture references)
