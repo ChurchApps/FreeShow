@@ -51,7 +51,9 @@ export async function pptToShow(filePath: string) {
                         preserveOrder: true,
                         allowBooleanAttributes: true,
                         ignoreDeclaration: true,
-                        trimValues: false
+                        trimValues: false,
+                        // keep text as is (e.g. "007" should not become 7)
+                        parseTagValue: false
                     }
                     const parser = new XMLParser(options)
                     const output = parser.parse(xmlText)
