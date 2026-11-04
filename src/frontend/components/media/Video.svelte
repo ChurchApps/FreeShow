@@ -66,7 +66,8 @@
                     clockNow += (Math.max(0, Date.now() - data.at) / 1000) * targetPlaybackRate
                     if (data.loop && data.duration > 0) clockNow %= data.duration
                 }
-                syncVideoToAudio(video, clockNow, lastSyncedTime, isSoftLoop, targetPlaybackRate, isFading)
+                const updateAge = data.at ? Date.now() - data.at : 0
+                syncVideoToAudio(video, clockNow, lastSyncedTime, isSoftLoop, targetPlaybackRate, isFading, updateAge)
                 if (clockNow !== undefined) lastSyncedTime = clockNow
 
                 if (!isFading && videoData.loop !== data.loop) videoData.loop = data.loop
