@@ -13,8 +13,17 @@
     const dispatch = createEventDispatcher()
     let timeout: NodeJS.Timeout | null = null
     let backdropEl: HTMLDivElement
+    let textareaEl: HTMLTextAreaElement
+
+    function syncScroll() {
+        if (backdropEl && textareaEl) {
+            backdropEl.scrollTop = textareaEl.scrollTop
+            backdropEl.scrollLeft = textareaEl.scrollLeft
+        }
+    }
 
     function input() {
+        syncScroll()
         if (timeout) return
         timeout = setTimeout(() => {
             dispatch("edit", value)
@@ -23,14 +32,8 @@
     }
 
     function change() {
+        syncScroll()
         setTimeout(() => dispatch("change", value))
-    }
-
-    function handleScroll(e: any) {
-        if (backdropEl) {
-            backdropEl.scrollTop = e.target.scrollTop
-            backdropEl.scrollLeft = e.target.scrollLeft
-        }
     }
 
     $: highlightedText = getHighlighted(value, $groups)
@@ -50,7 +53,7 @@
         })
 
         if (escaped.endsWith("\n")) {
-            escaped += " "
+            escaped += "\n"
         }
         return escaped
     }
@@ -62,7 +65,7 @@
             {@html highlightedText}
         </div>
     </div>
-    <textarea placeholder={placeholder || translateText("empty.text...")} class="edit {$$props.class}" rows={lines} style={$$props.style || ""} bind:value on:input={input} on:change={change} on:keydown on:scroll={handleScroll} {disabled} {autofocus} />
+    <textarea bind:this={textareaEl} placeholder={placeholder || translateText("empty.text...")} class="edit {$$props.class}" rows={lines} style={$$props.style || ""} bind:value on:input={input} on:change={change} on:keydown on:keyup={syncScroll} on:click={syncScroll} on:scroll={syncScroll} {disabled} {autofocus} />
 </div>
 
 <style>
@@ -83,6 +86,7 @@
         pointer-events: none;
         overflow-y: auto;
         overflow-x: hidden;
+        scrollbar-gutter: stable;
         z-index: 1;
         scrollbar-width: none;
     }
@@ -101,8 +105,11 @@
         color: inherit;
         font-family: inherit;
         font-size: inherit;
-        line-height: inherit;
+        line-height: 1.35;
+        letter-spacing: normal;
         padding: 10px;
+        margin: 0;
+        border: 0;
     }
 
     .edit {
@@ -111,16 +118,23 @@
         height: 100%;
         width: 100%;
         padding: 10px;
+        margin: 0;
+        border: 0;
         outline: none;
-        border: none;
         color: transparent;
         caret-color: var(--text, white);
         font-size: inherit;
         font-family: inherit;
+        line-height: 1.35;
+        letter-spacing: normal;
+        word-wrap: break-word;
+        word-break: break-word;
+        white-space: pre-wrap;
         background-color: transparent;
         resize: none;
         box-sizing: border-box;
         overflow-y: auto;
+        scrollbar-gutter: stable;
     }
 
     .edit::selection {
