@@ -132,21 +132,26 @@ function publishViaDnsSd(name: string, port: number, uniqueName: string) {
 /// HELPERS ///
 
 export function getLocalIPs() {
-    const interfaces = os.networkInterfaces()
     const results: Record<string, string[]> = {}
 
-    for (const name of Object.keys(interfaces)) {
-        for (const net of interfaces[name] || []) {
-            if (net.internal) continue
+    try {
+        const interfaces = os.networkInterfaces()
 
-            // Skip over non-IPv4 and internal (i.e. 127.0.0.1) addresses
-            // 'IPv4' is in Node <= 17, from 18 it's a number 4 or 6
-            const familyV4Value = typeof net.family === "string" ? "IPv4" : 4
-            if (net.family !== familyV4Value) continue
+        for (const name of Object.keys(interfaces)) {
+            for (const net of interfaces[name] || []) {
+                if (net.internal) continue
 
-            if (!results[name]) results[name] = []
-            results[name].push(net.address)
+                // Skip over non-IPv4 and internal (i.e. 127.0.0.1) addresses
+                // 'IPv4' is in Node <= 17, from 18 it's a number 4 or 6
+                const familyV4Value = typeof net.family === "string" ? "IPv4" : 4
+                if (net.family !== familyV4Value) continue
+
+                if (!results[name]) results[name] = []
+                results[name].push(net.address)
+            }
         }
+    } catch (err) {
+        console.warn("Bonjour: Failed to get network interfaces:", err instanceof Error ? err.message : String(err))
     }
 
     return [...(results.en0 || []), ...(results.eth0 || []), ...(results["Wi-Fi"] || []), ...Object.values(results).flat(), "localhost"]
