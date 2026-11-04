@@ -93,7 +93,7 @@ import { escapeRegExp, hideDisplay, isOutputWindow, newToast, triggerFunction, w
 import { setExampleEffects, setExampleOverlays, setExampleTemplates } from "../../utils/createData"
 import { translateText } from "../../utils/language"
 import { confirmCustom } from "../../utils/popup"
-import { removeProviderLinks } from "../../utils/providerItemLinks"
+import { openLinkProviderDialog, removeProviderLinks } from "../../utils/providerItemLinks"
 import { send } from "../../utils/request"
 import { initializeClosing, save } from "../../utils/save"
 import { updateThemeValues } from "../../utils/updateSettings"
@@ -1121,6 +1121,9 @@ const clickActions = {
             })
             return a
         })
+    },
+    link_provider: (obj: ObjData) => {
+        if (obj.sel?.data?.[0]) openLinkProviderDialog(obj.sel.data[0])
     },
     unlink_provider: (obj: ObjData) => {
         if (obj.sel) removeProviderLinks(obj.sel.data.map((b) => b.id))

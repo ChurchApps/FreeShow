@@ -155,7 +155,7 @@ async function textToProjectItems(text: string) {
     return items
 }
 
-export function isProjectLinked(project?: Project | null, projectId?: string, contentProviderDataVal?: any): boolean {
+export function isProjectLinked(project?: Project | null, projectId?: string | null, contentProviderDataVal?: any): boolean {
     if (!project && !projectId) return false
     if (project?.origin) return true
 

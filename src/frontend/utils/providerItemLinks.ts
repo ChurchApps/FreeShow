@@ -1,14 +1,15 @@
 import { get } from "svelte/store"
 import type { ContentProviderId } from "../../electron/contentProviders/base/types"
+import { history } from "../components/helpers/history"
 import { loadShows } from "../components/helpers/setShow"
-import { providerItemLinks, shows, showsCache } from "../stores"
+import { activePopup, activeProject, activeShow, popupData, projects, providerItemLinks, shows, showsCache } from "../stores"
 
 export function getProviderItemLink(providerId: ContentProviderId, itemId: string) {
     const link = get(providerItemLinks)[`${providerId}:${itemId}`]
     return link && get(shows)[link.showId] ? link : null
 }
 
-export function setProviderItemLink(providerId: ContentProviderId, itemId: string, showId: string, mode: "online" | "local") {
+export function setProviderItemLink(providerId: ContentProviderId, itemId: string, showId: string, mode: "online" | "local" | "manual") {
     providerItemLinks.update((a) => ({ ...a, [`${providerId}:${itemId}`]: { showId, mode } }))
 }
 
@@ -40,4 +41,50 @@ export async function syncProviderItemLinks(providerId: ContentProviderId) {
 
     // remove links to deleted shows
     providerItemLinks.set(Object.fromEntries(Object.entries(links).filter(([key, link]) => !key.startsWith(`${providerId}:`) || get(shows)[link.showId])))
+}
+
+function getProviderFromOrigin(origin?: string | null): ContentProviderId | null {
+    if (origin === "pco") return "planningcenter"
+    return (origin as ContentProviderId) || null
+}
+function getProviderItemIdFromShowId(showId: string, providerId: ContentProviderId, links = get(providerItemLinks)): string | null {
+    const entry = Object.entries(links).find(([key, link]) => key.startsWith(`${providerId}:`) && link.showId === showId)
+    if (entry) return entry[0].slice(providerId.length + 1)
+    return showId
+}
+
+export function openLinkProviderDialog(item: { id: string; index?: number }) {
+    if (!item?.id) return
+
+    const projectId = get(activeProject)
+    const currentProject = projectId ? get(projects)[projectId] : null
+    const providerId = getProviderFromOrigin(currentProject?.origin)
+    if (!providerId) return
+
+    const currentShowId = item.id
+    const providerItemId = getProviderItemIdFromShowId(currentShowId, providerId) || currentShowId
+    const itemIndex = item.index ?? currentProject?.shows?.findIndex((s) => s.id === currentShowId)
+
+    popupData.set({
+        action: "select_show",
+        active: currentShowId,
+        trigger: (chosenShowId: string) => {
+            setProviderItemLink(providerId, providerItemId, chosenShowId, "manual")
+
+            if (projectId && currentProject && itemIndex !== undefined && itemIndex >= 0) {
+                const newShows = [...(currentProject.shows || [])]
+                newShows[itemIndex] = { ...newShows[itemIndex], id: chosenShowId }
+
+                history({
+                    id: "UPDATE",
+                    newData: { key: "shows", data: newShows },
+                    oldData: { id: projectId },
+                    location: { page: "show", id: "project_key" }
+                })
+
+                if (get(activeShow)?.index === itemIndex) activeShow.set({ ...get(activeShow)!, id: chosenShowId })
+            }
+        }
+    })
+    activePopup.set("select_show")
 }
