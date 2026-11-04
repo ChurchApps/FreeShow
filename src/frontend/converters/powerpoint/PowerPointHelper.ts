@@ -2036,55 +2036,38 @@ function getBaseColor(fill: any[], colors: { [key: string]: any }[], depth = 0):
     return { hex: base.hex, alpha: base.alpha, modifiers: [...base.modifiers, ...modifiers] }
 }
 
-function rgbToHex(r: number, g: number, b: number) {
-    return (
-        "#" +
-        [r, g, b]
-            .map((c) =>
-                Math.round(clamp(c, 0, 255))
-                    .toString(16)
-                    .padStart(2, "0")
-            )
-            .join("")
-            .toUpperCase()
-    )
-}
-
-function clamp(value: number, min: number, max: number) {
-    return Math.max(min, Math.min(max, value))
-}
+const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v))
+const rgbToHex = (r: number, g: number, b: number) =>
+    "#" +
+    [r, g, b]
+        .map((c) =>
+            Math.round(clamp(c, 0, 255))
+                .toString(16)
+                .padStart(2, "0")
+        )
+        .join("")
+        .toUpperCase()
 
 function getGradient(gradFill: any[], colors: { [key: string]: any }[]) {
     if (!gradFill?.length) return null
-
     const stops = getValue(gradFill, "a:gsLst")
-        .map((stop) => ({ color: resolveColor(stop["a:gs"], colors) || "#000", pos: Number(stop[":@"]?.pos || 0) / 1000 }))
+        .map((s) => ({ color: resolveColor(s["a:gs"], colors) || "#000", pos: Number(s[":@"]?.pos || 0) / 1000 }))
         .sort((a, b) => a.pos - b.pos)
-    if (!stops.length) return null
-
-    const radial = !!getAttribute(gradFill, "path", "a:path")
-    // DrawingML 0deg = left to right
-    const angle = Number(getAttribute(gradFill, "ang", "a:lin") || 0) / 60000
-
-    return { stops, radial, angle }
+    return stops.length ? { stops, radial: !!getAttribute(gradFill, "path", "a:path"), angle: Number(getAttribute(gradFill, "ang", "a:lin") || 0) / 60000 } : null
 }
 
 function resolveGradient(gradFill: any[], colors: { [key: string]: any }[]) {
-    const gradient = getGradient(gradFill, colors)
-    if (!gradient) return null
-
-    const gradientStops = gradient.stops.map((s) => `${s.color} ${s.pos}%`)
-    if (gradient.radial) return `radial-gradient(circle at center, ${gradientStops.join(", ")})`
-    return `linear-gradient(${gradient.angle + 90}deg, ${gradientStops.join(", ")})`
+    const g = getGradient(gradFill, colors)
+    if (!g) return null
+    const stops = g.stops.map((s) => `${s.color} ${s.pos}%`).join(", ")
+    return g.radial ? `radial-gradient(circle at center, ${stops})` : `linear-gradient(${g.angle + 90}deg, ${stops})`
 }
 
 function getSvgGradient(gradFill: any[], colors: { [key: string]: any }[], id: string) {
-    const gradient = getGradient(gradFill, colors)
-    if (!gradient) return ""
-
-    const stops = gradient.stops.map((s) => `<stop offset="${s.pos}%" stop-color="${s.color}"></stop>`).join("")
-    if (gradient.radial) return `<defs><radialGradient id="${id}">${stops}</radialGradient></defs>`
-    return `<defs><linearGradient id="${id}" gradientTransform="rotate(${gradient.angle} 0.5 0.5)">${stops}</linearGradient></defs>`
+    const g = getGradient(gradFill, colors)
+    if (!g) return ""
+    const stops = g.stops.map((s) => `<stop offset="${s.pos}%" stop-color="${s.color}"></stop>`).join("")
+    return `<defs><${g.radial ? "radialGradient" : `linearGradient gradientTransform="rotate(${g.angle} 0.5 0.5)"`} id="${id}">${stops}</${g.radial ? "radialGradient" : "linearGradient"}></defs>`
 }
 
 function resolveImageEffects(blipFill: any[], colors: { [key: string]: any }[] = []): string {
