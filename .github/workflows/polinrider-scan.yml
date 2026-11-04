@@ -1,0 +1,19 @@
+name: PolinRider scan
+
+# Fails the build on editor autorun tasks, fake font files, and known loader markers.
+# The scanner is ChurchApps/.github/.github/workflows/polinrider-scan.yml.
+on:
+  pull_request:
+  push:
+    branches: [main, master, production, release]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  polinrider-scan:
+    name: polinrider-scan
+    permissions:
+      contents: read
+    uses: ChurchApps/.github/.github/workflows/polinrider-scan.yml@main
