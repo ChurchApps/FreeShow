@@ -18,6 +18,7 @@ interface SyncRecord {
     targetTime: number
     timestamp: number
     isNudging?: boolean
+    driftCount?: number
 }
 
 const lastSeekTimestamps = new WeakMap<HTMLVideoElement, number>()
@@ -50,8 +51,12 @@ export function clampPlaybackRate(rate: number): number {
  * - 500ms post-seek cooldown ensures smooth playback without repeated drift seeks.
  * - Smooth rate nudge with hysteresis for small continuous drift (80ms deadband).
  */
-export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: number | undefined, lastSyncedTime: number | null, isSoftLoop = false, targetPlaybackRate = 1, isFadingOut = false): void {
+export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: number | undefined, lastSyncedTime: number | null, isSoftLoop = false, targetPlaybackRate = 1, isFadingOut = false, shouldBePaused?: boolean): void {
     if (!vid || targetTime === undefined) return
+    // If the video should be playing but got paused (e.g. after a decoder stall or interrupted seek), resume it
+    if (shouldBePaused === false && vid.paused && !isFadingOut && !vid.error && vid.readyState >= 2) {
+        vid.play().catch(() => {})
+    }
     if (vid.readyState < 2 || vid.seeking) {
         // keep in step with lastSyncedTime, otherwise a slow seek looks like an explicit jump and seeks again in a loop
         const record = lastSyncRecords.get(vid)
@@ -110,7 +115,8 @@ export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: numbe
     const seekCooldownMs = 500 + (seekLatencyEMA.get(vid) ?? 0) * 1000
     const inSeekCooldown = now - (lastSeekTimestamps.get(vid) || 0) < seekCooldownMs
     const driftThreshold = Math.max(0.4, 0.8 * rate)
-    const shouldHardSeek = (isExplicitSeek && wrapDiff > 0.05) || (vid.paused && wrapDiff > 0.05) || (!inSeekCooldown && wrapDiff > driftThreshold)
+    const driftCount = !inSeekCooldown && wrapDiff > driftThreshold ? (prevRecord.driftCount ?? 0) + 1 : 0
+    const shouldHardSeek = (isExplicitSeek && wrapDiff > 0.05) || (vid.paused && wrapDiff > 0.05) || driftCount >= 3 || (!inSeekCooldown && wrapDiff > 5)
 
     if (shouldHardSeek) {
         lastSeekTimestamps.set(vid, now)
@@ -118,7 +124,7 @@ export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: numbe
 
         let seekTo = targetTime
         if (!vid.paused) {
-            seekTo += Math.min(seekLatencyEMA.get(vid) ?? 0, 8) * rate
+            seekTo += Math.min(seekLatencyEMA.get(vid) ?? 0, 0.25) * rate
             if (loopDuration) seekTo %= loopDuration
             else if (Number.isFinite(vid.duration)) seekTo = Math.min(seekTo, Math.max(targetTime, vid.duration - 0.1))
             pendingSeeks.set(vid, now)
@@ -136,14 +142,14 @@ export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: numbe
         return
     }
 
-    // 3. Smooth rate nudge with deadband (50ms) & hysteresis (20ms)
+    // 3. Smooth rate nudge with deadband (80ms) & hysteresis (30ms)
     // Scales dynamically: small drift gets gentle nudge, larger drift gets stronger nudge up to ±15%
     let isNudging = prevRecord.isNudging ?? false
     let targetRate = rate
 
     if (!vid.paused && !inWrapZone && vid.readyState >= 2) {
-        const deadband = Math.max(0.03, 0.05 * rate)
-        const hysteresis = Math.max(0.015, 0.02 * rate)
+        const deadband = Math.max(0.08, 0.08 * rate)
+        const hysteresis = Math.max(0.03, 0.03 * rate)
         if (isNudging && absDiff <= hysteresis) {
             isNudging = false
         } else if (isNudging || absDiff > deadband) {
@@ -154,7 +160,7 @@ export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: numbe
         isNudging = false
     }
 
-    lastSyncRecords.set(vid, { targetTime, timestamp: now, isNudging })
+    lastSyncRecords.set(vid, { targetTime, timestamp: now, isNudging, driftCount })
 
     // each playbackRate write resyncs the pipeline, so the rate moves in coarse steps;
     // a video dropping frames or short of data is never sped up

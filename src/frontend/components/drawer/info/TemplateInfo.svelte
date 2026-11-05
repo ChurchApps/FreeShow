@@ -29,7 +29,7 @@
         </main>
     {:else}
         <Center>
-            <Clock />
+            <Clock seconds />
             <Date />
         </Center>
     {/if}

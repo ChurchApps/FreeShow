@@ -55,18 +55,37 @@
         const isSelected = $activeEdit.items.includes(index)
 
         if (rightClick) {
-            if (!isSelected) activeEdit.update((ae) => { ae.items = [index]; return ae })
+            if (!isSelected)
+                activeEdit.update((ae) => {
+                    ae.items = [index]
+                    return ae
+                })
         } else if (e.shiftKey) {
-            if (!isSelected) activeEdit.update((ae) => { ae.items.push(index); return ae })
+            if (!isSelected)
+                activeEdit.update((ae) => {
+                    ae.items.push(index)
+                    return ae
+                })
         } else if (!isSelected) {
-            activeEdit.update((ae) => { ae.items = [index]; return ae })
+            activeEdit.update((ae) => {
+                ae.items = [index]
+                return ae
+            })
         } else if ($activeEdit.items.length > 1) {
-            const startX = e.clientX, startY = e.clientY
-            window.addEventListener("mouseup", (upEvent) => {
-                if (Math.hypot(upEvent.clientX - startX, upEvent.clientY - startY) < 4) {
-                    activeEdit.update((ae) => { ae.items = [index]; return ae })
-                }
-            }, { once: true })
+            const startX = e.clientX,
+                startY = e.clientY
+            window.addEventListener(
+                "mouseup",
+                (upEvent) => {
+                    if (Math.hypot(upEvent.clientX - startX, upEvent.clientY - startY) < 4) {
+                        activeEdit.update((ae) => {
+                            ae.items = [index]
+                            return ae
+                        })
+                    }
+                },
+                { once: true }
+            )
         }
 
         // deselect selected text
@@ -149,15 +168,15 @@
 
         if (e.ctrlKey || e.metaKey || e.target.closest(".item") === itemElem || !$activeEdit.items.includes(index) || e.target.closest(".item")) return
 
-        if (window.getSelection()) window.getSelection()?.removeAllRanges()
-
-        // timeout to allow CSS to update selected items first if any
+        // timeout to allow inputs (like CSS and font size) to update selected items/text first if any
         setTimeout(() => {
+            if (window.getSelection()) window.getSelection()?.removeAllRanges()
+
             activeEdit.update((ae) => {
                 ae.items = []
                 return ae
             })
-        })
+        }, 60)
     }
 
     $: customOutputId = getFirstActiveOutput($outputs)?.id || ""

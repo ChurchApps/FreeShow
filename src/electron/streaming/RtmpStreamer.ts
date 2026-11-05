@@ -338,7 +338,7 @@ export class RtmpStreamer {
                     if (!stdin || stdin.destroyed || !streamer.lastFrame || isWriting) return
 
                     // Hold video until audio arrives
-                    if (config.enableAudio && !streamer.hasReceivedFirstAudio) return
+                    if (config.enableAudio && !streamer.hasReceivedFirstAudio && (Date.now() - streamer.encoderStartedAt < 1000)) return
 
                     // Never write if stdin has ANY unsent data (>0 bytes queued).
                     // This guarantees VideoPipe Queued NEVER hits 8100 KB at startup!

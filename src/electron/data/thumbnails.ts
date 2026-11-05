@@ -275,7 +275,10 @@ export async function pdfToImage({ filePath }: { filePath: string }) {
     const rawPdfName = path.basename(filePath, path.extname(filePath))
     const pdfName = sanitizeFileName(rawPdfName)
     const pdfImportPath = getDataFolderPath("imports", "PDF")
-    const pathName = createFolder(path.join(pdfImportPath, pdfName))
+    let folderName = pdfName
+    // add timestamp to folder name if it already exists because files with the same name might have different content
+    if (fs.existsSync(path.join(pdfImportPath, folderName))) folderName = `${pdfName}_${Date.now()}`
+    const pathName = createFolder(path.join(pdfImportPath, folderName))
     const renderPhasePercent = 80
     const savePhasePercent = 20
 
@@ -306,7 +309,6 @@ export async function pdfToImage({ filePath }: { filePath: string }) {
             const image = nativeImage.createFromDataURL(base64)
             const imagePath = path.join(pathName, `${i + 1}.jpg`)
 
-            createFolder(pathName)
             saveToDisk(imagePath, image, "jpg")
             images.push(imagePath)
 

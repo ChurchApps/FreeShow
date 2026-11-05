@@ -708,17 +708,20 @@ const slideDrop = {
             delete a.id
 
             // "background" by default
-            let backgroundData = { muted: true, loop: true }
+            let backgroundData: any = { muted: true, loop: true }
             if (a.type === "player") {
                 backgroundData = { muted: false, loop: false }
             } else {
                 const mediaStyle = getMediaStyle(get(media)[path], undefined)
                 let type = getMediaLayerType(path, mediaStyle) || (shouldBeForeground ? "foreground" : "background")
                 if (a.contentProvider) type = "foreground"
-                if (type === "foreground") backgroundData = { muted: false, loop: false }
+                if (type === "foreground") {
+                    if (a.type === "video") backgroundData = { muted: false, loop: false, videoType: "foreground" }
+                    else backgroundData = { videoType: "foreground" }
+                }
             }
 
-            return { ...a, path, ...(a.type === "video" || a.type === "player" ? backgroundData : {}) }
+            return { ...a, path, ...(a.type === "video" || a.type === "player" ? backgroundData : backgroundData.videoType === "foreground" ? { videoType: "foreground" } : {}) }
         })
 
         if (center) {

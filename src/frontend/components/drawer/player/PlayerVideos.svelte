@@ -95,7 +95,7 @@
                 }
 
                 // set as "foreground" type (clear slide & ignore "background" layer)
-                clearSlide()
+                clearSlide(true)
                 setOutput("background", { id: video.rid, type: "player", muted: false, loop: false, startAt: 0, ignoreLayer: true })
             }}
             on:dblclick={() => {

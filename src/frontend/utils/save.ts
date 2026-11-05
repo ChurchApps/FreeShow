@@ -32,6 +32,7 @@ import {
     categories,
     cloudSyncData,
     contentProviderData,
+    providerItemLinks,
     customFonts,
     customMetadata,
     customizedIcons,
@@ -284,7 +285,8 @@ export function getSyncedSettings(): { [key in SaveListSyncedSettings]: any } {
         customMetadata,
         effects,
         deletedDefaults,
-        syncedOutputs
+        syncedOutputs,
+        providerItemLinks
     }
 }
 
@@ -514,6 +516,7 @@ const saveList: { [key in SaveList]: any } = {
     globalRegexes: null,
     customMetadata: null,
     contentProviderData,
+    providerItemLinks,
     obsData: null,
     effects,
     audioRouting,

@@ -3,7 +3,7 @@
     import type { Unsubscriber } from "svelte/store"
     import type { Output } from "../../../../types/Output"
     import type { MediaType, ShowType } from "../../../../types/Show"
-    import { activeFocus, activeShow, focusMode, outLocked, playerVideos } from "../../../stores"
+    import { activeEdit, activeFocus, activeShow, focusMode, outLocked, playerVideos } from "../../../stores"
     import { triggerClickOnEnterSpace } from "../../../utils/clickable"
     import { translateText } from "../../../utils/language"
     import Icon from "../../helpers/Icon.svelte"
@@ -89,6 +89,10 @@
 
     function openPreview() {
         if (!background || !path) return
+
+        if (type === "video" || type === "image" || type === "media") {
+            activeEdit.set({ id: path, type: "media", items: [] })
+        }
 
         if ($focusMode) activeFocus.set({ id: path, type: type as ShowType })
         else activeShow.set({ id: path, type: type as ShowType })

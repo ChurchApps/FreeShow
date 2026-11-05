@@ -416,9 +416,12 @@ function handleSlides(obj, data, initializing) {
 
     if (!slides[0]) return
 
-    slides = slides.sort((a, b) => (a.index < b.index ? 1 : -1))
-    if (data.layouts) data.layouts.reverse()
-    if (data.layout?.backgrounds?.[1]) data.layout.backgrounds.reverse()
+    const hasIndices = slides.some((s) => s.index !== undefined)
+    if (hasIndices) {
+        slides = slides.sort((a, b) => (a.index < b.index ? 1 : -1))
+        if (data.layouts) data.layouts.reverse()
+        if (data.layout?.backgrounds?.[1]) data.layout.backgrounds.reverse()
+    }
 
     slides.forEach((slide, i) => processSlide(slide, i, { deleting, data, showId, layout, ref, index, type }))
 
@@ -537,6 +540,16 @@ function addSlideToLayout(slide, slideId, slideIndex, i, showId, layout, ref, da
             if (oldIndex < 0) oldIndex = newChildren.length
             newChildren = addToPos(newChildren, [slideId], oldIndex)
             _show(showId).slides([parent.id]).set({ key: "children", value: newChildren })
+
+            showsCache.update((a) => {
+                if (!a[showId]?.layouts?.[layout]?.slides?.[parent.index]) return a
+                if (!a[showId].layouts[layout].slides[parent.index].children) a[showId].layouts[layout].slides[parent.index].children = {}
+
+                const newLayoutValue = clone(layoutValue)
+                delete newLayoutValue.id
+                a[showId].layouts[layout].slides[parent.index].children![slideId] = newLayoutValue
+                return a
+            })
         } else {
             _show(showId).slides([slideId]).set({ key: "group", value: "" })
             _show(showId)

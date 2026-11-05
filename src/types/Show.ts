@@ -457,6 +457,7 @@ export interface Media {
     path?: string
     cameraGroup?: string
     type?: MediaType
+    videoType?: "foreground" | "background" // currently used for images, videos are determined by the set "loop" state
     muted?: boolean
     loop?: boolean
     filters?: string
@@ -642,6 +643,7 @@ export interface OutSlide {
     translations?: number // scripture translations count (for style template)
     attributionString?: string // scripture custom attributionString
     customDynamicValues?: { [key: string]: string | [string, string][] } // used for scripture slides
+    silentIndexUpdate?: boolean // when the original slide index of the outputted slide changes
 }
 
 export interface OutTransition {

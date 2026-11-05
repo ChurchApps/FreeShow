@@ -483,10 +483,11 @@
 
             new Array(...line.childNodes).forEach((child: any, j) => {
                 if (child.nodeName === "#text") {
-                    // add "floating" text to previous node (e.g. pressing backspace at the start of a line)
+                    // add "floating" text to previous node (e.g. pressing backspace/delete at the start/end of a line)
                     // preserve style when merging lines with different styling (macOS issue)
                     let lastNode = newLines[pos].text.length - 1
-                    let originalLineStyle = item.lines?.[sourceLine]?.text?.[0]?.style || ""
+                    const mergedLine = (item.lines || []).length > (textElem?.children || []).length && lastNode >= 0 ? sourceLine + 1 : sourceLine
+                    let originalLineStyle = item.lines?.[mergedLine]?.text?.[0]?.style || item.lines?.[sourceLine]?.text?.[0]?.style || ""
                     let lastNodeStyle = lastNode >= 0 ? newLines[pos].text[lastNode]?.style || "" : ""
 
                     // Create new segment if no previous node or styles differ

@@ -417,14 +417,31 @@ function sendThemeToRemote() {
 }
 
 export async function convertBackgrounds(show: Show, noLoad = false, init = false) {
-    if (!show?.media) return {}
+    if (!show) return {}
 
     show = clone(show)
+    if (!show.media) show.media = {}
+
+    // media backgrounds
     const mediaIds = new Set<string>()
     show.layouts[show.settings?.activeLayout]?.slides.forEach((a) => {
         if (a.background) mediaIds.add(a.background)
         Object.values(a.children || {}).forEach((child) => {
             if (child?.background) mediaIds.add(child.background)
+        })
+    })
+
+    // include media items
+    Object.values(show.slides || {}).forEach((slide) => {
+        slide.items?.forEach((item) => {
+            if (item.type !== "media" || !item.src) return
+
+            let existingId = Object.keys(show.media).find((id) => (show.media[id]?.path || show.media[id]?.id) === item.src)
+            if (!existingId) {
+                existingId = item.src
+                show.media[existingId] = { path: item.src }
+            }
+            mediaIds.add(existingId)
         })
     })
     ;[...mediaIds].forEach((id) => {

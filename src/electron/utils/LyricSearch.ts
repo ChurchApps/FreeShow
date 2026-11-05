@@ -26,15 +26,24 @@ export class LyricSearch {
     // GENIUS
     private static getGeniusClient = () => {
         const Genius = require("genius-lyrics")
-        return new Genius.Client()
+        const client = new Genius.Client()
+        if (client.request?.get) {
+            client.request.get = async (route: string) => {
+                const url = route.startsWith("http") ? route : `https://genius.com${route}`
+                const res = await net.fetch(url, { headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" } })
+                return res.text()
+            }
+        }
+        return client
     }
 
     private static searchGenius = async (artist: string, title: string) => {
         try {
             const client = this.getGeniusClient()
-            const songs = await client.songs.search(title + artist)
+            const query = artist ? `${title} ${artist}` : title
+            const songs = await client.songs.search(query)
             if (songs.length > 3) songs.splice(3, songs.length - 3)
-            return songs.map((song: any) => LyricSearch.convertGenuisToResult(song, title + artist))
+            return songs.map((song: any) => LyricSearch.convertGenuisToResult(song, query))
         } catch (err) {
             console.error(err)
             return []
@@ -45,10 +54,10 @@ export class LyricSearch {
     private static getGenius = async (song: LyricSearchResult) => {
         try {
             const client = this.getGeniusClient()
-            const searchedSongs = await client.songs.search(song.originalQuery || "")
+            const searchedSongs = await client.songs.search(song.originalQuery || `${song.title} ${song.artist}`.trim())
             let result = ""
             for (const searchedSong of searchedSongs) {
-                if (searchedSong.id.toString() === song.key) {
+                if (searchedSong.id.toString() === song.key || searchedSong.title.toLowerCase() === song.title.toLowerCase()) {
                     result = await searchedSong.lyrics()
                     // remove extra song info
                     result = result.replace(/^[\s\S]*(?:\d*\s*Contributors?|Read More|Lyrics)\s*/i, "").trim()

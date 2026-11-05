@@ -45,6 +45,10 @@ export class AudioAnalyser {
         return this.ac
     }
 
+    static resumeContext() {
+        if (this.ac.state === "suspended") this.ac.resume().catch(() => {})
+    }
+
     private static createSourceNode(audio: HTMLMediaElement | MediaStream): AudioNode {
         if (audio instanceof MediaStream) return this.ac.createMediaStreamSource(audio)
         let source = this.elementSources.get(audio)
@@ -262,6 +266,8 @@ export class AudioAnalyser {
         try {
             processor?.dispose()
         } catch {}
+
+        const targetGainNode = this.gainNodes[key]
         try {
             this.gainNodes[key]?.disconnect()
         } catch {}
@@ -281,7 +287,7 @@ export class AudioAnalyser {
         }
 
         try {
-            if (isShared) source.disconnect(this.gainNodes[key])
+            if (isShared && targetGainNode) source.disconnect(targetGainNode)
             else source.disconnect()
         } catch {}
     }

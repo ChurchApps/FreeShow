@@ -8,11 +8,11 @@ import { clearAudio } from "../../audio/audioFading"
 import { AudioPlayer } from "../../audio/audioPlayer"
 import { AudioPlaylist } from "../../audio/audioPlaylist"
 import { dbToGain } from "../../audio/dBUtils"
-import { activeDrawerTab, activeEdit, activePage, activeProject, activeRecording, activeShow, activeTimers, audioChannelsData, audioPlaylists, audioRouting, draw, drawSettings, drawTool, folders, groupNumbers, groups, media, openScripture, outLocked, outputs, overlays, pdfImports, playingAudio, playingMetronome, projects, refreshEditSlide, selected, shows, showsCache, sortedShowsList, special, styles, timers, variables } from "../../stores"
+import { activeDrawerTab, activeEdit, activePage, activeProject, activeShow, activeTimers, audioChannelsData, audioPlaylists, audioRouting, draw, drawSettings, drawTool, folders, groupNumbers, groups, media, openScripture, outLocked, outputs, overlays, pdfImports, playingAudio, playingMetronome, projects, refreshEditSlide, selected, shows, showsCache, sortedShowsList, special, styles, timers, variables } from "../../stores"
 import { newToast, triggerFunction } from "../../utils/common"
 import { send } from "../../utils/request"
 import { parseEngScriptureRefToNumbers, resolveScriptureReference } from "../drawer/bible/scripture"
-import { startOutputRecording, stopMediaRecorder } from "../drawer/live/recorder"
+import { isOutputRecording, startOutputRecording, stopOutputRecording } from "../drawer/live/recorder"
 import { getDynamicValue } from "../edit/scripts/itemHelpers"
 import { keysToID, removeDeleted, sortByName } from "../helpers/array"
 import { ondrop } from "../helpers/drop"
@@ -174,7 +174,7 @@ export async function startProjectItemByName(name: string) {
         const shouldBeMuted = videoType === "background" ? item.muted || true : false
 
         const ignoreLayer = videoType === "foreground" || (videoType !== "background" && (item.type === "image" || !shouldLoop))
-        if (ignoreLayer) clearSlide()
+        if (ignoreLayer) clearSlide(true)
 
         let out = { path: item.id, muted: shouldBeMuted, loop: shouldLoop, startAt: 0, type: item.type, ...mediaStyle, ignoreLayer }
 
@@ -370,14 +370,14 @@ export function toggleOutputRecording(data: API_toggle_id = {}) {
     if ((data.value as any) === "true") data.value = true
 
     const outputId = data.id || getFirstActiveOutput()?.id || getFirstOutput()?.id || "default"
-    const isRecording = !!get(activeRecording)
+    const isRecording = isOutputRecording(outputId)
 
     if (data.value === true) {
         if (!isRecording) startOutputRecording(outputId)
     } else if (data.value === false) {
-        if (isRecording) stopMediaRecorder()
+        if (isRecording) stopOutputRecording(outputId)
     } else {
-        if (isRecording) stopMediaRecorder()
+        if (isRecording) stopOutputRecording(outputId)
         else startOutputRecording(outputId)
     }
 }

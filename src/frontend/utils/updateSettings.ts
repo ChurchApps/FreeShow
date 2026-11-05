@@ -32,6 +32,7 @@ import {
     categories,
     cloudSyncData,
     contentProviderData,
+    providerItemLinks,
     customFonts,
     customMetadata,
     customizedIcons,
@@ -476,6 +477,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
         if (v?.length > 1) contentProviderData.set({ ...get(contentProviderData), churchApps: { syncCategories: v } })
     },
     contentProviderData: (v: any) => contentProviderData.set(v),
+    providerItemLinks: (v: any) => providerItemLinks.set(v || {}),
     obsData: (v: any) => obsData.set(v),
     effects: (a: any) => effects.set(a),
     deletedDefaults: (a: any) => deletedDefaults.set({ ...get(deletedDefaults), ...a }),

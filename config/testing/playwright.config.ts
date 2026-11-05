@@ -3,6 +3,7 @@ import { defineConfig } from "@playwright/test"
 export default defineConfig({
     testDir: ".",
     testMatch: "**/*.test.ts",
+    testIgnore: "outputs/**",
 
     // Electron startup is slow, especially on CI.
     timeout: 120_000,

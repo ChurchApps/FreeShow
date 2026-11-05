@@ -197,7 +197,7 @@ export function keydown(e: KeyboardEvent) {
         if (isFormattingKey(e) && isEditingText()) return
 
         // use default input shortcuts on supported devices
-        const exeption = ["e", "i", "n", "o", "s", "a", "z", "Z", "y", "x"]
+        const exeption = ["e", "i", "n", "o", "s", "a", "x"]
         const passthrough = get(os).platform === "darwin" ? [...exeption, "c", "v"] : exeption
 
         const activeElem = document.activeElement
@@ -344,6 +344,8 @@ export const previewCtrlShortcuts = {
     }
 }
 
+let lastF2Time = 0
+
 export const previewShortcuts = {
     // presenter controller keys
     Escape: () => {
@@ -359,12 +361,17 @@ export const previewShortcuts = {
         clearBackground()
         timelineRecordingAction.set({ id: "clear_background" })
     },
-    F2: () => {
+    F2: (e?: any) => {
+        if (e?.repeat) return false
         // return if "rename" is selected
         if (get(outLocked) || (get(selected).id && get(selected).id !== "scripture" && !get(focusMode))) return false
         if (presentationControllersKeysDisabled()) return false
 
-        clearSlide()
+        const now = Date.now()
+        const isDoublePress = now - lastF2Time < 500
+        lastF2Time = isDoublePress ? 0 : now
+
+        clearSlide(isDoublePress)
         timelineRecordingAction.set({ id: "clear_slide" })
         return true
     },
@@ -527,7 +534,7 @@ export async function togglePlayingMedia(e: Event | null = null, back = false, a
         const shouldBeMuted = typeof projectItem?.muted === "boolean" ? projectItem.muted : videoType === "background" ? true : false
 
         const ignoreLayer = videoType === "foreground" || (videoType !== "background" && (type === "image" || !shouldLoop))
-        if (ignoreLayer) clearSlide()
+        if (ignoreLayer) clearSlide(true)
 
         const located = await getMedia(item.id)
         if (!located) return

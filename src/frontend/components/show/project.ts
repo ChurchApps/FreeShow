@@ -17,7 +17,8 @@ export function openProject(id: string, openFirstItem: boolean = true) {
     activeProject.set(id)
     markProjectAsUsed(id)
 
-    if (openFirstItem) openProjectItem(id)
+    const showAlreadyInProject = get(projects)[id]?.shows?.some((a) => a.id === get(activeShow)?.id)
+    if (openFirstItem && !showAlreadyInProject) openProjectItem(id)
 }
 
 function markProjectAsUsed(id: string) {
@@ -154,7 +155,7 @@ async function textToProjectItems(text: string) {
     return items
 }
 
-export function isProjectLinked(project?: Project | null, projectId?: string, contentProviderDataVal?: any): boolean {
+export function isProjectLinked(project?: Project | null, projectId?: string | null, contentProviderDataVal?: any): boolean {
     if (!project && !projectId) return false
     if (project?.origin) return true
 

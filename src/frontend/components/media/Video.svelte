@@ -51,9 +51,10 @@
 
     let isFadingOutState = false
     let unsubscribeSync: (() => void) | null = null
-    $: {
+    $: subscribeSync(syncPath || path, outputId, pauseCenter)
+    function subscribeSync(targetPath: string, outputId: string, pauseCenter: boolean) {
         unsubscribeSync?.()
-        const targetPath = syncPath || path
+        unsubscribeSync = null
         if (!pauseCenter && targetPath && outputId) {
             let lastSyncedTime: number | null = null
             unsubscribeSync = videoSync(targetPath, outputId, (data) => {
@@ -66,7 +67,7 @@
                     clockNow += (Math.max(0, Date.now() - data.at) / 1000) * targetPlaybackRate
                     if (data.loop && data.duration > 0) clockNow %= data.duration
                 }
-                syncVideoToAudio(video, clockNow, lastSyncedTime, isSoftLoop, targetPlaybackRate, isFading)
+                syncVideoToAudio(video, clockNow, lastSyncedTime, isSoftLoop, targetPlaybackRate, isFading, data.paused)
                 if (clockNow !== undefined) lastSyncedTime = clockNow
 
                 if (!isFading && videoData.loop !== data.loop) videoData.loop = data.loop

@@ -377,10 +377,7 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
                     else if (a.data.background) background = a.data.background
 
                     const showMedia = _show(showId).get("media")?.[a.data.background || ""]
-                    const mediaData = get(media)[showMedia?.path || ""] || {}
-                    // WIP getMediaLayerType - use what is set in show only
-                    // const mediaType = getMediaLayerType(a.data.background || "", mediaData)
-                    if (showMedia && (showMedia?.loop === false || mediaData.videoType === "foreground")) background = null
+                    if (showMedia && (showMedia?.loop === false || showMedia?.videoType === "foreground")) background = null
                 }
             })
         }
@@ -411,7 +408,7 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
                 const muted = bg.muted !== false
 
                 // player videos on a slide are treated as background, so we don't clear slide layers
-                const ignoreLayer = type === "player" ? false : mediaStyle.videoType === "foreground"
+                const ignoreLayer = type === "player" ? false : bg.videoType ? bg.videoType === "foreground" : mediaStyle.videoType === "foreground"
 
                 const bgData = {
                     name,

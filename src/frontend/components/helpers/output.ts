@@ -227,17 +227,19 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
             else resetActionTrigger = false
 
             // if current playing background is "foreground", clear it
-            const currentBackground = get(outputs)[outs?.[0]]?.out?.background || {}
-            const shouldClearLayer = currentBackground.ignoreLayer === true
-            // if a player video is played from a slide, it's treated as "background" instead of "foreground"
-            const isPlayerForeground = currentBackground.type === "player" && currentBackground.ignoreLayer !== false
-            if (shouldClearLayer || isPlayerForeground) clearBackground()
-            else {
-                // likely not needed, as ignoreLayer should be set when "foreground"
-                const mediaData = get(media)[currentBackground.path || ""] || {}
-                const mediaType = getMediaLayerType(currentBackground.path || "", mediaData)
-                if (mediaType === "foreground") clearBackground()
-            }
+            outs.forEach((outId) => {
+                const currentBackground = get(outputs)[outId]?.out?.background || {}
+                const shouldClearLayer = currentBackground.ignoreLayer === true
+                // if a player video is played from a slide, it's treated as "background" instead of "foreground"
+                const isPlayerForeground = currentBackground.type === "player" && currentBackground.ignoreLayer !== false
+                if (shouldClearLayer || isPlayerForeground) clearBackground(outId)
+                else {
+                    // likely not needed, as ignoreLayer should be set when "foreground"
+                    const mediaData = get(media)[currentBackground.path || ""] || {}
+                    const mediaType = getMediaLayerType(currentBackground.path || "", mediaData)
+                    if (mediaType === "foreground") clearBackground(outId)
+                }
+            })
         }
 
         let toggleState = false
@@ -1060,7 +1062,8 @@ export function updateOutputWebrtcData(outputId: string, key: string, value: any
     return newData
 }
 
-export function startRtmpStreaming(outputId: string = "") {
+export async function startRtmpStreaming(outputId: string = "") {
+    if (!(await checkFFmpeg())) return
     const resolvedId = outputId ? resolveOutputId(outputId) || outputId : ""
     const outputIds = resolvedId ? [resolvedId] : getAllActiveOutputIds()
     outputIds.forEach((id) => updateOutputRtmpData(id, "streaming", true))
@@ -1179,7 +1182,7 @@ export async function checkFFmpeg(): Promise<boolean> {
     const res = await requestMain(Main.FFMPEG_CHECK)
     if (res?.installed) return true
 
-    if (await confirmCustom("To create an RTMP output, FreeShow needs to download and install FFmpeg. Do you want to proceed?")) {
+    if (await confirmCustom("To record or stream outputs, FreeShow needs to download and install FFmpeg. Do you want to proceed?")) {
         const downloadRes = await requestMain(Main.FFMPEG_DOWNLOAD)
         if (downloadRes?.success) {
             newToast("FFmpeg installed successfully!")

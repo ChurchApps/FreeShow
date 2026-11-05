@@ -475,7 +475,7 @@ const copyActions = {
                 if (!ref[a.index]) return ""
 
                 // get layout
-                if (a.index !== undefined) layouts.push(ref[a.index].data)
+                if (a.index !== undefined) layouts.push(clone(ref[a.index].data || {}))
 
                 return a.id || (a.index !== undefined ? ref[a.index].id : "")
             })
@@ -500,9 +500,9 @@ const copyActions = {
             // this should never be here
             delete slide.children
 
-            const parent = ref.find((a) => a.id === slide.id)?.parent || ""
+            const parent = ref.find((a) => a.id === slide.id)?.parent
             // check that parent is not copied
-            if (ids.includes(parent)) return slide
+            if (ids.includes(parent?.id)) return slide
 
             // slide.group = ""
             slide.oldChild = slide.id

@@ -94,6 +94,21 @@ export function applyGraphicsDeviceSelection() {
             console.warn(`[GPU] configured graphics device ${node} does not exist on this system, using auto`)
             return
         }
+
+        // On native Wayland, pinning a secondary/discrete GPU (especially NVIDIA) causes dmabuf buffer
+        // sharing import mismatches with the desktop compositor, crashing with a fatal Wayland error (error 7).
+        const isWayland = Boolean(process.env.WAYLAND_DISPLAY || process.env.XDG_SESSION_TYPE === "wayland")
+        const ozonePlatform = app.commandLine.getSwitchValue("ozone-platform")
+        const isOzoneWayland = ozonePlatform === "wayland" || (!app.commandLine.hasSwitch("ozone-platform") && isWayland)
+
+        if (isOzoneWayland && !process.env.FS_LINUX_RENDER_NODE) {
+            const vendor = linuxNodeVendor(node)
+            if (vendor === "NVIDIA") {
+                console.warn(`[GPU] skipping GPU render node pinning for ${node} (${vendor}) under native Wayland to prevent dmabuf crash`)
+                return
+            }
+        }
+
         app.commandLine.appendSwitch("render-node-override", node)
         console.info(`[GPU] pinning GPU process DRM render node: --render-node-override=${node}${process.env.FS_LINUX_RENDER_NODE ? " (from FS_LINUX_RENDER_NODE)" : ""}`)
         return

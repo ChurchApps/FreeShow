@@ -4,9 +4,10 @@
     import type { ProjectShowRef, Tree } from "../../../types/Projects"
     import type { ShowType } from "../../../types/Show"
     import { addProjectItem, addToProject, updateRecentlyAddedFiles } from "../../converters/project"
-    import { actions, activeFocus, activePopup, activeProject, activeShow, contextActive, drawer, drawerTabsData, editingProjectTemplate, focusMode, fullColors, playerVideos, popupData, projects, projectTemplates, projectView, recentFiles, selected, shows, special } from "../../stores"
+    import { actions, activeFocus, activePopup, activeProject, activeShow, contentProviderData, contextActive, drawer, drawerTabsData, editingProjectTemplate, focusMode, fullColors, playerVideos, popupData, projects, projectTemplates, projectView, providerItemLinks, recentFiles, selected, special } from "../../stores"
     import { triggerFunction } from "../../utils/common"
     import { getAccess } from "../../utils/profile"
+    import { isShowLinked } from "../../utils/providerItemLinks"
     import { getActionIcon } from "../actions/actions"
     import { getTimeUntilClock } from "../drawer/timers/timers"
     import { openDrawer } from "../edit/scripts/edit"
@@ -24,7 +25,7 @@
     import Center from "../system/Center.svelte"
     import DropArea from "../system/DropArea.svelte"
     import SelectElem from "../system/SelectElem.svelte"
-    import { clipboardToProject } from "./project"
+    import { clipboardToProject, isProjectLinked } from "./project"
 
     export let tree: Tree[]
     export let recentlyUsedList: any[] = []
@@ -55,6 +56,7 @@
     $: projectId = isTemplate ? $editingProjectTemplate : $activeProject
 
     $: currentProject = isTemplate ? $projectTemplates[$editingProjectTemplate] : $activeProject ? $projects[$activeProject] : null
+    $: isProviderProject = !isTemplate && isProjectLinked(currentProject, $activeProject, $contentProviderData)
 
     // close if not existing
     $: if ($activeProject && !currentProject) activeProject.set(null) // projectView.set(true)
@@ -275,7 +277,7 @@
                         {#each splittedItemsList.items as show, i}
                             {@const index = show.index}
                             {@const triggerAction = show.data?.settings?.triggerAction || $special.sectionTriggerAction}
-                            {@const pcoLink = !!$shows[show.id]?.quickAccess?.pcoLink}
+                            {@const providerLink = isShowLinked(show.id, $providerItemLinks)}
                             {@const isFirst = i === 0}
                             {@const isLast = i === splittedItemsList.items.length - 1}
                             {@const borderRadiusStyle = `${isFirst ? "border-top-right-radius: 10px;" : ""}${isLast ? "border-bottom-right-radius: 10px;" : ""}`}
@@ -340,7 +342,7 @@
                                             {/if}
                                         </MaterialButton>
                                     {:else}
-                                        <ShowButton id={show.id} {show} {index} class={projectReadOnly ? "" : `context #${pcoLink ? "pco_item__" : ""}project_${getContextMenuId(show.type)}`} style={borderRadiusStyle} icon isProject />
+                                        <ShowButton id={show.id} {show} {index} class={projectReadOnly ? "" : `context #${isProviderProject ? `provider_item${providerLink ? "" : "_unlinked"}` : `project_${getContextMenuId(show.type)}`}`} style={borderRadiusStyle} icon isProject />
                                     {/if}
                                 </SelectElem>
                             {/if}

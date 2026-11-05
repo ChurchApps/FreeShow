@@ -100,7 +100,6 @@ export class VideoPlayer {
                 }
 
                 audioPath = located.path
-                id = located.path
             }
         }
 
@@ -297,12 +296,12 @@ export class VideoPlayer {
                 const currentTime = Math.min(audio.currentTime, duration)
                 const timeTick = new TimeInterpolator()
                 timeTick.update(currentTime)
-                if (!audio.paused) timeTick.play()
+                timeTick.play()
 
                 playingVideos.update((list) => {
                     const item = list.find((v) => v.path === originalId)
                     if (item) {
-                        item.audio = { currentTime, timeTick, duration, paused: audio.paused, loop: !!item.loop, muted: true }
+                        item.audio = { currentTime, timeTick, duration, paused: false, loop: !!item.loop, muted: true }
                     }
                     return list
                 })
@@ -323,20 +322,20 @@ export class VideoPlayer {
     }
 
     private static waitForAudio(pathOrId: string, audio: HTMLAudioElement): Promise<HTMLAudioElement | null> {
-        return new Promise((resolve) => {
-            audio.addEventListener("canplay", loaded, { once: true })
-            audio.addEventListener("error", error, { once: true })
+        if (audio.readyState >= 2) return Promise.resolve(audio)
 
-            let resolved = false
-            function loaded() {
-                resolved = true
-                resolve(audio)
+        return new Promise((resolve) => {
+            const timer = setTimeout(() => done(audio), 3000)
+            const done = (result: HTMLAudioElement | null) => {
+                clearTimeout(timer)
+                audio.oncanplay = null
+                audio.onerror = null
+                resolve(result)
             }
-            function error(err: ErrorEvent) {
-                if (resolved) return
-                console.error("Could not get audio:", err)
+            audio.oncanplay = () => done(audio)
+            audio.onerror = () => {
                 VideoPlayer.stop(pathOrId)
-                resolve(null)
+                done(null)
             }
         })
     }
@@ -451,6 +450,7 @@ export class VideoPlayer {
         }
 
         if (audio instanceof HTMLAudioElement) {
+            AudioAnalyser.resumeContext()
             audio.play().catch((err) => console.warn("[VideoPlayer] play failed:", err?.name))
         } else if ("timeTick" in audio) {
             audio.paused = false
@@ -506,8 +506,9 @@ export class VideoPlayer {
             .filter((a) => !a.enabled || !a.active)
             .map((a) => a.id)
         const linkedOutputIds = clone(playing?.linkedOutputIds || [])
-        const stopInOutputIds = linkedOutputIds.filter((id) => !nonActiveOutputs.includes(id))
-        const shouldStop = linkedOutputIds.length === stopInOutputIds.length
+        const stopInOutputIds = outputId ? [outputId] : linkedOutputIds.filter((id) => !nonActiveOutputs.includes(id))
+        const remainingOutputIds = linkedOutputIds.filter((id) => !stopInOutputIds.includes(id))
+        const shouldStop = remainingOutputIds.length === 0
 
         if (shouldStop && audio && !reachedEnd && !audio.paused) {
             const durationMs = get(transitionData)?.media?.duration ?? 800
@@ -818,6 +819,7 @@ export class VideoPlayer {
     }
 
     private static syncClockTimer: NodeJS.Timeout | null = null
+
     private static initSyncClock() {
         if (this.syncClockTimer) clearInterval(this.syncClockTimer)
         this.syncState() // update immediately
@@ -831,6 +833,10 @@ export class VideoPlayer {
             get(playingVideos).forEach((video) => {
                 const audio = video.audio
                 if (!audio) return
+
+                if (audio instanceof HTMLAudioElement && !audio.paused) {
+                    AudioAnalyser.resumeContext()
+                }
 
                 if ("timeTick" in audio) audio.currentTime = audio.timeTick.value
 

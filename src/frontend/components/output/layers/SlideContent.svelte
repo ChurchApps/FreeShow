@@ -4,6 +4,7 @@
     import { scriptureSettings, showsCache, slideTimelineSpeedMultiplier, templates } from "../../../stores"
     import { waitUntilValueIsDefined } from "../../../utils/common"
     import { shouldItemBeShown } from "../../edit/scripts/itemHelpers"
+    import { getItemText } from "../../edit/scripts/textStyle"
     import { clone } from "../../helpers/array"
     import { loadCustomFonts } from "../../helpers/fonts"
     import { getStyleTemplate, itemNeedsAutoSize, slideHasAutoSizeItem } from "../../helpers/output"
@@ -68,6 +69,13 @@
         if (!oldItem || !newItem) return false
         return JSON.stringify(getItemBase(oldItem)) === JSON.stringify(getItemBase(newItem))
     }
+
+    function itemsAreEqual(oldItem: Item | undefined, newItem: Item | undefined): boolean {
+        if (!oldItem || !newItem) return false
+        if (getItemText(oldItem) !== getItemText(newItem)) return false
+        return itemBoxesAreEqual(oldItem, newItem)
+    }
+
     // maintain a hidden workload that primes autosize results ahead of the visible reveal
     let precomputeTargets: { item: Item; index: number; key: string }[] = []
     let precomputePending = new Set<string>()
@@ -221,6 +229,10 @@
         if (betweenClearingTransition?.type === "none") betweenClearingTransition.duration = 0
 
         if (!currentSlideItems?.length) {
+            updateGeneration++
+            if (timeout) clearTimeout(timeout)
+            timeout = null
+            show = false
             scheduleAutoSizePrecompute([])
             currentItems = []
             current = {
@@ -246,7 +258,9 @@
         if (forceRemount) handledRefreshCounter = refreshCounter
 
         const isTempSlide = outSlide?.id === "temp" || outSlide?.id === "tempText"
-        const isDifferentSlide = isTempSlide || current.currentSlide?.id !== currentSlide?.id || current.outSlide?.index !== outSlide?.index || current.outSlide?.id !== outSlide?.id
+        const isSilentIndexUpdate = !!outSlide?.silentIndexUpdate && current.currentSlide?.id === currentSlide?.id && current.outSlide?.id === outSlide?.id
+        if (outSlide?.silentIndexUpdate) delete outSlide.silentIndexUpdate
+        const isDifferentSlide = !isSilentIndexUpdate && (isTempSlide || current.currentSlide?.id !== currentSlide?.id || current.outSlide?.index !== outSlide?.index || current.outSlide?.id !== outSlide?.id)
         // Same-slide refreshes (line reveal / dynamic values / metadata churn) should update in place.
         // Running the full hide/show transition cycle here can briefly output an empty frame.
         if (!isDifferentSlide && !forceRemount) {
@@ -290,7 +304,9 @@
         const forceRefreshItems = isSameSlideRefresh || hasStyleChange || forceRemount
         if (forceRefreshItems) renderVersion++
 
-        const hasTransitioningItems = forceRefreshItems || currentSlide.items.length !== currentItems.length || currentSlide.items.some((newItem: Item, i: number) => !itemBoxesAreEqual(currentItems[i], newItem) || hasLinesContent(newItem) || hasLinesContent(currentItems[i]))
+        const isZeroFadeInOffset = currentTransition?.fadeInOffset === 0
+        const isContentIdentical = !forceRefreshItems && currentSlide.items.length === currentItems.length && currentSlide.items.every((newItem: Item, i: number) => itemsAreEqual(currentItems[i], newItem))
+        const hasTransitioningItems = (forceRefreshItems || currentSlide.items.length !== currentItems.length || currentSlide.items.some((newItem: Item, i: number) => !itemBoxesAreEqual(currentItems[i], newItem) || hasLinesContent(newItem) || hasLinesContent(currentItems[i]))) && !(isZeroFadeInOffset && isContentIdentical)
 
         // between
         if (isDifferentSlide && currentItems.length && currentSlide.items.length) transitioningBetween = true
@@ -542,7 +558,23 @@
 {#if precomputeTargets.length}
     <div class="autosize-precompute" aria-hidden="true">
         {#each precomputeTargets as target (target.key)}
-            <Textbox item={target.item} {ratio} {outputId} outputStyle={currentStyle} {mirror} {preview} {styleIdOverride} ref={{ type: "show", showId: outSlide?.id, slideId: currentSlide?.id, id: currentSlide?.id || "", layoutId: outSlide?.layout }} linesStart={getLineState(lines, outSlide, currentLineId)?.[target.item.lineReveal ? "linesStart" : "start"]} linesEnd={getLineState(lines, outSlide, currentLineId)?.[target.item.lineReveal ? "linesEnd" : "end"]} clickRevealed={!!getLineState(lines, outSlide, currentLineId)?.clickRevealed} autoSizeKey={target.key} itemIndex={target.index} on:autosizeReady={handlePrecomputeReady} updateDynamicValues={!isClearing} />
+            <Textbox
+                item={target.item}
+                {ratio}
+                {outputId}
+                outputStyle={currentStyle}
+                {mirror}
+                {preview}
+                {styleIdOverride}
+                ref={{ type: "show", showId: outSlide?.id, slideId: currentSlide?.id, id: currentSlide?.id || "", layoutId: outSlide?.layout }}
+                linesStart={getLineState(lines, outSlide, currentLineId)?.[target.item.lineReveal ? "linesStart" : "start"]}
+                linesEnd={getLineState(lines, outSlide, currentLineId)?.[target.item.lineReveal ? "linesEnd" : "end"]}
+                clickRevealed={!!getLineState(lines, outSlide, currentLineId)?.clickRevealed}
+                autoSizeKey={target.key}
+                itemIndex={target.index}
+                on:autosizeReady={handlePrecomputeReady}
+                updateDynamicValues={!isClearing}
+            />
         {/each}
     </div>
 {/if}

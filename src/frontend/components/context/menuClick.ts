@@ -93,6 +93,7 @@ import { escapeRegExp, hideDisplay, isOutputWindow, newToast, triggerFunction, w
 import { setExampleEffects, setExampleOverlays, setExampleTemplates } from "../../utils/createData"
 import { translateText } from "../../utils/language"
 import { confirmCustom } from "../../utils/popup"
+import { openLinkProviderDialog, removeProviderLinks } from "../../utils/providerItemLinks"
 import { send } from "../../utils/request"
 import { initializeClosing, save } from "../../utils/save"
 import { updateThemeValues } from "../../utils/updateSettings"
@@ -1121,22 +1122,11 @@ const clickActions = {
             return a
         })
     },
-    unlink_pco: (obj: ObjData) => {
-        if (!obj.sel) return
-
-        showsCache.update((a) => {
-            obj.sel!.data.forEach((b) => {
-                if (!a[b.id]) return
-                delete a[b.id].quickAccess.pcoLink
-            })
-            return a
-        })
-        shows.update((a) => {
-            obj.sel!.data.forEach((b) => {
-                delete a[b.id].quickAccess.pcoLink
-            })
-            return a
-        })
+    link_provider: (obj: ObjData) => {
+        if (obj.sel?.data?.[0]) openLinkProviderDialog(obj.sel.data[0])
+    },
+    unlink_provider: (obj: ObjData) => {
+        if (obj.sel) removeProviderLinks(obj.sel.data.map((b) => b.id))
     },
     section: (obj: ObjData) => {
         if (get(projects)[get(activeProject)!]?.sectionsLocked) {
@@ -1681,7 +1671,7 @@ const clickActions = {
         const videoType = getMediaLayerType(path, mediaStyle)
 
         const ignoreLayer = videoType === "foreground"
-        if (ignoreLayer) clearSlide()
+        if (ignoreLayer) clearSlide(true)
 
         const type = getMediaType(getExtension(path))
         setOutput("background", { path, ...mediaStyle, type, loop: false, muted: false, ignoreLayer })

@@ -166,5 +166,6 @@ export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
     customMetadata: { disabled: [], custom: [] },
     effects: {},
     deletedDefaults: {},
-    syncedOutputs: {}
+    syncedOutputs: {},
+    providerItemLinks: {}
 }
