@@ -107,7 +107,9 @@ function parseChordChartIntoSections(chordChart: string): SongSection[] {
 
         // Detect section headers (VERSE, CHORUS, BRIDGE, etc.)
         // Order matters: longer patterns first (PRECORO before PRE, INSTRUMENTAL before INTRO, VERSE before VERS)
-        const sectionMatch = trimmed.match(/^\[?(POST-CHORUS|POSTCHORUS|POST-CORO|POSTCORO|PRE-CHORUS|PRECHORUS|PRE-CORO|PRECORO|INSTRUMENTAL|ESTRIBILLO|BREAKDOWN|TURNAROUND|INTERLUDE|REFRENG|REFRAIN|ENDING|PUENTE|CHORUS|VERSE|VERSO|BRIDGE|INTRO|OUTRO|FINAL|BREAK|SOLO|HOOK|VAMP|POST|VERS|CORO|PRE|TAG)(\s*\d+)?\]?(?:\s|$)/i)
+        // The whole line must be a header (keyword + optional number, colon, repeat marker or parenthesized note),
+        // otherwise lyric lines starting with a keyword (e.g. "solo tengo mi vida", "coro de ángeles") are misdetected.
+        const sectionMatch = trimmed.match(/^\[?(POST-CHORUS|POSTCHORUS|POST-CORO|POSTCORO|PRE-CHORUS|PRECHORUS|PRE-CORO|PRECORO|INSTRUMENTAL|ESTRIBILLO|BREAKDOWN|TURNAROUND|INTERLUDE|REFRENG|REFRAIN|ENDING|PUENTE|CHORUS|VERSE|VERSO|BRIDGE|INTRO|OUTRO|FINAL|BREAK|SOLO|HOOK|VAMP|POST|VERS|CORO|PRE|TAG)(\s*\d+)?\]?\s*:?\s*(?:\(?x\d+\)?)?\s*(?:\([^)]*\))?\s*$/i)
         if (sectionMatch) {
             // Save previous section if exists (including sections with only chords)
             if (currentSectionLabel) {
@@ -119,7 +121,7 @@ function parseChordChartIntoSections(chordChart: string): SongSection[] {
                     })
                 }
             }
-            currentSectionLabel = sectionMatch[0].trim().replace(/[\[\]]/g, "")
+            currentSectionLabel = (sectionMatch[1] + (sectionMatch[2] || "")).trim()
             currentSectionContent = []
             continue
         }
