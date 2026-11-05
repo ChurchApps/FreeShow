@@ -197,7 +197,7 @@ export function keydown(e: KeyboardEvent) {
         if (isFormattingKey(e) && isEditingText()) return
 
         // use default input shortcuts on supported devices
-        const exeption = ["e", "i", "n", "o", "s", "a", "z", "Z", "y", "x"]
+        const exeption = ["e", "i", "n", "o", "s", "a", "x"]
         const passthrough = get(os).platform === "darwin" ? [...exeption, "c", "v"] : exeption
 
         const activeElem = document.activeElement
