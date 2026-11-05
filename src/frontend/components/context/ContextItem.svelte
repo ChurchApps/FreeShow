@@ -6,7 +6,6 @@
         activeEdit,
         activePage,
         activeProject,
-        activeRecording,
         activeShow,
         categories,
         colorbars,
@@ -45,6 +44,7 @@
     } from "../../stores"
     import { translateText } from "../../utils/language"
     import { closeContextMenu } from "../../utils/shortcuts"
+    import { isOutputRecording } from "../drawer/live/recorder"
     import { keysToID } from "../helpers/array"
     import Icon from "../helpers/Icon.svelte"
     import { getExtension, getMediaType } from "../helpers/media"
@@ -373,14 +373,9 @@
             if ($forceClock) enabled = true
         },
         recording: () => {
-            if ($activeRecording) {
-                menu.label = "actions.stop_recording"
-                menu.icon = "stop"
-                // enabled = true
-            } else {
-                menu.label = "actions.start_recording"
-                menu.icon = "record"
-            }
+            const isRec = isOutputRecording(contextElem?.id || "")
+            menu.label = isRec ? "actions.stop_recording" : "actions.start_recording"
+            menu.icon = isRec ? "stop" : "record"
         },
         mark_played: () => {
             const projectId = $activeProject

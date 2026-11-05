@@ -3,7 +3,7 @@
     import { activePage, activeRecording, activeStyle, audioChannelsData, dictionary, outputs, rtmpStatus, selected, settingsTab, special, styles, templates, toggleOutputEnabled } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import AudioMeter from "../../drawer/audio/AudioMeter.svelte"
-    import { stopMediaRecorder } from "../../drawer/live/recorder"
+    import { isOutputRecording, stopMediaRecorder } from "../../drawer/live/recorder"
     import { openDrawer } from "../../edit/scripts/edit"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -187,8 +187,8 @@
     $: liveStartedAt = (fullscreenOut?.rtmp ? fullscreenOut?.rtmpData?.startedAt : fullscreenOut?.webrtcData?.startedAt) || 0
     $: liveUnhealthy = fullscreenOut?.rtmp && isLive && getUnhealthyDestinations(fullscreenOut?.rtmpData, $rtmpStatus[fullscreenId])?.length
 
-    $: isRec = $activeRecording?.outputId === fullscreenId || ($activeRecording?.isOutput && !$activeRecording.outputId && outs[0]?.id === fullscreenId)
-    $: recStartedAt = $activeRecording?.startedAt || 0
+    $: isRec = isOutputRecording(fullscreenId)
+    $: recStartedAt = $activeRecording?.outputs?.[fullscreenId]?.startedAt || $activeRecording?.startedAt || 0
 </script>
 
 <!-- aspect-ratio: {resolution?.width || 1920}/{resolution?.height || 1080}; -->
@@ -273,9 +273,9 @@ aria-label={fullscreen ? "Exit fullscreen preview" : "Toggle fullscreen preview"
                             </div>
                         {/if}
 
-                        {#if $activeRecording?.outputId === output.id || ($activeRecording?.isOutput && !$activeRecording.outputId && outs[0]?.id === output.id)}
+                        {#if isOutputRecording(output.id)}
                             <div class="badge rec" style="background-color: #b60707;">
-                                <MaterialButton style="padding: 2px 4px;min-height: 0;gap: 4px;" on:click={() => stopMediaRecorder()} title="actions.stop_recording">
+                                <MaterialButton style="padding: 2px 4px;min-height: 0;gap: 4px;" on:click={() => stopMediaRecorder(output.id)} title="actions.stop_recording">
                                     <Icon id="record" size={0.7} white />
                                     REC
                                 </MaterialButton>
