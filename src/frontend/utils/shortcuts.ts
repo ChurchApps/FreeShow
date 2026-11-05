@@ -204,6 +204,15 @@ export function keydown(e: KeyboardEvent) {
         if (key === "i" && activeElem?.closest(".editItem")) return
         if (isTypingTarget(activeElem) && !passthrough.includes(key)) return
 
+        // plain text areas (e.g. show Text edit) use native step-by-step undo/redo (app undo/redo skips these anyway)
+        const isPlainTextEdit = activeElem?.classList?.contains("edit") && !activeElem?.closest(".editItem")
+        // (triggered explicitly, as macOS Electron has no native "undo" menu role here)
+        if (isPlainTextEdit && ["z", "Z", "y"].includes(key)) {
+            e.preventDefault()
+            document.execCommand(key === "z" ? "undo" : "redo")
+            return
+        }
+
         key = key.toLowerCase()
 
         if (e.shiftKey && shiftCtrlKeys[key]) {

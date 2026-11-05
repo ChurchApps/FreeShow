@@ -181,8 +181,8 @@ const clickActions = {
     },
     fullscreen: () => sendMain(Main.FULLSCREEN),
     // edit
-    undo: () => undo(),
-    redo: () => redo(),
+    undo: () => (isPlainTextEditFocused() ? document.execCommand("undo") : undo()),
+    redo: () => (isPlainTextEditFocused() ? document.execCommand("redo") : redo()),
     history: () => activePopup.set("history"),
     cut: () => cut(),
     copy: () => copy(),
@@ -2518,4 +2518,10 @@ function sort(obj: ObjData, id: string) {
     })
 
     if (id === "shows") updateShowsList(get(shows))
+}
+
+// plain text areas (e.g. show Text edit) use the native step-by-step undo/redo
+function isPlainTextEditFocused() {
+    const activeElem = document.activeElement
+    return !!activeElem?.classList?.contains("edit") && !activeElem.closest(".editItem")
 }
