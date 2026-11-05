@@ -50,9 +50,8 @@ export function clampPlaybackRate(rate: number): number {
  * - 500ms post-seek cooldown ensures smooth playback without repeated drift seeks.
  * - Smooth rate nudge with hysteresis for small continuous drift (80ms deadband).
  */
-export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: number | undefined, lastSyncedTime: number | null, isSoftLoop = false, targetPlaybackRate = 1, isFadingOut = false, updateAge = 0): void {
+export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: number | undefined, lastSyncedTime: number | null, isSoftLoop = false, targetPlaybackRate = 1, isFadingOut = false): void {
     if (!vid || targetTime === undefined) return
-    if (updateAge > 120) return
     if (vid.readyState < 2 || vid.seeking) {
         // keep in step with lastSyncedTime, otherwise a slow seek looks like an explicit jump and seeks again in a loop
         const record = lastSyncRecords.get(vid)

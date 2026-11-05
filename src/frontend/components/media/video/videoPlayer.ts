@@ -100,7 +100,6 @@ export class VideoPlayer {
                 }
 
                 audioPath = located.path
-                id = located.path
             }
         }
 
@@ -323,20 +322,20 @@ export class VideoPlayer {
     }
 
     private static waitForAudio(pathOrId: string, audio: HTMLAudioElement): Promise<HTMLAudioElement | null> {
-        return new Promise((resolve) => {
-            audio.addEventListener("canplay", loaded, { once: true })
-            audio.addEventListener("error", error, { once: true })
+        if (audio.readyState >= 2) return Promise.resolve(audio)
 
-            let resolved = false
-            function loaded() {
-                resolved = true
-                resolve(audio)
+        return new Promise((resolve) => {
+            const timer = setTimeout(() => done(audio), 3000)
+            const done = (result: HTMLAudioElement | null) => {
+                clearTimeout(timer)
+                audio.oncanplay = null
+                audio.onerror = null
+                resolve(result)
             }
-            function error(err: ErrorEvent) {
-                if (resolved) return
-                console.error("Could not get audio:", err)
+            audio.oncanplay = () => done(audio)
+            audio.onerror = () => {
                 VideoPlayer.stop(pathOrId)
-                resolve(null)
+                done(null)
             }
         })
     }
@@ -451,6 +450,7 @@ export class VideoPlayer {
         }
 
         if (audio instanceof HTMLAudioElement) {
+            AudioAnalyser.resumeContext()
             audio.play().catch((err) => console.warn("[VideoPlayer] play failed:", err?.name))
         } else if ("timeTick" in audio) {
             audio.paused = false
@@ -819,18 +819,24 @@ export class VideoPlayer {
     }
 
     private static syncClockTimer: NodeJS.Timeout | null = null
+
     private static initSyncClock() {
+        if (this.syncClockTimer) clearInterval(this.syncClockTimer)
         this.syncState() // update immediately
-        if (!this.syncClockTimer && get(playingVideos).length > 0) {
-            this.syncClockTimer = setInterval(() => this.syncState(), get(special).optimizedMode ? 500 : 100)
-        }
+        this.syncClockTimer = setInterval(() => this.syncState(), get(special).optimizedMode ? 500 : 100)
     }
 
     private static syncState() {
+        let isPlaying = false
+
         playingVideoState.update((a) => {
             get(playingVideos).forEach((video) => {
                 const audio = video.audio
                 if (!audio) return
+
+                if (audio instanceof HTMLAudioElement && !audio.paused) {
+                    AudioAnalyser.resumeContext()
+                }
 
                 if ("timeTick" in audio) audio.currentTime = audio.timeTick.value
 
@@ -873,12 +879,14 @@ export class VideoPlayer {
                         isFadingOut: this.isFadingOut.includes(video.path)
                     }
                 })
+
+                if (!video.audio.paused) isPlaying = true
             })
 
             return a
         })
 
-        if (get(playingVideos).length === 0) {
+        if (!isPlaying) {
             if (this.syncClockTimer) {
                 clearInterval(this.syncClockTimer)
                 this.syncClockTimer = null

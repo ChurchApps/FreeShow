@@ -45,6 +45,10 @@ export class AudioAnalyser {
         return this.ac
     }
 
+    static resumeContext() {
+        if (this.ac.state === "suspended") this.ac.resume().catch(() => {})
+    }
+
     private static createSourceNode(audio: HTMLMediaElement | MediaStream): AudioNode {
         if (audio instanceof MediaStream) return this.ac.createMediaStreamSource(audio)
         let source = this.elementSources.get(audio)
