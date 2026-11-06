@@ -349,6 +349,8 @@
     $: styleBackgroundData = { path: styleBackground, ...($media[styleBackground] || {}), loop: true }
     $: templateBackgroundData = { path: templateBackground, loop: true, ...($media[templateBackground] || {}) }
     $: backgroundData = templateBackground ? templateBackgroundData : background
+    // slide color drawn over the style background media (skipped when other background media is active, as composited media would be covered too)
+    $: slideColorOverlay = currentSlide?.settings?.colorOverBackground && currentSlide.settings.color && !backgroundData && layers.includes("background") && !sceneHideLayers ? currentSlide.settings.color : ""
 
     // remove slide transition when replaced by "foreground" media (drawn below slide)
     const noTransition: Transition = { type: "none", duration: 0, easing: "" }
@@ -409,6 +411,13 @@
     <!-- always show style background (behind other backgrounds) -->
     {#if styleBackground && actualSlide?.type !== "pdf"}
         <Background data={styleBackgroundData} {outputId} transition={transitions.media} {currentStyle} {slideFilter} {ratio} animationStyle={animationData.style?.background || ""} mirror />
+    {/if}
+
+    <!-- slide color over style background -->
+    {#if slideColorOverlay}
+        {#key slideColorOverlay}
+            <div class="slideColor" style="background: {slideColorOverlay};" transition:custom={mirror ? noTransition : transitions.media} />
+        {/key}
     {/if}
 
     <!-- scene media -->
@@ -485,6 +494,15 @@
 </Zoomed>
 
 <style>
+    .slideColor {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 100%;
+        height: 100%;
+    }
+
     .attributionString {
         position: absolute;
         bottom: 15px;

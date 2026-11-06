@@ -11,6 +11,7 @@
     import MaterialColorInput from "../../inputs/MaterialColorInput.svelte"
     import MaterialFilePicker from "../../inputs/MaterialFilePicker.svelte"
     import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
+    import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
     import ItemsList from "./ItemsList.svelte"
 
     $: slideId = getLayoutRef()[$activeEdit.slide || 0]?.id
@@ -20,13 +21,14 @@
     // $: groupData = $groups[globalGroup] || {}
     // $: groupTemplate = groupData.template
 
-    let settings: { template?: string; color?: string; backgroundImage?: string } = {}
+    let settings: { template?: string; color?: string; colorOverBackground?: boolean; backgroundImage?: string } = {}
 
     $: if ($showsCache || editSlide) setValues()
     function setValues() {
         settings = {
             template: editSlide?.settings?.template,
             color: editSlide?.settings?.color || "",
+            colorOverBackground: editSlide?.settings?.colorOverBackground || false,
             backgroundImage: editSlide?.settings?.backgroundImage || ""
         }
     }
@@ -72,6 +74,18 @@
             allowEmpty
             noLabel
         />
+
+        {#if settings.color}
+            <MaterialToggleSwitch
+                label="edit.color_over_background"
+                checked={settings.colorOverBackground}
+                defaultValue={false}
+                on:change={(e) => {
+                    settings.colorOverBackground = e.detail
+                    update()
+                }}
+            />
+        {/if}
 
         <!-- WIP TIP about layout background image -->
         <InputRow>

@@ -1062,6 +1062,7 @@
         "color": "Color",
         "accent_color": "Accent color",
         "background_color": "Background color",
+        "color_over_background": "Show color over style background",
         "background_opacity": "Background opacity",
         "background_image": "Background image",
         "background_media": "Background media",
