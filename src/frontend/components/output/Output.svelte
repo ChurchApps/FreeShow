@@ -351,6 +351,13 @@
     $: backgroundData = templateBackground ? templateBackgroundData : background
     // slide color drawn over the style background media (skipped when other background media is active, as composited media would be covered too)
     $: slideColorOverlay = currentSlide?.settings?.colorOverBackground && currentSlide.settings.color && !backgroundData && layers.includes("background") && !sceneHideLayers ? currentSlide.settings.color : ""
+    // one persistent layer that eases between colors (a crossfade between two layers would let the media show through halfway)
+    let lastSlideColor = ""
+    $: if (slideColorOverlay) lastSlideColor = slideColorOverlay
+    // animate like the slide text: on outputs and in the main preview, not in other mirrors
+    $: slideColorAnimated = !mirror || preview
+    $: slideColorDuration = !slideColorAnimated || transitions.media?.type === "none" ? 0 : (transitions.media?.duration ?? 800)
+    $: slideColorStyle = `${lastSlideColor.includes("-gradient") ? `background-image: ${lastSlideColor};` : `background-color: ${lastSlideColor};`}transition: background-color ${slideColorDuration}ms;`
 
     // remove slide transition when replaced by "foreground" media (drawn below slide)
     const noTransition: Transition = { type: "none", duration: 0, easing: "" }
@@ -415,9 +422,7 @@
 
     <!-- slide color over style background -->
     {#if slideColorOverlay}
-        {#key slideColorOverlay}
-            <div class="slideColor" style="background: {slideColorOverlay};" transition:custom={mirror ? noTransition : transitions.media} />
-        {/key}
+        <div class="slideColor" style={slideColorStyle} transition:custom={slideColorAnimated ? transitions.media : noTransition} />
     {/if}
 
     <!-- scene media -->
