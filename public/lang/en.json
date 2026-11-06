@@ -971,7 +971,20 @@
         "local": "Local",
         "syncing": "Syncing to cloud",
         "sync_complete": "Sync completed",
-        "restore_weekly_backup": "Restore sync state from a week ago"
+        "restore_weekly_backup": "Restore sync state from a week ago",
+        "s3": "S3 compatible storage",
+        "s3_tip": "Sync to your own bucket on AWS S3, Cloudflare R2, Backblaze B2, MinIO, Wasabi or any other S3 compatible service.",
+        "s3_endpoint": "Endpoint URL",
+        "s3_endpoint_tip": "Leave empty for AWS S3.",
+        "s3_region": "Region",
+        "s3_bucket": "Bucket",
+        "s3_prefix": "Folder in bucket",
+        "s3_prefix_tip": "Optional. Use a different folder for each group of devices that should share data.",
+        "s3_access_key": "Access key ID",
+        "s3_secret_key": "Secret access key",
+        "s3_path_style": "Path-style URLs",
+        "s3_path_style_tip": "Use endpoint/bucket instead of bucket.endpoint. Most S3 compatible services need this.",
+        "s3_edit": "Edit connection"
     },
     "export": {
         "export": "Export",

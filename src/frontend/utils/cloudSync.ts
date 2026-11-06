@@ -26,11 +26,22 @@ function syncFinished() {
     contentProviderSync(startup, true)
 }
 
-export async function setupCloudSync(auto: boolean = false) {
+export type CloudSyncProviderId = "churchApps" | "s3"
+
+// the provider currently used for cloud sync
+function getSyncProvider(): CloudSyncProviderId {
+    return get(cloudSyncData).id === "s3" ? "s3" : "churchApps"
+}
+
+export async function setupCloudSync(auto: boolean = false, providerId: CloudSyncProviderId = getSyncProvider()) {
     queueProviderSync(auto)
 
     if (get(cloudSyncData).enabled === false) {
         syncFinished()
+        return
+    }
+    if (providerId === "s3") {
+        await setupS3Sync(auto)
         return
     }
     if (auto && get(cloudSyncData).id) {
@@ -79,6 +90,35 @@ export async function setupCloudSync(auto: boolean = false) {
     syncFinished()
 }
 
+// S3 compatible storage has no teams: the configured bucket & prefix is the sync location
+async function setupS3Sync(auto: boolean) {
+    const id: CloudSyncProviderId = "s3"
+    const isSetUp = get(cloudSyncData).id === id && !!get(cloudSyncData).team
+
+    if (!(await requestMain(Main.CAN_SYNC, { id }))) {
+        if (!auto) {
+            cloudSyncData.update((a) => ({ ...a, enabled: false }))
+            alertMessage.set("Could not connect to the S3 storage. Check the connection settings and try again.")
+            activePopup.set("alert")
+        }
+        syncFinished()
+        return
+    }
+
+    if (auto && isSetUp) {
+        await syncWithCloud()
+        return
+    }
+
+    const location = (await requestMain(Main.GET_TEAMS, { id }))?.[0]
+    if (!location) {
+        syncFinished()
+        return
+    }
+
+    chooseTeam({ ...location, count: 1 }, id)
+}
+
 export async function changeTeam() {
     const teams = (await requestMain(Main.GET_TEAMS)) || []
     const currentTeam = get(cloudSyncData).enabled ? get(cloudSyncData).team?.id : ""
@@ -88,8 +128,7 @@ export async function changeTeam() {
     activePopup.set("cloud_sync")
 }
 
-export async function chooseTeam(team: { id: string; churchId: string; name: string; count?: number }) {
-    const id = "churchApps"
+export async function chooseTeam(team: { id: string; churchId: string; name: string; count?: number }, id: CloudSyncProviderId = "churchApps") {
     const deviceName = get(cloudSyncData).deviceName || (await requestMain(Main.GET_DEVICE_NAME))
 
     socketDisconnect()
@@ -114,7 +153,8 @@ export async function chooseTeam(team: { id: string; churchId: string; name: str
 export let isSyncing = false
 // let lastSync = 0
 export async function syncWithCloud(initialize: boolean = false, isClosing: boolean = false) {
-    if (!get(providerConnections).churchApps) {
+    // S3 connection is checked by the main process when syncing
+    if (getSyncProvider() === "churchApps" && !get(providerConnections).churchApps) {
         syncFinished()
         return false
     }
@@ -233,6 +273,8 @@ function getCloudSocket() {
 
 async function createCloudSocket(): Promise<SocketHelper | null> {
     if (cloudSocketHelper) return cloudSocketHelper
+    // live presence & settings updates go through ChurchApps
+    if (getSyncProvider() !== "churchApps") return null
 
     const team = get(cloudSyncData).team
     if (!team) return null
