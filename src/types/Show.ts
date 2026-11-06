@@ -96,6 +96,7 @@ export interface Slide {
         template?: string
         background?: boolean
         color?: string
+        colorOverBackground?: boolean // draw the color over the style background media
         backgroundImage?: string
         resolution?: Resolution
     }
