@@ -148,7 +148,16 @@ function getObjectInfo(response: Response): S3ObjectInfo {
     }
 }
 
+// error text partly comes from the storage server, and alerts are rendered as HTML
 export function getErrorMessage(err: any): string {
+    return escapeHtml(describeError(err))
+}
+
+function escapeHtml(text: string) {
+    return text.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!)
+}
+
+function describeError(err: any): string {
     if (err instanceof S3Error) {
         if (err.statusCode === 403) return `Access denied (${err.code}). Check the access key and its permissions.`
         if (err.statusCode === 404) return `Bucket not found (${err.code}). Check the bucket name, region and endpoint.`

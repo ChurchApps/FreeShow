@@ -70,6 +70,25 @@ describe("S3Client requests", () => {
         expect(result).toEqual({ success: false, error: "Access denied (InvalidAccessKeyId). Check the access key and its permissions." })
     })
 
+    it("escapes server supplied error text, as alerts are rendered as HTML", async () => {
+        const client = new S3Client({ ...base, endpoint: "http://localhost:9000" })
+
+        vi.stubGlobal(
+            "fetch",
+            vi.fn(async () => new Response("", { status: 500, statusText: "<img src=x onerror=alert(1)>" }))
+        )
+        const fromStatus = await client.testConnection()
+        expect(fromStatus).toEqual({ success: false, error: "&lt;img src=x onerror=alert(1)&gt;: GET /freeshow/ failed (500)" })
+
+        const body = `<Error><Code>Bad"Code</Code><Message>x" onmouseover='alert(1)' &lt;b&gt;</Message></Error>`
+        vi.stubGlobal(
+            "fetch",
+            vi.fn(async () => new Response(body, { status: 500 }))
+        )
+        const fromBody = await client.testConnection()
+        expect(fromBody).toEqual({ success: false, error: "Bad&quot;Code: x&quot; onmouseover=&#39;alert(1)&#39; &amp;lt;b&amp;gt;" })
+    })
+
     it("gives a readable message for unreachable endpoints", () => {
         const err = Object.assign(new TypeError("fetch failed"), { cause: { code: "ENOTFOUND" } })
         expect(getErrorMessage(err)).toContain("Could not reach the storage server")
