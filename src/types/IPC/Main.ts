@@ -2,6 +2,8 @@ import type { Display } from "electron"
 import type { ExifData } from "exif"
 import type { Stats } from "fs"
 import type { Bible } from "json-bible/lib/Bible"
+import type { S3Config } from "../../electron/cloud/s3/S3Client"
+import type { S3PublicConfig } from "../../electron/cloud/S3SyncManager"
 import type { SyncProviderId } from "../../electron/cloud/syncManager"
 import type { ContentFile, ContentLibraryCategory, ContentProviderId, MediaLicense } from "../../electron/contentProviders/base/types"
 import type { PCOFolderTreeNode } from "../../electron/contentProviders/planningCenter/request"
@@ -149,6 +151,8 @@ export enum Main {
     CLOUD_SYNC = "CLOUD_SYNC",
     RESTORE_CLOUD_BACKUP = "RESTORE_CLOUD_BACKUP",
     GET_CONVERSATION_ID = "GET_CONVERSATION_ID",
+    S3_SYNC_GET_CONFIG = "S3_SYNC_GET_CONFIG",
+    S3_SYNC_SET_CONFIG = "S3_SYNC_SET_CONFIG",
     SEND_SOCKET_MESSAGE = "SEND_SOCKET_MESSAGE",
     // Provider-based routing
     PROVIDER_LOAD_SERVICES = "PROVIDER_LOAD_SERVICES",
@@ -267,6 +271,8 @@ export interface MainSendPayloads {
     [Main.CLOUD_SYNC]: { id: SyncProviderId; churchId: string; teamId: string; method: "merge" | "read_only" | "upload" | "replace" }
     [Main.RESTORE_CLOUD_BACKUP]: { id: SyncProviderId; churchId: string; teamId: string }
     [Main.GET_CONVERSATION_ID]: { teamId: string }
+    [Main.S3_SYNC_GET_CONFIG]: undefined
+    [Main.S3_SYNC_SET_CONFIG]: S3Config | null
     [Main.SEND_SOCKET_MESSAGE]: { churchId: string; teamId: string; displayName: string; content: string }
     // Provider-based routing
     [Main.PROVIDER_LOAD_SERVICES]: { providerId: ContentProviderId; cloudOnly?: boolean; data?: any }
@@ -384,6 +390,8 @@ export interface MainReturnPayloads {
     [Main.CLOUD_DATA]: Promise<boolean>
     [Main.CLOUD_SYNC]: Promise<{ success?: boolean; error?: string; changedFiles?: any[]; downloadedShowIds?: string[]; replacedShows?: string[] }>
     [Main.GET_CONVERSATION_ID]: Promise<string | null>
+    [Main.S3_SYNC_GET_CONFIG]: S3PublicConfig | null
+    [Main.S3_SYNC_SET_CONFIG]: Promise<{ success: boolean; error?: string }>
     [Main.SEND_SOCKET_MESSAGE]: Promise<boolean>
     // Provider-based routing
     [Main.PROVIDER_CONNECTIONS]: { [key in ContentProviderId]?: boolean }

@@ -16,6 +16,7 @@ import { SpeechToText } from "../ai/stt/SpeechToTextManager"
 import { getAudioMetadata } from "../audio/audio"
 import { openNowPlaying, setPlayingState, unsetPlayingAudio } from "../audio/nowPlaying"
 import { CaptureHelper } from "../capture/CaptureHelper"
+import { getS3PublicConfig, setS3Config } from "../cloud/S3SyncManager"
 import { canSync, getSyncTeams, hasTeamData, markAsNewSync, restoreCloudBackup, syncData } from "../cloud/syncManager"
 import { ChurchAppsChat } from "../contentProviders/churchApps/ChurchAppsChat"
 import { ContentProviderRegistry } from "../contentProviders/ContentProviderRegistry"
@@ -186,6 +187,8 @@ export const mainResponses: MainResponses = {
     [Main.CLOUD_SYNC]: (data) => syncData(data),
     [Main.RESTORE_CLOUD_BACKUP]: (data) => restoreCloudBackup(data),
     [Main.GET_CONVERSATION_ID]: (data) => getConversationId(data.teamId),
+    [Main.S3_SYNC_GET_CONFIG]: () => getS3PublicConfig(),
+    [Main.S3_SYNC_SET_CONFIG]: (data) => setS3Config(data),
     [Main.SEND_SOCKET_MESSAGE]: (data) => sendSocketMessage(data),
     // Provider-based routing
     [Main.PROVIDER_LOAD_SERVICES]: async (data) => {
