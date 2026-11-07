@@ -7,6 +7,7 @@ import { clearAudio } from "../audio/audioFading"
 import { AudioPlayer } from "../audio/audioPlayer"
 import { menuClick } from "../components/context/menuClick"
 import { createScriptureShow } from "../components/drawer/bible/scripture"
+import { getOrCreatePlayerVideo } from "../components/drawer/player/playerHelper"
 import { addItem } from "../components/edit/scripts/itemHelpers"
 import { keysToID, sortByName } from "../components/helpers/array"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../components/helpers/clipboard"
@@ -21,7 +22,7 @@ import { importFromClipboard } from "../converters/importHelpers"
 import { addSection } from "../converters/project"
 import { requestMain, sendMain } from "../IPC/main"
 import { changeSlidesView } from "../show/slides"
-import { activeDrawerTab, activeEdit, activeFocus, activePage, activePopup, activeProject, activeStage, alertMessage, audioChannelsData, contextActive, drawer, editMode, focusedArea, focusMode, guideActive, media, os, outLocked, outputs, playingVideoState, projects, quickSearchActive, refreshEditSlide, selected, showRecentlyUsedProjects, special, spellcheck, styles, timelineRecordingAction, topContextActive } from "../stores"
+import { activeDrawerTab, activeEdit, activeFocus, activePage, activePopup, activeProject, activeStage, alertMessage, audioChannelsData, contextActive, drawer, editMode, focusedArea, focusMode, guideActive, media, os, outLocked, outputs, playerVideos, playingVideoState, projects, quickSearchActive, refreshEditSlide, selected, showRecentlyUsedProjects, special, spellcheck, styles, timelineRecordingAction, topContextActive } from "../stores"
 import { audioExtensions, imageExtensions, videoExtensions } from "../values/extensions"
 import { drawerTabs } from "../values/tabs"
 import { activeShow } from "./../stores"
@@ -535,6 +536,27 @@ export async function togglePlayingMedia(e: Event | null = null, back = false, a
 
         const ignoreLayer = videoType === "foreground" || (videoType !== "background" && (type === "image" || !shouldLoop))
         if (ignoreLayer) clearSlide(true)
+
+        // online player videos (YouTube/Vimeo) are referenced by id, not a file path - getMedia would fail to locate them
+        if (type === "player") {
+            let playerId = item.id
+
+            // older projects stored links dropped directly on the project with a "-" placeholder id
+            const projectData = projectItem?.data
+            if (!get(playerVideos)[playerId] && projectData?.id && (projectData.type === "youtube" || projectData.type === "vimeo")) {
+                playerId = getOrCreatePlayerVideo(projectData.type, projectData.id, projectData.name)
+                projects.update((a) => {
+                    const ref = a[get(activeProject) || ""]?.shows?.[item.index!]
+                    if (ref) ref.id = playerId
+                    return a
+                })
+                if (get(focusMode)) activeFocus.set({ ...item, id: playerId })
+                else activeShow.set({ ...item, id: playerId })
+            }
+
+            setOutput("background", { type, id: playerId,startAt: 0, muted: shouldBeMuted, loop: shouldLoop, ...mediaStyle, ignoreLayer })
+            return
+        }
 
         const located = await getMedia(item.id)
         if (!located) return

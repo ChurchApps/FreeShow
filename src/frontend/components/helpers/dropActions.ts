@@ -15,7 +15,7 @@ import { audioExtensions, imageExtensions, mediaExtensions, presentationExtensio
 import { actionData } from "../actions/actionData"
 import { addSlideAction, getActionTriggerId, isMatchingSlideAction } from "../actions/actions"
 import { getActiveScripturesContent, getReferenceText, getScriptureShow, getScriptureSlidesNew } from "../drawer/bible/scripture"
-import { getVimeoData, getYouTubeData, trimPlayerId } from "../drawer/player/playerHelper"
+import { getOrCreatePlayerVideo, getVimeoData, getYouTubeData, trimPlayerId } from "../drawer/player/playerHelper"
 import { addItem, DEFAULT_ITEM_STYLE } from "../edit/scripts/itemHelpers"
 import { addStageItem } from "../stage/stage"
 import { clone, removeDuplicates } from "./array"
@@ -199,12 +199,13 @@ export const dropActions = {
                     if (url.includes("youtube.com") || url.includes("youtu.be")) {
                         const id = trimPlayerId(url, "youtube")
                         const name = (await getYouTubeData(id)).name
-                        return { id: "-", type: "player", data: { type: "youtube", id, name } }
+                        // add to Online media so the project item has a real id (needed for output & next)
+                        return { id: getOrCreatePlayerVideo("youtube", id, name), type: "player", data: { type: "youtube", id, name } }
                     }
                     if (url.includes("vimeo.com")) {
                         const id = trimPlayerId(url, "vimeo")
                         const name = (await getVimeoData(id)).name
-                        return { id: "-", type: "player", data: { type: "vimeo", id, name } }
+                        return { id: getOrCreatePlayerVideo("vimeo", id, name), type: "player", data: { type: "vimeo", id, name } }
                     }
 
                     return { id: url, type: "url" }
