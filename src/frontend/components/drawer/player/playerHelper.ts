@@ -1,3 +1,7 @@
+import { get } from "svelte/store"
+import { uid } from "uid"
+import { playerVideos } from "../../../stores"
+
 export function trimPlayerId(id: string, type: "youtube" | "vimeo") {
     if (type === "youtube") {
         let value = id.trim()
@@ -134,4 +138,17 @@ export async function getVimeoData(id: string): Promise<{ name: string; duration
     } finally {
         isLoadingIds = isLoadingIds.filter((loadingId) => loadingId !== id)
     }
+}
+
+// find an existing Online media entry for this video, or add one, and return its library id
+export function getOrCreatePlayerVideo(type: "youtube" | "vimeo", videoId: string, name = ""): string {
+    const existing = Object.entries(get(playerVideos)).find(([_, p]) => p?.type === type && p?.id === videoId)?.[0]
+    if (existing) return existing
+
+    const rid = uid()
+    playerVideos.update((a) => {
+        a[rid] = { id: videoId, name: name || videoId, type }
+        return a
+    })
+    return rid
 }
