@@ -11,11 +11,26 @@ import { sendMain } from "../IPC/main"
 import { asyncPool, createFolder, deleteFile, deleteFolderAsync, doesPathExistAsync, getDataFolderPath, getFileStatsAsync, getTimePointString, loadShows, moveFileAsync, readFileAsync, readFolderAsync, writeFileAsync } from "../utils/files"
 import { clone, getMachineId } from "../utils/helpers"
 import { getChurchAppsSyncManager } from "./ChurchAppsSyncManager"
+import { getS3SyncManager } from "./S3SyncManager"
 import { SyncLedger, type Changes } from "./syncLedger"
 
-export type SyncProviderId = "churchApps"
-const getManager = {
-    churchApps: getChurchAppsSyncManager
+export type SyncProviderId = "churchApps" | "s3"
+
+// a sync provider stores the synced data as "current.zip" and a weekly "previous.zip" backup
+interface SyncProvider {
+    hasValidConnection(): Promise<boolean>
+    getTeams(): Promise<{ id: string; churchId: string; name: string }[]>
+    existingData(churchId: string, teamId: string): Promise<boolean>
+    getData(churchId: string, teamId: string, outputFolderPath: string): Promise<string | null>
+    uploadData(teamId: string, filePath: string): Promise<boolean>
+    getBackup(churchId: string, teamId: string, outputFolderPath: string): Promise<string | null>
+    getBackupModified(churchId: string, teamId: string): Promise<number>
+    uploadBackup(teamId: string, filePath: string): Promise<boolean>
+}
+
+const getManager: { [key in SyncProviderId]: () => SyncProvider | null } = {
+    churchApps: getChurchAppsSyncManager,
+    s3: getS3SyncManager
 }
 
 export async function canSync({ id }: { id: SyncProviderId } = { id: "churchApps" }): Promise<boolean> {

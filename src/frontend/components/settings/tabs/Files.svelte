@@ -3,7 +3,7 @@
     import type { ContentProviderId } from "../../../../electron/contentProviders/base/types"
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain, sendMain } from "../../../IPC/main"
-    import { activePopup, alertMessage, autosave, cloudSyncData, dataPath, driveData, driveKeys, providerConnections, saved, special, statusIndicator } from "../../../stores"
+    import { activePopup, autosave, cloudSyncData, dataPath, driveData, driveKeys, providerConnections, saved, special, statusIndicator } from "../../../stores"
     import { changeTeam, setupCloudSync, socketDisconnect, syncWithCloud, updateCloudDeviceName } from "../../../utils/cloudSync"
     import { previousAutosave, startAutosave, wait } from "../../../utils/common"
     import { validateKeys } from "../../../utils/drive"
@@ -20,6 +20,8 @@
     import MaterialFolderPicker from "../../inputs/MaterialFolderPicker.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
+    import CloudSyncOptions from "./CloudSyncOptions.svelte"
+    import CloudSyncS3 from "./CloudSyncS3.svelte"
 
     function updateSpecial(value, key) {
         special.update((a) => {
@@ -67,26 +69,14 @@
     //     })
     // }
 
-    let mediaFolderPath = ""
-    async function updateMediaFolderPath(e: any) {
-        mediaFolderPath = e.detail || ""
-        sendMain(Main.SET_MEDIA_FOLDER_PATH, mediaFolderPath)
-
-        // get default path again if reset
-        if (!mediaFolderPath) mediaFolderPath = (await requestMain(Main.GET_MEDIA_FOLDER_PATH)) || ""
-        else sendMain(Main.BUNDLE_MEDIA_FILES, { outputPath: mediaFolderPath })
-    }
-
     // get times
     let nextAutosave = 0
     let nextAutobackup = 0
 
     let updater: NodeJS.Timeout | null = null
-    onMount(async () => {
+    onMount(() => {
         checkTimes()
         updater = setInterval(checkTimes, 1000)
-
-        if ($cloudSyncData.enabled && $special.cloudSyncMediaFolder) mediaFolderPath = (await requestMain(Main.GET_MEDIA_FOLDER_PATH)) || ""
     })
     onDestroy(() => {
         if (updater) clearInterval(updater)
@@ -179,6 +169,10 @@
 
     // CLOUD
 
+    // only one cloud sync provider can be active at a time
+    $: churchAppsSyncEnabled = !!$cloudSyncData.enabled && $cloudSyncData.id !== "s3"
+    $: s3SyncEnabled = !!$cloudSyncData.enabled && $cloudSyncData.id === "s3"
+
     function updateCloudData(key: string, value: any) {
         cloudSyncData.update((a) => {
             a[key] = value
@@ -200,7 +194,7 @@
             sendMain(Main.PROVIDER_LOAD_SERVICES, { providerId, cloudOnly: true })
         } else {
             if (providerId === "churchApps" && !$special.churchAppsCloudOnly) {
-                const enabled = !$cloudSyncData.enabled
+                const enabled = !churchAppsSyncEnabled
                 cloudSyncData.set({ enabled, id: "churchApps" })
                 toggleSync(enabled)
                 return
@@ -225,7 +219,7 @@
     $: if ($activePopup) resetValue++
     function toggleSync(enabled: boolean) {
         if (enabled) {
-            setupCloudSync()
+            setupCloudSync(false, "churchApps")
         } else {
             updateCloudData("enabled", false)
         }
@@ -233,35 +227,6 @@
 
     function syncNow() {
         syncWithCloud()
-    }
-
-    async function restoreCloudBackupState() {
-        if (!$cloudSyncData.id || !$cloudSyncData.team?.churchId || !$cloudSyncData.team?.id) return
-
-        const result = await requestMain(Main.RESTORE_CLOUD_BACKUP, { id: "churchApps", churchId: $cloudSyncData.team.churchId, teamId: $cloudSyncData.team.id })
-
-        alertMessage.set(result?.success ? "Cloud backup restored." : result?.error || "Could not restore cloud backup.")
-        activePopup.set("alert")
-    }
-
-    // function deleteCloudData() {
-    //     console.log(1)
-    // }
-
-    let bundled = false
-    async function toggleMediaFolder(e: any) {
-        updateSpecial(e.detail, "cloudSyncMediaFolder")
-
-        if (e.detail) {
-            if (bundled) return
-            bundled = true
-
-            // alertMessage.set("media.media_sync_folder_tip")
-            // activePopup.set("alert")
-
-            if (!mediaFolderPath) mediaFolderPath = (await requestMain(Main.GET_MEDIA_FOLDER_PATH)) || ""
-            sendMain(Main.BUNDLE_MEDIA_FILES, { openFolder: true, outputPath: mediaFolderPath })
-        }
     }
 </script>
 
@@ -280,7 +245,9 @@
 <!-- cloud -->
 <Title label="settings.cloud" icon="cloud" title="cloud.info" />
 
-{#if !$providerConnections.churchApps || (!$special.churchAppsCloudOnly && !$cloudSyncData.enabled)}
+{#if s3SyncEnabled}
+    <!-- ChurchApps sync is hidden while S3 sync is active -->
+{:else if !$providerConnections.churchApps || (!$special.churchAppsCloudOnly && !churchAppsSyncEnabled)}
     <InputRow>
         <MaterialButton on:click={() => contentProviderConnect("churchApps")} style="flex: 1;" icon="login">
             <T id="settings.connect_to" replace={["ChurchApps"]} />
@@ -291,20 +258,20 @@
         <MaterialButton disabled={disconnecting} on:click={() => contentProviderConnect("churchApps")} style="flex: 1;border-bottom: 2px solid var(--connected) !important;" icon="logout">
             <T id="settings.disconnect_from" replace={["ChurchApps"]} />
         </MaterialButton>
-        {#if $cloudSyncData.enabled}
+        {#if churchAppsSyncEnabled}
             <MaterialButton icon="cloud_sync" disabled={$statusIndicator === "syncing"} on:click={syncNow}>
                 <T id="cloud.sync" />
             </MaterialButton>
         {/if}
     </InputRow>
 
-    <InputRow arrow={$cloudSyncData.enabled}>
+    <InputRow arrow={churchAppsSyncEnabled}>
         <InputRow style="flex: 1;">
             {#key resetValue}
-                <MaterialToggleSwitch label="cloud.enable_sync" data={$cloudSyncData?.team?.name} checked={$cloudSyncData.enabled} style="flex: 1;" on:change={(e) => toggleSync(e.detail)} />
+                <MaterialToggleSwitch label="cloud.enable_sync" data={churchAppsSyncEnabled ? $cloudSyncData?.team?.name : ""} checked={churchAppsSyncEnabled} style="flex: 1;" on:change={(e) => toggleSync(e.detail)} />
             {/key}
 
-            {#if $cloudSyncData.enabled && ($cloudSyncData.team?.count || 0) > 1}
+            {#if churchAppsSyncEnabled && ($cloudSyncData.team?.count || 0) > 1}
                 <MaterialButton variant="outlined" icon="people" on:click={changeTeam}><T id="cloud.change_team" /></MaterialButton>
             {/if}
         </InputRow>
@@ -312,26 +279,15 @@
         <svelte:fragment slot="menu">
             <MaterialTextInput label="settings.device_name" value={$cloudSyncData.deviceName || ""} on:change={(e) => updateCloudData("deviceName", e.detail)} />
 
-            <!-- changing team directly without toggling "Enable sync" off/on -->
-            <MaterialToggleSwitch label="cloud.read_only" title="cloud.readonly_tip" checked={$cloudSyncData.cloudMethod === "read_only"} defaultValue={false} on:change={(e) => updateCloudData("cloudMethod", e.detail ? "read_only" : "merge")} />
-
-            <!-- Documents/FreeShow/Media -->
-            <!-- This should only be needed if no custom media management is already existing -->
-            <!-- Custom drives should work without as long as the path location is the same -->
-            <!-- Files in this folder will automatically be checked to find missing files -->
-            <MaterialToggleSwitch label="media.media_sync_folder" title="media.media_sync_folder_tip" style="width: 100%;" checked={$special.cloudSyncMediaFolder} defaultValue={false} on:change={toggleMediaFolder} />
-
-            {#if $special.cloudSyncMediaFolder}
-                <MaterialFolderPicker label="media.media_sync_folder" value={mediaFolderPath} on:change={updateMediaFolderPath} allowEmpty={!mediaFolderPath.endsWith("Documents\\FreeShow\\Media") && !mediaFolderPath.endsWith("Documents/FreeShow/Media")} />
-            {/if}
-
-            <!-- <MaterialButton variant="outlined" icon="delete" on:click={deleteCloudData} red white>Delete cloud data</MaterialButton> -->
-
-            <MaterialButton variant="outlined" icon="import" disabled={$statusIndicator === "syncing"} on:click={restoreCloudBackupState}>
-                <p><T id="cloud.restore_weekly_backup" /></p>
-            </MaterialButton>
+            <CloudSyncOptions />
         </svelte:fragment>
     </InputRow>
+{/if}
+
+<!-- S3 compatible storage (AWS S3, Cloudflare R2, Backblaze B2, MinIO, ...) -->
+{#if !churchAppsSyncEnabled}
+    <Title label="cloud.s3" icon="cloud" title="cloud.s3_tip" />
+    <CloudSyncS3 />
 {/if}
 
 <!-- DEPRECATED: -->

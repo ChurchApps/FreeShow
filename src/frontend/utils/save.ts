@@ -300,7 +300,7 @@ export async function saveComplete({ closeWhenFinished, customTriggers }: { clos
     }
 
     // cloud sync (only when autosaving or closing)
-    if ((customTriggers?.autosave || closeWhenFinished) && (get(providerConnections).churchApps || !get(driveData)?.mainFolderId)) {
+    if ((customTriggers?.autosave || closeWhenFinished) && (get(providerConnections).churchApps || get(cloudSyncData).id === "s3" || !get(driveData)?.mainFolderId)) {
         if (closeWhenFinished) {
             alertMessage.set("actions.closing")
             activePopup.set("alert")

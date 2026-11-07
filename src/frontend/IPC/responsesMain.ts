@@ -52,6 +52,7 @@ import {
     aiSttStatus,
     alertMessage,
     audioData,
+    cloudSyncData,
     contentProviderData,
     currentOutputSettings,
     dataPath,
@@ -349,8 +350,9 @@ export const mainResponses: MainResponses = {
         if (data.isFirstConnection) {
             newToast("main.finished")
 
-            if (data.providerId === "churchApps") {
-                setTimeout(() => setupCloudSync(false), 1000)
+            // don't replace an active S3 cloud sync setup
+            if (data.providerId === "churchApps" && get(cloudSyncData).id !== "s3") {
+                setTimeout(() => setupCloudSync(false, "churchApps"), 1000)
             }
         }
     },
