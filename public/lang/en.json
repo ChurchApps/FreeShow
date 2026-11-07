@@ -226,6 +226,8 @@
         "blur_fill": "Blur fill",
         "cover": "Cover",
         "online": "Online",
+        "player_added": "Added to Media > Online",
+        "player_invalid": "That doesn't look like a valid video link or ID",
         "downloading": "Downloading",
         "recommended": "Recommended",
         "media_sync_folder": "Media sync folder",
