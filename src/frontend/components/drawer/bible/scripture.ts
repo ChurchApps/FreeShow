@@ -279,7 +279,7 @@ export function sortScriptureSelection(selection: (string | number)[]) {
 
 // OUTPUT
 
-export async function playScripture(recordHistory = true) {
+export async function playScripture() {
     if (get(outLocked)) return
 
     const biblesContent = await getActiveScripturesContent()
@@ -293,7 +293,7 @@ export async function playScripture(recordHistory = true) {
     const fullReferenceRange = buildFullReferenceRange(selectedChapters, selectedVerses)
 
     // scripture usage history
-    if (recordHistory) scriptureHistory.update((a) => {
+    scriptureHistory.update((a) => {
         const tabId = get(drawerTabsData).scripture?.activeSubTab || ""
         biblesContent.forEach((content) => {
             const contentVerses = content.activeVerses?.[0] || selectedVerses[0]

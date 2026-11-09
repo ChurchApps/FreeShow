@@ -396,7 +396,6 @@
     }
 
     let playWhenLoaded = false
-    let playWithoutHistory = false
     async function openVerse(verseNumbers?: (number | string)[][]) {
         verseNumbers = verseNumbers?.length ? verseNumbers : activeReference.verses.length ? activeReference.verses : [[1]]
         activeReference.verses = verseNumbers
@@ -425,9 +424,8 @@
             })
         }
 
-        if (playWhenLoaded) setTimeout(() => playScripture(!playWithoutHistory))
+        if (playWhenLoaded) setTimeout(playScripture)
         playWhenLoaded = false
-        playWithoutHistory = false
     }
 
     // update active reference
@@ -453,8 +451,7 @@
 
         resetContentSearch()
 
-        playWithoutHistory = !!$openScripture.skipHistory
-        if ($openScripture.play) playWhenLoaded = true
+        playWhenLoaded = !!$openScripture.play
 
         let verses = $openScripture.verses
         if (!Array.isArray(verses)) verses = [[1]]
@@ -494,7 +491,7 @@
         if (!isOpen) setDrawerTabData("scripture", targetTabId)
 
         // navigate (once loaded)
-        openScripture.set({ book: item.book, chapter: item.chapter, verses: item.verse, play: true, skipHistory: true })
+        openScripture.set({ book: item.book, chapter: item.chapter, verses: item.verse, play: false })
     }
 
     /// AUTOSCROLL ///

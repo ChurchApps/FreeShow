@@ -173,7 +173,7 @@
         })
 
         setDrawerTabData("scripture", targetTabId)
-        openScripture.set({ book: item.book, chapter: item.chapter, verses: item.verse, play: true, skipHistory: true })
+        openScripture.set({ book: item.book, chapter: item.chapter, verses: item.verse, play: false })
     }
 
     $: onlyOneNormalOutput = getAllNormalOutputs().length === 1
