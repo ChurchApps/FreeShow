@@ -492,7 +492,8 @@ const ERROR_FILTER = [
     "::internal::", // internal errors (v8 / partition_alloc)
     "crash_reporter::DumpWithoutCrashing", // chromium crashes
     "ERR_INTERNET_DISCONNECTED", // internet disconnected
-    "First argument to DataView constructor must be an ArrayBuffer" // mp4box issue
+    "First argument to DataView constructor must be an ArrayBuffer", // mp4box issue
+    "mtx_do_lock" // missing or incompatible Visual C++ runtime (Spotify)
 ]
 export function catchErrors() {
     process.on("uncaughtException", (err) => {
@@ -528,9 +529,8 @@ export function autoErrorReport() {
         dsn: "https://5d1069c3cb6faaa6e7ad0d9dc0145361@o4510419080445952.ingest.us.sentry.io/4510419082346496",
         beforeSend(event) {
             // filter out known non-critical errors
-            const errorMessage = event.exception?.values?.[0]?.value || ""
-            const shouldFilter = ERROR_FILTER.some((filter) => errorMessage.includes(filter))
-            return shouldFilter ? null : event
+            const eventStr = JSON.stringify(event)
+            return ERROR_FILTER.some((filter) => eventStr.includes(filter)) ? null : event
         }
     })
 }
