@@ -534,7 +534,8 @@ export const mainResponses: MainResponses = {
                 created: currentProject.created,
                 used: Date.now(), // show on top in last used list
                 parent: folderId || providerFolderId,
-                shows: currentProject.items || [],
+                // the provider item stays known after its show is replaced, so links follow the item
+                shows: (currentProject.items || []).map((a) => ((a.type || "show") === "show" ? { ...a, providerItemId: a.id } : a)),
                 origin
             }
             const project = createProviderProject(data.providerId, projectBase)

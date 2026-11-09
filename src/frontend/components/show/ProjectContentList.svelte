@@ -7,7 +7,7 @@
     import { actions, activeFocus, activePopup, activeProject, activeShow, contentProviderData, contextActive, drawer, drawerTabsData, editingProjectTemplate, focusMode, fullColors, playerVideos, popupData, projects, projectTemplates, projectView, providerItemLinks, recentFiles, selected, special } from "../../stores"
     import { triggerFunction } from "../../utils/common"
     import { getAccess } from "../../utils/profile"
-    import { isShowLinked } from "../../utils/providerItemLinks"
+    import { isProjectItemLinked } from "../../utils/providerItemLinks"
     import { getActionIcon } from "../actions/actions"
     import { getTimeUntilClock } from "../drawer/timers/timers"
     import { openDrawer } from "../edit/scripts/edit"
@@ -277,7 +277,7 @@
                         {#each splittedItemsList.items as show, i}
                             {@const index = show.index}
                             {@const triggerAction = show.data?.settings?.triggerAction || $special.sectionTriggerAction}
-                            {@const providerLink = isShowLinked(show.id, $providerItemLinks)}
+                            {@const providerLink = isProviderProject && isProjectItemLinked(currentProject, show, $providerItemLinks)}
                             {@const isFirst = i === 0}
                             {@const isLast = i === splittedItemsList.items.length - 1}
                             {@const borderRadiusStyle = `${isFirst ? "border-top-right-radius: 10px;" : ""}${isLast ? "border-bottom-right-radius: 10px;" : ""}`}

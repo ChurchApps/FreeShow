@@ -9,6 +9,7 @@ export type HistoryIDs =
     | "TEMPLATE"
     | "SHOW_LAYOUT"
     | "SHOW_ITEMS"
+    | "PROVIDER_LINK"
 
     // TODO: remove/update these:
     // edit

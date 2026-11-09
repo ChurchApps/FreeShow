@@ -9,6 +9,7 @@ import { deselect } from "./select"
 import { loadShows } from "./setShow"
 import { removeTemplatesFromShow } from "./show"
 import { _show } from "./shows"
+import { applyProviderLinkChanges } from "../../utils/providerItemLinks"
 
 // override previous history
 const override = ["textAlign", "textStyle", "deleteItem", "setItems", "setStyle", "slideStyle", "STAGE"]
@@ -53,6 +54,10 @@ export function history(obj: History, shouldUndo: null | boolean = null) {
         historyActions({ obj, undo: shouldUndo })[obj.id]()
     } else {
         switch (obj.id) {
+            // a project item's show and its provider link change together, so one undo reverts both
+            case "PROVIDER_LINK":
+                old = { projectId: obj.newData.projectId, changes: applyProviderLinkChanges(obj.newData.projectId, obj.newData.changes) }
+                break
             // EDIT
             // style
             case "deleteItem":
