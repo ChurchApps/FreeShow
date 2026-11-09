@@ -4,6 +4,7 @@
 
 /node_modules/
 /public/build/
+/public/release.json
 /public/*.js.map
 /public/*.ts
 /build/

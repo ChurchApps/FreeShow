@@ -1,6 +1,7 @@
 import * as Sentry from "@sentry/electron/main"
 import type { BrowserWindow, DesktopCapturerSource } from "electron"
 import { app, desktopCapturer, screen, shell, systemPreferences } from "electron"
+import fs from "fs"
 import os from "os"
 import path from "path"
 import { getMainWindow, isProd, mainWindow, maximizeMain, setGlobalMenu } from ".."
@@ -519,9 +520,16 @@ export function autoErrorReport() {
     if (config.get("autoErrorReporting") === false) return
 
     // prevent random forks from sending error reports
-    // dots to prevent auto find/replace
-    const originalName = "f.r.e.e.s.h.o.w".replace(/\./g, "")
-    if (app.name !== originalName) return
+    try {
+        const releasePath = path.join(__dirname, "../../../public/release.json")
+        if (!fs.existsSync(releasePath)) return
+        const release = JSON.parse(fs.readFileSync(releasePath, "utf8"))
+        // dots to prevent auto find/replace
+        const officialRepo = "Church.Apps/F.r.e.e.S.h.o.w".replace(/\./g, "")
+        if (release?.repo !== officialRepo) return
+    } catch {
+        return
+    }
 
     console.info("Starting Sentry error reporting...")
 

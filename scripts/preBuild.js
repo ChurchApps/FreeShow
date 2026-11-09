@@ -57,3 +57,8 @@ function getPdfWorkerFile() {
 
 if (process.env.NODE_ENV === "production") generateProdConfigs()
 getPdfWorkerFile()
+
+// write release build repository info (currently for error reporting checks)
+const releaseRepo = process.env.GITHUB_REPOSITORY || "local"
+console.log("Built from repo:", releaseRepo)
+writeFileSync(join(__dirname, "..", "public", "release.json"), JSON.stringify({ repo: releaseRepo }))
