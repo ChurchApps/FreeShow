@@ -279,7 +279,7 @@ export function sortScriptureSelection(selection: (string | number)[]) {
 
 // OUTPUT
 
-export async function playScripture() {
+export async function playScripture(recordHistory = true) {
     if (get(outLocked)) return
 
     const biblesContent = await getActiveScripturesContent()
@@ -291,32 +291,32 @@ export async function playScripture() {
     const { slides, attributions, slideDynamicValues } = await getScriptureSlidesNew({ biblesContent, selectedChapters, selectedVerses }, true)
 
     const fullReferenceRange = buildFullReferenceRange(selectedChapters, selectedVerses)
-    // include every selected chapter/verse in the displayed reference label
-    const { id, subverse } = getVerseIdParts(selectedVerses[0]?.[0])
-    const showSplitSuffix = get(scriptureSettings).splitLongVersesSuffix
-    const value = `${id}${showSplitSuffix && subverse ? getVersePartLetter(subverse) : ""}`
 
     // scripture usage history
-    scriptureHistory.update((a) => {
+    if (recordHistory) scriptureHistory.update((a) => {
         const tabId = get(drawerTabsData).scripture?.activeSubTab || ""
-        const tabData = get(scriptures)[tabId]
-        const version = tabData?.customName || tabData?.name || biblesContent[0].version || ""
+        biblesContent.forEach((content) => {
+            const contentVerses = content.activeVerses?.[0] || selectedVerses[0]
+            const contentRange = buildFullReferenceRange(content.chapters || selectedChapters, content.activeVerses || selectedVerses)
+            const { id: verseId, subverse } = getVerseIdParts(contentVerses?.[0])
+            const splitSuffix = get(scriptureSettings).splitLongVersesSuffix
+            const verseLabel = `${verseId}${splitSuffix && subverse ? getVersePartLetter(subverse) : ""}`
+            const verseText = content.verses?.[0] || {}
+            const newItem = {
+                tabId, // can be a collection
+                version: content.version || content.id,
+                id: content.id,
+                book: content.bookId,
+                chapter: content.chapters[0],
+                verse: contentVerses,
+                reference: `${content.book} ${contentRange || `${content.chapters[0]}:${verseLabel}`}`.trim(),
+                text: getSplittedVerses(verseText)[contentVerses?.[0]] || verseText[contentVerses?.[0]] || ""
+            }
 
-        const newItem = {
-            tabId, // can be a collection
-            version,
-            id: biblesContent[0].id,
-            book: biblesContent[0].bookId,
-            chapter: biblesContent[0].chapters[0],
-            verse: selectedVerses[0],
-            reference: `${biblesContent[0].book} ${fullReferenceRange || `${biblesContent[0].chapters[0]}:${value}`}`.trim(),
-            text: getSplittedVerses(biblesContent[0].verses?.[0])[selectedVerses[0]?.[0]] || biblesContent[0].verses[selectedVerses[0]?.[0]] || ""
-        }
-        // WIP multiple verses, play from another version
-
-        const existingIndex = a.findIndex((a) => JSON.stringify(a) === JSON.stringify(newItem))
-        if (existingIndex > -1) a.splice(existingIndex, 1)
-        a.push(newItem)
+            const existingIndex = a.findIndex((item) => JSON.stringify(item) === JSON.stringify(newItem))
+            if (existingIndex > -1) a.splice(existingIndex, 1)
+            a.push(newItem)
+        })
 
         return a
     })

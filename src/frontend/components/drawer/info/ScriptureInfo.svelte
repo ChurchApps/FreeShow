@@ -2,7 +2,7 @@
     import type { MediaStyle } from "../../../../types/Main"
     import type { BibleContent } from "../../../../types/Scripture"
     import type { Item } from "../../../../types/Show"
-    import { activeEdit, activePage, activeScripture, activeStyle, drawerTabsData, media, outputs, scriptureSettings, settingsTab, styles, templates } from "../../../stores"
+    import { activeEdit, activePage, activeScripture, activeStyle, drawerTabsData, media, openScripture, outputs, scriptureHistory, scriptureSettings, scriptures, settingsTab, styles, templates } from "../../../stores"
     import { setDefaultScriptureTemplates } from "../../../utils/createData"
     import { confirmCustom } from "../../../utils/popup"
     import { mediaExtensions } from "../../../values/extensions"
@@ -11,6 +11,7 @@
     import { history } from "../../helpers/history"
     import { getMediaStyle } from "../../helpers/media"
     import { getAllNormalOutputs, getFirstActiveOutput } from "../../helpers/output"
+    import { setDrawerTabData } from "../../helpers/historyHelpers"
     import InputRow from "../../input/InputRow.svelte"
     import Link from "../../inputs/Link.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
@@ -156,6 +157,24 @@
 
     let longVersesMenuOpened = false
     let referenceMenuOpened = false
+    let historyOpened = false
+
+    $: currentHistory = [...$scriptureHistory].reverse()
+    function openHistoryEntry(item: any) {
+        let targetTabId = item.tabId
+        if (!$scriptures[targetTabId]) targetTabId = item.id
+        if (!$scriptures[targetTabId]) return
+
+        scriptures.update((items) => {
+            const versions = items[targetTabId]?.collection?.versions
+            const previewIndex = versions?.indexOf(item.id) ?? -1
+            if (previewIndex >= 0) items[targetTabId].collection!.previewIndex = previewIndex
+            return items
+        })
+
+        setDrawerTabData("scripture", targetTabId)
+        openScripture.set({ book: item.book, chapter: item.chapter, verses: item.verse, play: true, skipHistory: true })
+    }
 
     $: onlyOneNormalOutput = getAllNormalOutputs().length === 1
     $: styleScriptureTemplate = onlyOneNormalOutput ? $styles[styleId]?.templateScripture || "" : ""
@@ -255,10 +274,26 @@
             <!-- Template -->
             <InputRow style={templateBackground ? "" : "margin-bottom: 10px;"}>
                 <MaterialPopupButton id="scripture_drawer" label="info.template" disabled={!!styleScriptureTemplate} value={templateId} name={template?.name} popupId="select_template" icon="templates" on:change={(e) => update("template", e.detail)} allowEmpty={!isDefault} />
+                <MaterialButton title="popup.history" icon="history" isActive={historyOpened} disabled={!currentHistory.length} on:click={() => (historyOpened = !historyOpened)} />
                 {#if (templateId && template) || styleScriptureTemplate}
                     <MaterialButton title="titlebar.edit" icon="edit" on:click={editTemplate} />
                 {/if}
             </InputRow>
+
+            {#if historyOpened}
+                <div class="history-list">
+                    {#if currentHistory.length}
+                        {#each currentHistory as item, index (`${item.tabId}-${item.reference}-${index}`)}
+                            <MaterialButton class="history-item" title={item.reference} on:click={() => openHistoryEntry(item)}>
+                                <span class="history-reference">{item.reference}</span>
+                                <span class="history-version">{item.version}</span>
+                            </MaterialButton>
+                        {/each}
+                    {:else}
+                        <div class="history-empty"><T id="empty.general" /></div>
+                    {/if}
+                </div>
+            {/if}
 
             <!-- Template Settings - Quick Edit -->
             {#if templateBackground}
@@ -314,6 +349,41 @@
         /* position: absolute; */
         width: 160%;
         inset-inline-end: 0;
+    }
+
+    .history-list {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        max-height: 180px;
+        margin-bottom: 10px;
+        overflow-y: auto;
+    }
+
+    .history-list :global(.history-item) {
+        display: flex;
+        width: 100%;
+        min-width: 0;
+        justify-content: space-between;
+        padding: 7px 10px;
+        text-align: start;
+    }
+
+    .history-reference {
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .history-version {
+        flex-shrink: 0;
+        opacity: 0.65;
+        font-size: 0.85em;
+    }
+
+    .history-empty {
+        padding: 10px;
+        text-align: center;
+        opacity: 0.65;
     }
 
     .attributionString {

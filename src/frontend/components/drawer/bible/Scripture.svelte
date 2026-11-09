@@ -396,6 +396,7 @@
     }
 
     let playWhenLoaded = false
+    let playWithoutHistory = false
     async function openVerse(verseNumbers?: (number | string)[][]) {
         verseNumbers = verseNumbers?.length ? verseNumbers : activeReference.verses.length ? activeReference.verses : [[1]]
         activeReference.verses = verseNumbers
@@ -424,8 +425,9 @@
             })
         }
 
-        if (playWhenLoaded) setTimeout(playScripture)
+        if (playWhenLoaded) setTimeout(() => playScripture(!playWithoutHistory))
         playWhenLoaded = false
+        playWithoutHistory = false
     }
 
     // update active reference
@@ -451,6 +453,7 @@
 
         resetContentSearch()
 
+        playWithoutHistory = !!$openScripture.skipHistory
         if ($openScripture.play) playWhenLoaded = true
 
         let verses = $openScripture.verses
@@ -473,6 +476,13 @@
         if (!$scriptures[targetTabId]) targetTabId = item.id
         if (!$scriptures[targetTabId]) return // tab no longer exists
 
+        scriptures.update((items) => {
+            const versions = items[targetTabId]?.collection?.versions
+            const previewIndex = versions?.indexOf(item.id) ?? -1
+            if (previewIndex >= 0) items[targetTabId].collection!.previewIndex = previewIndex
+            return items
+        })
+
         const isOpen = targetTabId === activeScriptureId
         // if (isOpen) {
         //     openBook(item.book, [item.chapter], [item.verse])
@@ -484,7 +494,7 @@
         if (!isOpen) setDrawerTabData("scripture", targetTabId)
 
         // navigate (once loaded)
-        openScripture.set({ book: item.book, chapter: item.chapter, verses: item.verse, play: true })
+        openScripture.set({ book: item.book, chapter: item.chapter, verses: item.verse, play: true, skipHistory: true })
     }
 
     /// AUTOSCROLL ///
