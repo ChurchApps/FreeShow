@@ -428,7 +428,7 @@
                         {#if !disableStagePreview}
                             <StageLayout outputId={outputWindowId} stageId={($outputs[outputWindowId] || $allOutputs[outputWindowId])?.stageOutput} edit={false} disableStagePreview={true} />
                         {/if}
-                    {:else}
+                    {:else if ($outputs[outputWindowId] || $allOutputs[outputWindowId])?.enabled !== false}
                         <Output outputId={outputWindowId} mirror style="width: 100%; height: 100%;" />
                     {/if}
 
