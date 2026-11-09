@@ -75,8 +75,7 @@ export function convertText({ name = "", origin = "", category = null, text, noF
 
     function extractMetaLine(line: string, delimiter: ":" | "=") {
         const idx = line.indexOf(delimiter)
-        if (idx <= 0) return false
-        if (delimiter === ":" && isHeaderLine(line, true)) return false
+        if (!isMetadataKey(line, delimiter)) return false
 
         const key = line.slice(0, idx).trim()
         const val = line.slice(idx + 1).trim()
@@ -187,6 +186,15 @@ export function convertText({ name = "", origin = "", category = null, text, noF
     history({ id: "UPDATE", newData: { data: show, remember: { project: get(activeProject), index: selectedIndex } }, oldData: { id: showId }, location: { page: "show", id: "show" } })
 
     return { id: showId, show }
+}
+
+export function isMetadataKey(line: string, delimiter: ":" | "=") {
+    const idx = line.indexOf(delimiter)
+    if (idx <= 0) return false
+    if (delimiter === ":" && isHeaderLine(line, true)) return false
+
+    const key = line.slice(0, idx).trim()
+    return !!key && !/[\d\s]/.test(key)
 }
 
 export function trimNameFromString(text: string) {
