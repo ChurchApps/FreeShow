@@ -22,6 +22,7 @@ type VideoOptions = {
     muted?: boolean
     loop?: boolean
     volume?: number
+    speed?: number | string
     startAt?: number
     fromTime?: number
     toTime?: number
@@ -49,6 +50,7 @@ export type VideoAudioData = {
     fromTime?: number
     toTime?: number
     volume?: number
+    speed?: number | string
 }
 
 export type PlayingVideoState = {
@@ -140,7 +142,7 @@ export class VideoPlayer {
         const volume = options.volume !== undefined ? options.volume : globalOpts.volume
 
         playingVideos.update((a) => {
-            a.push({ path: id, audio, linkedOutputIds: linkedOutputIds || [], type: options.type || "background", isOnline: options.isOnline, softLoop, loop, fromTime, toTime, volume })
+            a.push({ path: id, audio, linkedOutputIds: linkedOutputIds || [], type: options.type || "background", isOnline: options.isOnline, softLoop, loop, fromTime, toTime, volume, speed: options.speed })
             return a
         })
 
@@ -701,6 +703,7 @@ export class VideoPlayer {
         return {
             ...globalOpts,
             ...(playing.volume !== undefined ? { volume: playing.volume } : {}),
+            ...(playing.speed !== undefined ? { speed: String(playing.speed) } : {}),
             ...(playing.fromTime !== undefined ? { fromTime: playing.fromTime } : {}),
             ...(playing.toTime !== undefined ? { toTime: playing.toTime } : {}),
             ...(playing.loop !== undefined ? { loop: playing.loop } : {}),
