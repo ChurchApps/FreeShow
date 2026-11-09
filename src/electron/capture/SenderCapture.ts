@@ -52,7 +52,7 @@ export class SenderCapture {
         return true
     }
 
-    static captureDoneCallbacks: { [id: string]: (seq: number, tl?: CaptureTimeline | null) => void } = {}
+    static captureDoneCallbacks: { [id: string]: (seq: number, tl?: CaptureTimeline | null, failed?: boolean) => void } = {}
     static releaseTextureCallbacks: { [id: string]: (seq: number) => void } = {}
 
     // registered by their owners to avoid an import cycle
@@ -71,7 +71,7 @@ export class SenderCapture {
             this.releaseTextureCallbacks[msg.id]?.(msg.seq)
         } else if (msg.type === "captureDone") {
             // a pipeline slot frees, so the lifecycle may forward the next frame
-            this.captureDoneCallbacks[msg.id]?.(msg.seq, msg.tl)
+            this.captureDoneCallbacks[msg.id]?.(msg.seq, msg.tl, !!msg.failed)
         } else if (msg.type === "serverFrame") {
             // RGBA from the GPU, forwarded untouched
             CaptureHelper.Transmitter.sendServerFrame(msg.id, msg.buffer, msg.size)
