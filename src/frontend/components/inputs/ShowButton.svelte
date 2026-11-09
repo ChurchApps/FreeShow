@@ -113,7 +113,9 @@
         if ($focusMode) {
             let inProject = $projects[$activeProject || ""]?.shows?.find((p) => p.id === id)
             if (inProject) {
-                activeFocus.set({ id, index: pos ?? undefined, type })
+                let focusData: any = { id, index: pos ?? undefined, type }
+                if (type === "player") focusData.data = show.data
+                activeFocus.set(focusData)
                 return
             } else {
                 focusMode.set(false)
@@ -123,6 +125,7 @@
         if (pos !== null) {
             newShow.index = pos
             if (type === "audio") newShow.name = show.name
+            else if (type === "player") newShow.data = show.data
             else if (type === "show") {
                 // async waiting for show to load
                 setTimeout(async () => {
