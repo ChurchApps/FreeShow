@@ -19,7 +19,7 @@ const UYVY_SHADER = [
 ].join("")
 
 // `swap` exchanges red and blue for BGRA
-const RGBA_SHADER = "precision mediump float;varying vec2 v;uniform sampler2D t;uniform float swap;void main(){vec4 c=texture2D(t,v);gl_FragColor=vec4(mix(c.rgb,c.bgr,swap),1.0);}"
+const RGBA_SHADER = "precision mediump float;varying vec2 v;uniform sampler2D t;uniform float swap;void main(){vec4 c=texture2D(t,v);gl_FragColor=vec4(mix(c.rgb,c.bgr,swap),c.a);}"
 
 function buildProgram(context: WebGLRenderingContext, fragmentSource = UYVY_SHADER) {
     const vertex = context.createShader(context.VERTEX_SHADER)
@@ -124,7 +124,7 @@ export class StreamCanvasRenderer {
     }
 
     private initGL(canvas: HTMLCanvasElement) {
-        this.gl = canvas.getContext("webgl", { alpha: false, antialias: false, depth: false, stencil: false, preserveDrawingBuffer: true })
+        this.gl = canvas.getContext("webgl", { alpha: true, antialias: false, depth: false, stencil: false, preserveDrawingBuffer: true })
         if (!this.gl) return false
 
         // a lost context is rebuilt on the next frame
