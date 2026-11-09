@@ -164,6 +164,7 @@
 
         // timeout for loading, because if the video is not loaded in time it will start playing, but that's fine
         setTimeout(() => {
+            if (playingInOutput) return
             videoData.paused = true
             videoTime = videoData.duration ? videoData.duration / 2 : 0
         }, 2000)

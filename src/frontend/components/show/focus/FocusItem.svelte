@@ -18,7 +18,7 @@
 </script>
 
 {#if type === "video" || type === "image" || type === "player"}
-    <div class="outline" class:active={currentOutput?.out?.background?.path === show.id}>
+    <div class="outline" class:active={(currentOutput?.out?.background?.path || currentOutput?.out?.background?.id) === show.id}>
         <MediaPreview projectShow={show} />
     </div>
 {:else if type === "audio"}

@@ -199,12 +199,12 @@ export const dropActions = {
                     if (url.includes("youtube.com") || url.includes("youtu.be")) {
                         const id = trimPlayerId(url, "youtube")
                         const name = (await getYouTubeData(id)).name
-                        return { id: "-", type: "player", data: { type: "youtube", id, name } }
+                        return { id: uid(5), type: "player", data: { type: "youtube", id, name } }
                     }
                     if (url.includes("vimeo.com")) {
                         const id = trimPlayerId(url, "vimeo")
                         const name = (await getVimeoData(id)).name
-                        return { id: "-", type: "player", data: { type: "vimeo", id, name } }
+                        return { id: uid(5), type: "player", data: { type: "vimeo", id, name } }
                     }
 
                     return { id: url, type: "url" }
