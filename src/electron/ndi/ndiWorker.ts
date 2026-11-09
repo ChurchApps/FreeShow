@@ -101,6 +101,7 @@ export const ndiAdapter: SenderAdapter = {
     label: "NDI",
     load: loadGrandiose,
     describe: (msg) => (msg.groups ? `; In group: ${msg.groups}` : ""),
+    recreateDelayMs: 500,
 
     async create(grandiose: any, _id: string, msg: any) {
         /* eslint @typescript-eslint/await-thenable: 0 */

@@ -29,7 +29,7 @@ export const omtAdapter: SenderAdapter = {
     label: "OMT",
     load: loadOMT,
     // a quality change recreates the sender, and the replacement rebinds the same port
-    recreateDelayMs: 250,
+    recreateDelayMs: 500,
 
     async create(omt: any, _id: string, msg: any) {
         const sender = new omt.Sender(msg.name, mapQuality(omt, msg.quality))
