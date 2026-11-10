@@ -3,7 +3,7 @@
     import { uid } from "uid"
     import { Main } from "../../../types/IPC/Main"
     import { sendMain } from "../../IPC/main"
-    import { activePopup, activeProject, activeShow, autoOpenedTimeline, editingProjectTemplate, openToolsTab, outputs, projects, projectTemplates, selected, showNotesActive, shows, showsCache, special, styles, templates } from "../../stores"
+    import { activePopup, activeProject, activeShow, autoOpenedTimeline, editingProjectTemplate, focusMode, openToolsTab, outputs, projects, projectTemplates, selected, showNotesActive, shows, showsCache, special, styles, templates } from "../../stores"
     import { translateText } from "../../utils/language"
     import { getAccess } from "../../utils/profile"
     import { clone, keysToID, sortByName } from "../helpers/array"
@@ -165,9 +165,13 @@
 
 <svelte:window on:mousedown={mousedown} />
 
-<div class="header context #default" class:shadow={listScrollY > 0}>
+<div class="header context #default" class:shadow={listScrollY > 0} class:focusMode={$focusMode}>
     <div class="name-notes" data-title={currentShow?.name}>
         <div class="name">
+            {#if $focusMode}
+                <Icon id="slide" style="margin-right: 4px;" white />
+            {/if}
+
             <span class="title">
                 {#if currentShow?.name}
                     {currentShow.name}
@@ -182,7 +186,7 @@
                 {#if activeLayoutData}
                     <MaterialDropdown label="show.arrangement" options={sortedLayouts.map((layout) => ({ value: layout.id, label: layout.name }))} value={activeLayout} class="context #layout" on:change={(e) => setLayout(e.detail)} addNew={disabledLayouts ? "" : "show.new_arrangement"} on:new={addLayout} inline />
                 {/if}
-            {:else if !disabledLayouts}
+            {:else if !disabledLayouts && !$focusMode}
                 <MaterialButton on:click={() => addLayout()} style="margin-left: 3px;padding: 3px 4px 2px 4px;" title="show.new_arrangement" center>
                     <Icon id="add" white />
                 </MaterialButton>
@@ -197,75 +201,77 @@
         {/if}
     </div>
 
-    <div class="right">
-        <!-- template icon -->
-        {#if enableStylePreview}
-            <MaterialButton style="width: 32px;height: 100%;padding: 0.3em 0.5em;" title="formats.template: <b>{$templates[outputStyleTemplate]?.name || ''}</b>" on:click={() => activePopup.set("template_info")}>
-                <Icon size={0.8} id="styles" white />
-            </MaterialButton>
-        {:else if enableShowTemplate}
-            <MaterialButton style="width: 32px;height: 100%;padding: 0.3em 0.5em;" class="context #show_template" title="formats.template: <b>{$templates[showTemplateId]?.name || 'info.template'}</b>" on:click={() => activePopup.set("template_info")}>
-                <Icon size={0.8} id="templates" white />
-            </MaterialButton>
-        {/if}
+    {#if !$focusMode}
+        <div class="right">
+            <!-- template icon -->
+            {#if enableStylePreview}
+                <MaterialButton style="width: 32px;height: 100%;padding: 0.3em 0.5em;" title="formats.template: <b>{$templates[outputStyleTemplate]?.name || ''}</b>" on:click={() => activePopup.set("template_info")}>
+                    <Icon size={0.8} id="styles" white />
+                </MaterialButton>
+            {:else if enableShowTemplate}
+                <MaterialButton style="width: 32px;height: 100%;padding: 0.3em 0.5em;" class="context #show_template" title="formats.template: <b>{$templates[showTemplateId]?.name || 'info.template'}</b>" on:click={() => activePopup.set("template_info")}>
+                    <Icon size={0.8} id="templates" white />
+                </MaterialButton>
+            {/if}
 
-        <!-- zoom icon ? -->
-        <!-- <MaterialButton style="width: 32px;height: 100%;padding: 0.3em 0.5em;" title="actions.zoom" on:click={() => }>
+            <!-- zoom icon ? -->
+            <!-- <MaterialButton style="width: 32px;height: 100%;padding: 0.3em 0.5em;" title="actions.zoom" on:click={() => }>
             <Icon size={0.9} id="zoomIn" white />
         </MaterialButton> -->
 
-        {#if !hideOptions}
-            <!-- show more -->
-            <MaterialButton style="width: 32px;height: 100%;padding: 0.3em 0.5em;border-bottom-right-radius: 10px;{showDropdown ? '' : 'opacity: 0.8;'}" title="create_show.more_options" icon="more" on:click={() => (showDropdown = !showDropdown)} white={!showDropdown}>
-                <!-- prevent force "white" -->
-                <span style="display: none;"></span>
-            </MaterialButton>
-        {/if}
-
-        {#if showDropdown && currentShow}
-            <div class="showDropdown" transition:fade={{ duration: 100 }} role="none" on:click={() => (showDropdown = false)}>
-                <MaterialButton title="tooltip.notes" on:click={() => showNotesActive.set(!$showNotesActive)}>
-                    <Icon id="notes" white={!$showNotesActive} />
-
-                    {#if $showNotesActive}
-                        <Icon id="check" size={0.7} white />
-                    {/if}
-
-                    <p><T id="tools.notes" /></p>
+            {#if !hideOptions}
+                <!-- show more -->
+                <MaterialButton style="width: 32px;height: 100%;padding: 0.3em 0.5em;border-bottom-right-radius: 10px;{showDropdown ? '' : 'opacity: 0.8;'}" title="create_show.more_options" icon="more" on:click={() => (showDropdown = !showDropdown)} white={!showDropdown}>
+                    <!-- prevent force "white" -->
+                    <span style="display: none;"></span>
                 </MaterialButton>
+            {/if}
 
-                <div class="DIVIDER"></div>
+            {#if showDropdown && currentShow}
+                <div class="showDropdown" transition:fade={{ duration: 100 }} role="none" on:click={() => (showDropdown = false)}>
+                    <MaterialButton title="tooltip.notes" on:click={() => showNotesActive.set(!$showNotesActive)}>
+                        <Icon id="notes" white={!$showNotesActive} />
 
-                <MaterialButton
-                    title="timeline.toggle_timeline"
-                    on:click={() => {
-                        special.update((a) => ({ ...a, timelineActive: !a.timelineActive }))
-                        autoOpenedTimeline.set(false)
-                    }}
-                >
-                    <Icon id="timeline" white={!$special.timelineActive} />
+                        {#if $showNotesActive}
+                            <Icon id="check" size={0.7} white />
+                        {/if}
 
-                    {#if $special.timelineActive}
-                        <Icon id="check" size={0.7} white />
-                    {/if}
+                        <p><T id="tools.notes" /></p>
+                    </MaterialButton>
 
-                    <p><T id="timeline.toggle_timeline" /></p>
-                </MaterialButton>
+                    <div class="DIVIDER"></div>
 
-                <div class="DIVIDER"></div>
+                    <MaterialButton
+                        title="timeline.toggle_timeline"
+                        on:click={() => {
+                            special.update((a) => ({ ...a, timelineActive: !a.timelineActive }))
+                            autoOpenedTimeline.set(false)
+                        }}
+                    >
+                        <Icon id="timeline" white={!$special.timelineActive} />
 
-                <MaterialButton title="context.lockForChanges" on:click={toggleShowLock}>
-                    <Icon id="lock" white={!currentShow.locked} />
+                        {#if $special.timelineActive}
+                            <Icon id="check" size={0.7} white />
+                        {/if}
 
-                    {#if currentShow.locked}
-                        <Icon id="check" size={0.7} white />
-                    {/if}
+                        <p><T id="timeline.toggle_timeline" /></p>
+                    </MaterialButton>
 
-                    <p><T id="context.lockForChanges" /></p>
-                </MaterialButton>
-            </div>
-        {/if}
-    </div>
+                    <div class="DIVIDER"></div>
+
+                    <MaterialButton title="context.lockForChanges" on:click={toggleShowLock}>
+                        <Icon id="lock" white={!currentShow.locked} />
+
+                        {#if currentShow.locked}
+                            <Icon id="check" size={0.7} white />
+                        {/if}
+
+                        <p><T id="context.lockForChanges" /></p>
+                    </MaterialButton>
+                </div>
+            {/if}
+        </div>
+    {/if}
 </div>
 
 <style>
@@ -299,6 +305,10 @@
     .header.shadow {
         background-color: rgb(0 0 10 / 0.12);
         box-shadow: 0 2px 4px rgb(0 0 10 / 0.3);
+    }
+
+    .header.focusMode:not(.shadow) {
+        border-radius: 0;
     }
 
     .header .right {
