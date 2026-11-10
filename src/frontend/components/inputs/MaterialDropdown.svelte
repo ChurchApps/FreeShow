@@ -21,6 +21,7 @@
     export let allowEmpty = false
     export let flags = false
     export let onlyArrow = false
+    export let inline = false
 
     export let addNew: string | null = null
     export let allowDeleting = false
@@ -278,11 +279,12 @@
     $: hasValue = !!value || (value === "" && options[0]?.value === "")
 </script>
 
-<div class="textfield {disabled ? 'disabled' : ''}" style={$$props.style || null} class:flags class:onlyArrow bind:this={dropdownEl}>
+<div class="textfield {disabled ? 'disabled' : ''}" style={$$props.style || null} class:flags class:onlyArrow class:inline bind:this={dropdownEl}>
     <div class="background" />
 
     <div
-        class="input edit dropdown-trigger"
+        class="input edit dropdown-trigger {$$props.class || ''}"
+        id="#{value}"
         data-title="{translateText(label)}{selected ? `: <b>${selected.label || '—'}</b>` : ''}"
         role="button"
         tabindex={disabled ? undefined : 0}
@@ -303,12 +305,12 @@
                 {#if selected?.value !== undefined}{selected?.label || "—"}{:else if value}{value}{/if}
             </span>
         {/if}
-        <svg class="arrow {open ? 'open' : ''}" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg class="arrow {open ? 'open' : ''}" width={inline ? "16" : "24"} height={inline ? "16" : "24"} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2" />
         </svg>
     </div>
 
-    {#if !onlyArrow}
+    {#if !onlyArrow && !inline}
         <label for={id} class:selected={hasValue}>{@html translateText(label, $dictionary)}</label>
     {/if}
     <span class="underline" />
@@ -462,12 +464,24 @@
         width: 50px;
     }
 
+    .textfield.inline {
+        width: auto;
+        height: auto;
+        border-bottom: 0;
+    }
+
     .background {
         position: absolute;
         inset: 0;
         background-color: var(--primary-darkest);
         border-radius: 4px 4px 0 0;
         z-index: 0;
+    }
+
+    .textfield.inline .background {
+        background-color: rgb(0 0 0 / 0.4);
+        /* background: red; */
+        border-radius: 4px;
     }
 
     .textfield:not(:has(.dropdown)):not(:has(.remove:hover)):not(:disabled):hover .input {
@@ -488,6 +502,14 @@
         background: transparent;
         border: none;
         outline: none;
+    }
+
+    .textfield.inline .dropdown-trigger {
+        padding: 1px 5px;
+        font-weight: normal;
+
+        font-size: 0.85rem;
+        opacity: 0.9;
     }
 
     .remove {
@@ -519,6 +541,13 @@
     }
     .arrow.open {
         transform: translateY(-0.4rem) rotate(180deg);
+    }
+
+    .textfield.inline .arrow {
+        transform: initial;
+    }
+    .textfield.inline .arrow.open {
+        transform: rotate(180deg);
     }
 
     label {
@@ -595,6 +624,10 @@
         animation: dropdownFlyFade 80ms cubic-bezier(0.33, 1, 0.68, 1);
     }
 
+    .textfield.inline .dropdown {
+        min-width: 180px;
+    }
+
     @keyframes dropdownFlyFade {
         from {
             opacity: 0;
@@ -643,6 +676,10 @@
     }
     .dropdown li.selected {
         color: var(--secondary);
+    }
+
+    .textfield.inline .dropdown li {
+        padding: 0.4rem 0.75rem;
     }
 
     .dropdown .data {

@@ -1,36 +1,21 @@
 <script lang="ts">
-    import { uid } from "uid"
-    import type { ClickEvent } from "../../../types/Main"
     import { changeSlidesView } from "../../show/slides"
-    import { actions, activePopup, activeProject, activeShow, alertMessage, editingProjectTemplate, labelsDisabled, projects, projectTemplates, showsCache, slidesOptions } from "../../stores"
+    import { actions, activePopup, activeShow, alertMessage, showsCache, slidesOptions } from "../../stores"
     import { translateText } from "../../utils/language"
     import { getAccess } from "../../utils/profile"
     import { getActionIcon, runAction } from "../actions/actions"
     import Icon from "../helpers/Icon.svelte"
-    import T from "../helpers/T.svelte"
-    import { keysToID, sortByName } from "../helpers/array"
-    import { duplicate } from "../helpers/clipboard"
-    import { history } from "../helpers/history"
     import { _show } from "../helpers/shows"
     import { joinTime, secondsToTime } from "../helpers/time"
     import FloatingInputs from "../input/FloatingInputs.svelte"
-    import HiddenInput from "../inputs/HiddenInput.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import MaterialZoom from "../inputs/MaterialZoom.svelte"
-    import SelectElem from "../system/SelectElem.svelte"
     import Reference from "./Reference.svelte"
 
     $: showId = $activeShow?.id || ""
     $: currentShow = $showsCache[showId] || {}
     $: layouts = currentShow.layouts
     $: activeLayout = currentShow.settings?.activeLayout
-
-    $: isTemplate = !!$editingProjectTemplate
-    $: projectId = isTemplate ? $editingProjectTemplate : $activeProject
-    $: store = isTemplate ? projectTemplates : projects
-    $: project = $store[projectId!]
-
-    $: sortedLayouts = sortByName(keysToID(layouts || {}))
 
     let totalTime = "0s"
     let isTranslated = false
@@ -57,62 +42,7 @@
         )
     }
 
-    function addLayout(e: ClickEvent) {
-        if (!e.detail.ctrl) {
-            duplicate({ id: "layout" })
-            return
-        }
-
-        history({ id: "UPDATE", newData: { key: "layouts", subkey: uid() }, oldData: { id: showId }, location: { page: "show", id: "show_layout" } })
-    }
-
-    function changeName(e: any) {
-        let currentLayout = e.detail?.id?.slice("layout_".length)
-        if (!currentLayout || isLocked) return
-
-        const newName = e.detail.value
-        history({ id: "UPDATE", newData: { key: "layouts", keys: [currentLayout], subkey: "name", data: newName }, oldData: { id: showId }, location: { page: "show", id: "show_key" } })
-
-        const showIndex = $activeShow?.index
-        if (project?.shows?.[showIndex ?? -1]?.layout === currentLayout) {
-            store.update((a) => {
-                if (a[projectId!]?.shows?.[showIndex!]) {
-                    a[projectId!].shows[showIndex!].layoutInfo = { name: newName }
-                }
-                return a
-            })
-        }
-    }
-
-    function setLayout(id: string, layoutInfo) {
-        if (!$showsCache[showId]) return
-
-        showsCache.update((a) => {
-            if (a[showId]) {
-                if (!a[showId].settings) a[showId].settings = { activeLayout: "", template: null }
-                a[showId].settings.activeLayout = id
-            }
-            return a
-        })
-
-        // set active layout in project
-        if (sortedLayouts?.length < 2) return
-        const showIndex = $activeShow?.index
-        if (($activeShow?.type === undefined || $activeShow?.type === "show") && showIndex !== undefined && projectId && project?.shows?.[showIndex]) {
-            store.update((a) => {
-                if (a[projectId!]?.shows?.[showIndex]) {
-                    a[projectId!].shows[showIndex].layout = id
-                    a[projectId!].shows[showIndex].layoutInfo = layoutInfo
-                }
-                return a
-            })
-        }
-    }
-
-    let edit: string | boolean = false
-
     $: reference = currentShow.reference
-    $: multipleLayouts = sortedLayouts.length > 1
 
     $: customActionId = currentShow?.settings?.customAction
     $: customAction = customActionId && $actions[customActionId] ? customActionId : ""
@@ -194,43 +124,13 @@
     </FloatingInputs>
 {/if}
 
-{#if $slidesOptions.mode !== "simple"}
-    <FloatingInputs style="max-width: {referenceType ? 90 : 70}%;" side="left" onlyOne={!reference && !multipleLayouts}>
-        {#if reference}
-            <Reference {showId} show={currentShow} />
-        {:else if layouts}
-            {#if multipleLayouts}
-                <span class="layouts">
-                    {#each sortedLayouts as layout}
-                        <SelectElem id="layout" data={layout.id} fill={!edit || edit === layout.id}>
-                            <MaterialButton
-                                class={isLocked ? "" : "context #layout"}
-                                on:click={() => {
-                                    if (!edit) setLayout(layout.id, { name: layout.name })
-                                }}
-                                isActive={activeLayout === layout.id}
-                            >
-                                <HiddenInput value={layout.name} id={"layout_" + layout.id} on:edit={changeName} bind:edit allowEdit={!isLocked} />
-                            </MaterialButton>
-                        </SelectElem>
-                    {/each}
-                </span>
-            {/if}
-
-            <MaterialButton disabled={!layoutSlides.length || isLocked || !layoutSlides?.some((a) => a && currentShow?.slides?.[a.id]?.group && currentShow?.slides?.[a.id]?.group !== ".")} on:click={addLayout} style="white-space: nowrap;" title="show.new_arrangement" center>
-                <Icon id="add" size={1.1} white={multipleLayouts} />
-                {#if !multipleLayouts && !$labelsDisabled}<T id="show.new_arrangement" />{/if}
-            </MaterialButton>
-        {/if}
+{#if $slidesOptions.mode !== "simple" && reference}
+    <FloatingInputs style="max-width: {referenceType ? 90 : 70}%;" side="left">
+        <Reference {showId} show={currentShow} />
     </FloatingInputs>
 {/if}
 
 <style>
-    .layouts {
-        display: flex;
-        overflow-x: auto;
-    }
-
     div {
         display: flex;
         justify-content: space-between;

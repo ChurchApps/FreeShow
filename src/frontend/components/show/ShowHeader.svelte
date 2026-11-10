@@ -1,20 +1,34 @@
 <script lang="ts">
     import { fade } from "svelte/transition"
+    import { uid } from "uid"
     import { Main } from "../../../types/IPC/Main"
     import { sendMain } from "../../IPC/main"
-    import { activePopup, autoOpenedTimeline, openToolsTab, outputs, showNotesActive, shows, showsCache, special, styles, templates } from "../../stores"
+    import { activePopup, activeProject, activeShow, autoOpenedTimeline, editingProjectTemplate, openToolsTab, outputs, projects, projectTemplates, selected, showNotesActive, shows, showsCache, special, styles, templates } from "../../stores"
     import { translateText } from "../../utils/language"
+    import { getAccess } from "../../utils/profile"
+    import { clone, keysToID, sortByName } from "../helpers/array"
+    import { duplicate } from "../helpers/clipboard"
+    import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import { allOutputsHasStyleTemplate, getFirstActiveOutput } from "../helpers/output"
     import { removeTemplatesFromShow } from "../helpers/show"
     import T from "../helpers/T.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
+    import MaterialDropdown from "../inputs/MaterialDropdown.svelte"
 
     export let showId: string
     export let hideOptions = false
 
+    let profile = getAccess("shows")
+    $: isLocked = currentShow?.locked || profile.global === "read" || profile[currentShow?.category || ""] === "read"
+
     $: currentShow = $showsCache[showId]
     $: layouts = currentShow?.layouts
+
+    $: isTemplate = !!$editingProjectTemplate
+    $: projectId = isTemplate ? $editingProjectTemplate : $activeProject
+    $: store = isTemplate ? projectTemplates : projects
+    $: project = $store[projectId!]
 
     let notes: { text: string; id: string; title: string; icon: string; tab: string } | null = null
     $: if (layouts || currentShow) updateNotes()
@@ -69,6 +83,74 @@
         })
     }
 
+    // LAYOUT
+
+    $: activeLayout = currentShow?.settings?.activeLayout
+    $: activeLayoutData = layouts?.[activeLayout] || Object.values(layouts || {})[0]
+
+    $: sortedLayouts = sortByName(keysToID(layouts || {}))
+    $: multipleLayouts = sortedLayouts.length > 1
+
+    function setLayout(layoutId: string) {
+        if (!$showsCache[showId]) return
+
+        let layoutInfo: any = clone(sortedLayouts.find((layout) => layout.id === layoutId))
+        if (layoutInfo?.id) delete layoutInfo.id
+
+        showsCache.update((a) => {
+            if (a[showId]) {
+                if (!a[showId].settings) a[showId].settings = { activeLayout: "", template: null }
+                a[showId].settings.activeLayout = layoutId
+            }
+            return a
+        })
+
+        // set active layout in project
+        if (sortedLayouts?.length < 2) return
+        const showIndex = $activeShow?.index
+        if (($activeShow?.type === undefined || $activeShow?.type === "show") && showIndex !== undefined && projectId && project?.shows?.[showIndex]) {
+            store.update((a) => {
+                if (a[projectId!]?.shows?.[showIndex]) {
+                    a[projectId!].shows[showIndex].layout = layoutId
+                    a[projectId!].shows[showIndex].layoutInfo = layoutInfo
+                }
+                return a
+            })
+        }
+    }
+
+    function addLayout(e: any = null) {
+        const layoutId = uid()
+        const name = e === null ? "" : e.detail
+
+        if (!name) {
+            setTimeout(() => {
+                selected.set({ id: "layout", data: [{ id: layoutId }] })
+                activePopup.set("rename")
+            })
+        }
+
+        const ctrlKey = false // e.detail.ctrl
+        if (!ctrlKey) {
+            duplicate({ id: "layout", data: [{ name, newId: layoutId }] })
+            return
+        }
+
+        // create empty
+        history({ id: "UPDATE", newData: { key: "layouts", subkey: layoutId }, oldData: { id: showId }, location: { page: "show", id: "show_layout" } })
+
+        // set name
+        showsCache.update((a) => {
+            if (a[showId]?.layouts?.[layoutId]) {
+                a[showId].layouts[layoutId] = { ...a[showId].layouts[layoutId], name }
+            }
+            return a
+        })
+    }
+
+    $: layoutSlides = layouts?.[activeLayout]?.slides || []
+    $: disabledLayouts = !layoutSlides.length || isLocked || !layoutSlides.some((a) => a && currentShow?.slides?.[a.id]?.group && currentShow?.slides?.[a.id]?.group !== ".")
+
     // TEMPLATE
 
     $: referenceType = currentShow?.reference?.type
@@ -83,13 +165,27 @@
 
 <svelte:window on:mousedown={mousedown} />
 
-<div class="header" class:shadow={listScrollY > 0}>
+<div class="header context #default" class:shadow={listScrollY > 0}>
     <div class="name-notes" data-title={currentShow?.name}>
         <div class="name">
-            {#if currentShow?.name}
-                {currentShow.name}
-            {:else}
-                <span style="opacity: 0.5;font-style: italic;"><T id="main.unnamed" /></span>
+            <span class="title">
+                {#if currentShow?.name}
+                    {currentShow.name}
+                {:else}
+                    <span style="opacity: 0.5;font-style: italic;"><T id="main.unnamed" /></span>
+                {/if}
+            </span>
+
+            {#if multipleLayouts}
+                <Icon id="next" style="opacity: 0.8;transform: translateY(2px);" size={1.2} white />
+
+                {#if activeLayoutData}
+                    <MaterialDropdown label="show.arrangement" options={sortedLayouts.map((layout) => ({ value: layout.id, label: layout.name }))} value={activeLayout} class="context #layout" on:change={(e) => setLayout(e.detail)} addNew={disabledLayouts ? "" : "show.new_arrangement"} on:new={addLayout} inline />
+                {/if}
+            {:else if !disabledLayouts}
+                <MaterialButton on:click={() => addLayout()} style="margin-left: 3px;padding: 3px 4px 2px 4px;" title="show.new_arrangement" center>
+                    <Icon id="add" white />
+                </MaterialButton>
             {/if}
         </div>
 
@@ -215,6 +311,12 @@
 
     /* name and notes */
 
+    .name {
+        display: flex;
+        align-items: center;
+        gap: 1px;
+    }
+
     .name-notes {
         flex: 1;
         display: flex;
@@ -222,16 +324,25 @@
         gap: 0.5em;
         font-size: 0.9em;
         min-width: 0;
-        overflow: hidden;
     }
 
     .name-notes .name {
+        display: flex;
+        align-items: center;
+        gap: 1px;
         flex-shrink: 0;
         max-width: 90%;
+        min-width: 0;
+    }
 
-        white-space: nowrap;
+    .name-notes .title {
+        display: inline-block;
+        max-width: 100%;
+        min-width: 0;
+
         overflow: hidden;
         text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     /* notes */

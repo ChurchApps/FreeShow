@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Line, SlideData } from "../../../../types/Show"
-    import { activePopup, activeShow, audioRouting, calendars, customScriptureBooks, drawerTabsData, effectsLibrary, scripturesCache, selected, showsCache } from "../../../stores"
+    import { activePopup, activeProject, activeShow, audioRouting, calendars, customScriptureBooks, drawerTabsData, effectsLibrary, projects, scripturesCache, selected, showsCache } from "../../../stores"
     import { renameCalendar } from "../../drawer/calendar/calendars"
     import { clone, removeDuplicates } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -32,6 +32,11 @@
                 if (i === 0) groupName = name
             })
             list = removeDuplicates(list)
+        } else if ($selected.id === "layout") {
+            const layoutId = selectionData[0]?.id || ""
+            const currentShow = $activeShow?.id || ""
+            const layout = $showsCache[currentShow].layouts[layoutId] || {}
+            groupName = layout.name || ""
         } else if ($selected.id === "chord") {
             groupName = selectionData[0]?.chord?.key || ""
         } else if ($selected.id === "bible_book") {
@@ -149,6 +154,25 @@
 
                 history({ id: "UPDATE", newData: { data: groupName, key: "slides", keys: [slideId], subkey: "group" }, oldData: { id: $activeShow?.id }, location: { page: "show", id: "show_key" } })
             })
+        },
+        layout: () => {
+            const layoutId = $selected.data?.[0]?.id
+            if (!layoutId) return
+
+            history({ id: "UPDATE", newData: { key: "layouts", keys: [layoutId], subkey: "name", data: groupName }, oldData: { id: $activeShow?.id }, location: { page: "show", id: "show_key" } })
+
+            const projectId = $activeProject
+            const project = $projects[projectId!]
+
+            const showIndex = $activeShow?.index
+            if (project?.shows?.[showIndex ?? -1]?.layout === layoutId) {
+                projects.update((a) => {
+                    if (a[projectId!]?.shows?.[showIndex!]) {
+                        a[projectId!].shows[showIndex!].layoutInfo = { name: groupName }
+                    }
+                    return a
+                })
+            }
         },
         chord: () => {
             let chord = $selected.data[0]

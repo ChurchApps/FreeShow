@@ -263,12 +263,15 @@ const clickActions = {
         const data = obj.sel?.data?.[0] || {}
 
         const renameById = ["show_drawer", "project", "folder", "stage", "theme", "style", "output", "tag", "profile", "interaction"]
-        const renameByIdDirect = ["overlay", "template", "player", "layout", "effect", "scene"]
+        const renameByIdDirect = ["overlay", "template", "player", "effect", "scene"]
 
         if (renameById.includes(id)) activeRename.set(id + "_" + data.id)
         else if (renameByIdDirect.includes(id)) activeRename.set(id + "_" + data)
         else if (id === "slide" || id === "group" || id === "audio_effect") activePopup.set("rename")
-        else if (obj.contextElem?.classList?.contains("#audio_channel") || obj.contextElem?.classList?.contains("#audio_channel_main")) {
+        else if (obj.contextElem?.classList?.contains("#layout")) {
+            selected.set({ id: "layout", data: [{ id: id.slice(1) }] })
+            activePopup.set("rename")
+        } else if (obj.contextElem?.classList?.contains("#audio_channel") || obj.contextElem?.classList?.contains("#audio_channel_main")) {
             selected.set({ id: "audio_channel", data: [{ id: obj.contextElem?.id }] })
             activePopup.set("rename")
         } else if (obj.contextElem?.classList?.contains("#bible_book_local")) {
@@ -292,6 +295,12 @@ const clickActions = {
     },
     remove: (obj: ObjData) => {
         if (obj.sel && deleteAction(obj.sel)) return
+
+        if (obj.contextElem?.classList.value.includes("#layout")) {
+            const id = obj.contextElem.id?.slice(1) || ""
+            deleteAction({ id: "layout", data: [id] })
+            return
+        }
 
         if (obj.contextElem?.classList.contains("#slide_recorder_item")) {
             const index = obj.contextElem.id.slice(1)
@@ -428,6 +437,12 @@ const clickActions = {
     delete_col: () => window.dispatchEvent(new CustomEvent("delete-col")),
     duplicate: (obj: ObjData) => {
         if (duplicate(obj.sel)) return
+
+        if (obj.contextElem?.classList.value.includes("#layout")) {
+            const id = obj.contextElem.id?.slice(1) || ""
+            duplicate({ id: "layout", data: [{ id }] })
+            return
+        }
 
         if (obj.contextElem?.classList.value.includes("#audio_effect_item")) {
             const effectId = obj.contextElem.id

@@ -1190,18 +1190,22 @@ const duplicateActions = {
         history({ id: "UPDATE", newData: { data: stage.items, key: "items" }, oldData: { id: stageId }, location: { page: "stage", id: "stage_item_content" } })
         updateSortedStageItems()
     },
-    layout: (data: any) => {
+    layout: (data?: { name?: string; id?: string; newId?: string }[]) => {
         const showId = get(activeShow)?.id
         if (!showId) return
 
-        const layoutId = data?.[0] || get(showsCache)[showId]?.settings?.activeLayout
+        const layoutId = data?.[0]?.id || get(showsCache)[showId]?.settings?.activeLayout
         if (!layoutId) return
 
         const newLayout = clone(get(showsCache)[showId]?.layouts?.[layoutId])
         if (!newLayout) return
 
-        newLayout.name += " 2"
-        history({ id: "UPDATE", newData: { key: "layouts", subkey: uid(), data: newLayout }, oldData: { id: get(activeShow)?.id }, location: { page: "show", id: "show_layout" } })
+        const customName = data?.[0]?.name
+        if (customName) newLayout.name = customName
+        else newLayout.name += " 2"
+
+        const newId = data?.[0]?.newId || uid()
+        history({ id: "UPDATE", newData: { key: "layouts", subkey: newId, data: newLayout }, oldData: { id: get(activeShow)?.id }, location: { page: "show", id: "show_layout" } })
     },
     folder: (data: any) => {
         // duplicate projects folder and all of the projects inside
