@@ -45,7 +45,11 @@ function updateActiveRecordingStore() {
 }
 
 export function isOutputRecording(outputId?: string): boolean {
-    return outputId ? outputRecordings.has(outputId) : outputRecordings.size > 0
+    const active = get(activeRecording)
+    if (outputId) {
+        return !!active?.outputs?.[outputId] || outputRecordings.has(outputId)
+    }
+    return !!active?.isOutput || outputRecordings.size > 0
 }
 
 const getMimeType = () => (typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported("video/webm; codecs=vp9,opus") ? "video/webm; codecs=vp9,opus" : "video/webm")

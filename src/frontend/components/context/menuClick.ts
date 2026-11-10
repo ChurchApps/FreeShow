@@ -1822,8 +1822,10 @@ const clickActions = {
         cameraManager.setStartupCameras(cameraIds)
     },
     recording: (obj: ObjData) => {
-        if (obj.contextElem?.classList.contains("#output_preview") || (obj.contextElem?.id && get(outputs)[obj.contextElem.id])) {
-            const outputId = obj.contextElem?.id || ""
+        const previewElem = obj.contextElem?.closest?.(".outputPreview") as HTMLElement | null
+        const outputId = (previewElem && get(outputs)[previewElem.id] ? previewElem.id : "") || (obj.contextElem?.id && get(outputs)[obj.contextElem.id] ? obj.contextElem.id : "")
+
+        if (outputId || obj.contextElem?.classList.contains("#output_preview")) {
             if (outputId) startOutputRecording(outputId)
         } else if (get(activeRecording)) {
             stopMediaRecorder()

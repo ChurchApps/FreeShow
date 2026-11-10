@@ -187,7 +187,7 @@
     $: liveStartedAt = (fullscreenOut?.rtmp ? fullscreenOut?.rtmpData?.startedAt : fullscreenOut?.webrtcData?.startedAt) || 0
     $: liveUnhealthy = fullscreenOut?.rtmp && isLive && getUnhealthyDestinations(fullscreenOut?.rtmpData, $rtmpStatus[fullscreenId])?.length
 
-    $: isRec = isOutputRecording(fullscreenId)
+    $: isRec = !!$activeRecording?.outputs?.[fullscreenId]
     $: recStartedAt = $activeRecording?.outputs?.[fullscreenId]?.startedAt || $activeRecording?.startedAt || 0
 </script>
 
@@ -273,7 +273,7 @@ aria-label={fullscreen ? "Exit fullscreen preview" : "Toggle fullscreen preview"
                             </div>
                         {/if}
 
-                        {#if isOutputRecording(output.id)}
+                        {#if $activeRecording?.outputs?.[output.id]}
                             <div class="badge rec" style="background-color: #b60707;">
                                 <MaterialButton style="padding: 2px 4px;min-height: 0;gap: 4px;" on:click={() => stopMediaRecorder(output.id)} title="actions.stop_recording">
                                     <Icon id="record" size={0.7} white />

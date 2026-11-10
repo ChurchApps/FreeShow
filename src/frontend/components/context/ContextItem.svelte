@@ -6,6 +6,7 @@
         activeEdit,
         activePage,
         activeProject,
+        activeRecording,
         activeShow,
         categories,
         colorbars,
@@ -373,7 +374,9 @@
             if ($forceClock) enabled = true
         },
         recording: () => {
-            const isRec = isOutputRecording(contextElem?.id || "")
+            const previewElem = contextElem?.closest?.(".outputPreview") as HTMLElement | null
+            const outputId = (previewElem && $outputs[previewElem.id] ? previewElem.id : "") || (contextElem?.id && $outputs[contextElem.id] ? contextElem.id : "")
+            const isRec = outputId ? !!$activeRecording?.outputs?.[outputId] : isOutputRecording()
             menu.label = isRec ? "actions.stop_recording" : "actions.start_recording"
             menu.icon = isRec ? "stop" : "record"
         },
