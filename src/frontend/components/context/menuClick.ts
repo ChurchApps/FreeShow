@@ -93,7 +93,7 @@ import { escapeRegExp, hideDisplay, isOutputWindow, newToast, triggerFunction, w
 import { setExampleEffects, setExampleOverlays, setExampleTemplates } from "../../utils/createData"
 import { translateText } from "../../utils/language"
 import { confirmCustom } from "../../utils/popup"
-import { openLinkProviderDialog, removeProviderLinks } from "../../utils/providerItemLinks"
+import { openLinkProviderDialog, unlinkProjectItems } from "../../utils/providerItemLinks"
 import { send } from "../../utils/request"
 import { initializeClosing, save } from "../../utils/save"
 import { updateThemeValues } from "../../utils/updateSettings"
@@ -1126,7 +1126,7 @@ const clickActions = {
         if (obj.sel?.data?.[0]) openLinkProviderDialog(obj.sel.data[0])
     },
     unlink_provider: (obj: ObjData) => {
-        if (obj.sel) removeProviderLinks(obj.sel.data.map((b) => b.id))
+        if (obj.sel) unlinkProjectItems(obj.sel.data)
     },
     section: (obj: ObjData) => {
         if (get(projects)[get(activeProject)!]?.sectionsLocked) {
