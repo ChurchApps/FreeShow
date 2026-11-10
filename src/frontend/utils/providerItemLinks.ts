@@ -41,57 +41,14 @@ function getProviderFromOrigin(origin?: string | null): ContentProviderId | null
     return (origin as ContentProviderId) || null
 }
 
-/** the link key of a provider project item */
-export function getProjectItemLinkKey(project: Project | null | undefined, item: ProjectShowRef | undefined, links = get(providerItemLinks)): string {
+function getProjectItemLinkKey(project: Project | null | undefined, item: ProjectShowRef | undefined): string {
     const providerId = getProviderFromOrigin(project?.origin)
-    if (!providerId || !item?.id) return ""
-    if (item.providerItemId) return `${providerId}:${item.providerItemId}`
-
-    // DEPRECATED items imported before they kept their provider item (pre v1.6.8)
-    const entry = Object.entries(links).find(([key, link]) => key.startsWith(`${providerId}:`) && link.showId === item.id)
-    return entry ? entry[0] : `${providerId}:${item.id}`
+    const itemId = item?.providerItemId || item?.id
+    return providerId && itemId ? `${providerId}:${itemId}` : ""
 }
 
 export function isProjectItemLinked(project: Project | null | undefined, item: ProjectShowRef | undefined, links = get(providerItemLinks)) {
-    const key = getProjectItemLinkKey(project, item, links)
-    return !!key && !!links[key]
-}
-
-type ProviderItemLink = { showId: string; mode: "online" | "local" | "manual" }
-export type ProviderLinkChange = { index: number; showId?: string; key: string; link: ProviderItemLink | null }
-
-/** applies item show and link changes together, returning the previous values (used by history) */
-export function applyProviderLinkChanges(projectId: string, changes: ProviderLinkChange[]): ProviderLinkChange[] {
-    const links = get(providerItemLinks)
-    const previous = changes.map(({ index, showId, key }) => ({ index, showId: showId === undefined ? undefined : get(projects)[projectId]?.shows?.[index]?.id, key, link: links[key] || null }))
-
-    providerItemLinks.update((a) => {
-        changes.forEach(({ key, link }) => {
-            if (link) a[key] = link
-            else delete a[key]
-        })
-        return a
-    })
-
-    projects.update((a) => {
-        const items = a[projectId]?.shows
-        if (!items) return a
-        changes.forEach(({ index, showId }) => {
-            if (showId !== undefined && items[index]) items[index] = { ...items[index], id: showId }
-        })
-        return a
-    })
-
-    const active = get(activeShow)
-    const changed = changes.find((a) => a.showId !== undefined && a.index === active?.index)
-    if (active && changed && get(activeProject) === projectId) activeShow.set({ ...active, id: changed.showId! })
-
-    return previous
-}
-
-function changeProjectItemLinks(projectId: string, changes: ProviderLinkChange[]) {
-    if (!changes.length) return
-    history({ id: "PROVIDER_LINK", newData: { projectId, changes }, location: { page: "show" } })
+    return !!links[getProjectItemLinkKey(project, item)]
 }
 
 export function openLinkProviderDialog(item: { id: string; index?: number }) {
@@ -99,32 +56,47 @@ export function openLinkProviderDialog(item: { id: string; index?: number }) {
 
     const projectId = get(activeProject)
     const currentProject = projectId ? get(projects)[projectId] : null
-    if (!projectId || !currentProject) return
+    const providerId = getProviderFromOrigin(currentProject?.origin)
+    if (!projectId || !currentProject || !providerId) return
 
-    const index = item.index ?? currentProject.shows?.findIndex((s) => s.id === item.id) ?? -1
-    const key = getProjectItemLinkKey(currentProject, currentProject.shows?.[index])
-    if (index < 0 || !key) return
+    const itemIndex = item.index ?? currentProject.shows?.findIndex((s) => s.id === item.id) ?? -1
+    const providerItemId = currentProject.shows?.[itemIndex]?.providerItemId || item.id
 
     popupData.set({
         action: "select_show",
         active: item.id,
-        trigger: (showId: string) => changeProjectItemLinks(projectId, [{ index, showId, key, link: { showId, mode: "manual" } }])
+        trigger: (chosenShowId: string) => {
+            setProviderItemLink(providerId, providerItemId, chosenShowId, "manual")
+
+            if (itemIndex >= 0) {
+                const newShows = [...(currentProject.shows || [])]
+                newShows[itemIndex] = { ...newShows[itemIndex], id: chosenShowId }
+
+                history({
+                    id: "UPDATE",
+                    newData: { key: "shows", data: newShows },
+                    oldData: { id: projectId },
+                    location: { page: "show", id: "project_key" }
+                })
+
+                if (get(activeShow)?.index === itemIndex) activeShow.set({ ...get(activeShow)!, id: chosenShowId })
+            }
+        }
     })
     activePopup.set("select_show")
 }
 
-/** the items keep their shows, and the next sync decides them again */
 export function unlinkProjectItems(items: { id: string; index?: number }[]) {
     const projectId = get(activeProject)
     const currentProject = projectId ? get(projects)[projectId] : null
-    if (!projectId || !currentProject) return
+    if (!currentProject) return
 
-    const links = get(providerItemLinks)
-    const changes = items
-        .map((item) => {
+    providerItemLinks.update((a) => {
+        items.forEach((item) => {
             const index = item.index ?? currentProject.shows?.findIndex((s) => s.id === item.id) ?? -1
-            return { index, key: getProjectItemLinkKey(currentProject, currentProject.shows?.[index], links), link: null }
+            const key = getProjectItemLinkKey(currentProject, currentProject.shows?.[index])
+            if (key) delete a[key]
         })
-        .filter((a) => a.key && links[a.key])
-    changeProjectItemLinks(projectId, changes)
+        return a
+    })
 }
