@@ -422,7 +422,7 @@
             <span style="pointer-events: none;width: 100%;height: 100%;{item.type === 'current_output' ? 'position: relative;' : ''}">
                 {#if item.type === "current_output" || id.includes("current_output")}
                     <!-- use PreviewCanvas only in remote StageShow -->
-                    <!-- {#if $currentWindow === "output" && !$special.optimizedMode} -->
+                    <!-- {#if $currentWindow === "output" && !$isOptimizedMode} -->
                     <!-- <PreviewCanvas capture={$previewBuffers[outputWindowId]} id={outputWindowId} fullscreen /> -->
                     {#if ($outputs[outputWindowId] || $allOutputs[outputWindowId])?.stageOutput}
                         {#if !disableStagePreview}

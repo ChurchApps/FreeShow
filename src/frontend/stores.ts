@@ -43,6 +43,7 @@ export const loadedState: Writable<string[]> = writable([])
 export const isDev: Writable<boolean> = writable(false)
 export const windowState: Writable<any> = writable({})
 export const dataPath: Writable<string> = writable("")
+export const isOptimizedMode: Writable<boolean> = writable(false)
 
 // ACTIVE
 export const selected: Writable<Selected> = writable({ id: null, data: [] })

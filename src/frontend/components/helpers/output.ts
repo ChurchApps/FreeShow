@@ -55,6 +55,7 @@ import { translateText } from "../../utils/language"
 import { confirmCustom } from "../../utils/popup"
 import { send } from "../../utils/request"
 import { hasStageStreamViewers, sendBackgroundToStage } from "../../utils/stageTalk"
+import { checkOptimizedMode } from "../../utils/startup"
 import { TemplateHelper } from "../../utils/templates"
 import { customActionActivation, runAction } from "../actions/actions"
 import type { API_camera, API_screen, API_stage_output_layout } from "../actions/api"
@@ -1056,6 +1057,7 @@ export function updateOutputWebrtcData(outputId: string, key: string, value: any
     if (key === "streaming") {
         if (value) AudioAnalyser.recorderActivate()
         else AudioAnalyser.recorderDeactivate()
+        checkOptimizedMode()
     }
 
     send(OUTPUT, ["SET_VALUE"], { id: resolvedId, key: "webrtcData", value: newData })
@@ -1100,6 +1102,7 @@ export function updateOutputRtmpData(outputId: string, key: string, value: any) 
     if (key === "streaming") {
         if (value) AudioAnalyser.recorderActivate()
         else AudioAnalyser.recorderDeactivate()
+        checkOptimizedMode()
     }
 
     if (key === "encoder") {

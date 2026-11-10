@@ -2,9 +2,9 @@
 
 <script lang="ts">
     import { fade, fly } from "svelte/transition"
-    import { quickSearchActive, special, theme, themes } from "../../stores"
+    import { isOptimizedMode, quickSearchActive, theme, themes } from "../../stores"
     import { translateText } from "../../utils/language"
-    import { highlightText } from "./searchHighlight"
+    import { getNormalizedKey } from "../../utils/shortcuts"
     import { hexToRgb } from "../helpers/color"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -12,7 +12,7 @@
     import TextInput from "../inputs/TextInput.svelte"
     import Center from "../system/Center.svelte"
     import { quicksearch, quickSearchCategoryNames, selectQuicksearchValue, type SearchCategory } from "./quicksearch"
-    import { getNormalizedKey } from "../../utils/shortcuts"
+    import { highlightText } from "./searchHighlight"
 
     let values: any[] = []
     let searchValue = ""
@@ -143,7 +143,7 @@
         rgb = { r: Math.max(0, newRgb.r - 1), g: Math.max(0, newRgb.g - 5), b: Math.max(0, newRgb.b - 5) }
     }
 
-    $: isOptimized = $special.optimizedMode
+    $: isOptimized = $isOptimizedMode
 
     // auto-scroll to selected item
     $: if (values.length && selectedIndex >= 0) {

@@ -165,7 +165,7 @@ export function logerror(err) {
 
 // stream to OutputShow
 export function toggleRemoteStream() {
-    // get(special).optimizedMode
+    // get(isOptimizedMode)
     if (!isMainWindow()) return
 
     const value = { key: "server", value: false }

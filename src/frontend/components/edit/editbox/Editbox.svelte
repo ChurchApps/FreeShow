@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Item } from "../../../../types/Show"
-    import { activeEdit, activeShow, openToolsTab, os, outputs, showsCache, special, templates, variables } from "../../../stores"
+    import { activeEdit, activeShow, isOptimizedMode, openToolsTab, os, outputs, showsCache, templates, variables } from "../../../stores"
     import { startResizing } from "../../../utils/cursor"
     import { translateText } from "../../../utils/language"
     import { getAccess } from "../../../utils/profile"
@@ -13,9 +13,9 @@
     import { isSlideLocked } from "../../helpers/show"
     import { createCSSVariables } from "../../helpers/showActions"
     import { getItemStyle, getStyles } from "../../helpers/style"
-    import { getShapeGuideStyle } from "../scripts/shapeOutside"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import SlideItems from "../../slide/SlideItems.svelte"
+    import { getShapeGuideStyle } from "../scripts/shapeOutside"
     import EditboxCropping from "./EditboxCropping.svelte"
     import EditboxLines from "./EditboxLines.svelte"
     import EditboxPlain from "./EditboxPlain.svelte"
@@ -239,7 +239,7 @@
     // give CSS access to certain dynamic values
     $: cssVariables = createCSSVariables($variables)
 
-    const isOptimized = $special.optimizedMode
+    const isOptimized = $isOptimizedMode
     let previewCropType: "clip" | "ppt" = "clip"
     $: previewCropType = item?.cropping?.type === "ppt" ? "ppt" : "clip"
     $: previewItem = cropActive && item ? { ...item, cropping: { ...cropPreview, type: previewCropType } } : item

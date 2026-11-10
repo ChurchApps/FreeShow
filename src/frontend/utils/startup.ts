@@ -7,16 +7,16 @@ import { syncIcsCalendars } from "../components/drawer/calendar/calendars"
 import { getTimeFromInterval } from "../components/helpers/time"
 import { requestMain, requestMainMultiple, sendMain, sendMainMultiple } from "../IPC/main"
 import { cameraManager } from "../media/cameraManager"
-import { activePopup, activeProfile, alertMessage, cachePath, cloudSyncData, contentProviderData, currentWindow, dataPath, deviceId, driveKeys, isDev, loaded, loadedState, os, profiles, providerConnections, shows, special, version, windowState } from "../stores"
+import { activePopup, activeProfile, alertMessage, cachePath, cloudSyncData, contentProviderData, currentWindow, dataPath, deviceId, driveKeys, isDev, isOptimizedMode, loaded, loadedState, os, outputs, profiles, providerConnections, shows, special, version, windowState } from "../stores"
 import { startTracking } from "./analytics"
 import { setupCloudSync } from "./cloudSync"
 import { wait, waitUntilValueIsDefined } from "./common"
 import { getDefaultElements } from "./createData"
 import { setLanguage } from "./language"
 import { storeSubscriber } from "./listeners"
-import { renderSignatureHook } from "./renderSignature"
 import { autoOpenLastUsedProfile, openProfileByName } from "./profile"
 import { receiveOUTPUTasOUTPUT, remoteListen, setupMainReceivers } from "./receivers"
+import { renderSignatureHook } from "./renderSignature"
 import { destroy, receive, send, setBeforeOutputSend } from "./request"
 import { save, unsavedUpdater } from "./save"
 
@@ -121,9 +121,18 @@ function windowFocusListener() {
     updateFocus()
 }
 
+let performanceMode = false
 async function checkRamUsage() {
     const ram = await requestMain(Main.CHECK_RAM_USAGE)
-    if (ram && (ram.performanceMode ? ram.performanceMode !== get(special).optimizedMode : get(special).optimizedMode)) special.set({ ...get(special), optimizedMode: ram.performanceMode })
+    performanceMode = ram?.performanceMode ?? performanceMode
+    checkOptimizedMode()
+}
+
+export function checkOptimizedMode() {
+    let shouldBeEnabled = get(special).optimizedMode
+    if (performanceMode) shouldBeEnabled = true
+    if (Object.values(get(outputs) || {}).some((o) => !!o?.rtmpData?.streaming || !!o?.webrtcData?.streaming)) shouldBeEnabled = true
+    isOptimizedMode.set(shouldBeEnabled)
 }
 
 function autoBackup() {

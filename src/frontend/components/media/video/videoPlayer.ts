@@ -5,7 +5,7 @@ import { Main } from "../../../../types/IPC/Main"
 import { AudioAnalyser } from "../../../audio/audioAnalyser"
 import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "../../../audio/audioFading"
 import { requestMain } from "../../../IPC/main"
-import { activeProject, media, outputs, playerVideos, playingVideos, projects, playingVideoState, special, styles, transitionData } from "../../../stores"
+import { activeProject, isOptimizedMode, media, outputs, playerVideos, playingVideos, playingVideoState, projects, special, styles, transitionData } from "../../../stores"
 import { playFolder } from "../../../utils/shortcuts"
 import { customActionActivation } from "../../actions/actions"
 import { getVimeoData, getYouTubeData } from "../../drawer/player/playerHelper"
@@ -826,7 +826,7 @@ export class VideoPlayer {
     private static initSyncClock() {
         if (this.syncClockTimer) clearInterval(this.syncClockTimer)
         this.syncState() // update immediately
-        this.syncClockTimer = setInterval(() => this.syncState(), get(special).optimizedMode ? 500 : 100)
+        this.syncClockTimer = setInterval(() => this.syncState(), get(isOptimizedMode) ? 300 : 100)
     }
 
     private static syncState() {

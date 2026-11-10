@@ -2,7 +2,7 @@
     import { fade, scale } from "svelte/transition"
     import type { Popups } from "../../../types/Main"
     import { EFFECTS_LIST } from "../../audio/effects/audioEffectsHelpers"
-    import { activePopup, alertMessage, os, popupData, special } from "../../stores"
+    import { activePopup, alertMessage, isOptimizedMode, os, popupData } from "../../stores"
     import { MENU_BAR_HEIGHT } from "../../utils/common"
     import { translateText } from "../../utils/language"
     import { clearPopupSubmit, popups } from "../../utils/popup"
@@ -43,7 +43,7 @@
         scrolled = e.target.scrollTop > 0
     }
 
-    $: isOptimized = $special.optimizedMode
+    $: isOptimized = $isOptimizedMode
 </script>
 
 {#if popupId !== null}

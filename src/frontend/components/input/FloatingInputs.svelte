@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { special } from "../../stores"
+    import { isOptimizedMode } from "../../stores"
     import { isDarkTheme } from "../../utils/common"
     import Icon from "../helpers/Icon.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
@@ -14,7 +14,7 @@
     let open = false
 
     const light = !isDarkTheme()
-    $: isOptimized = $special.optimizedMode
+    $: isOptimized = $isOptimizedMode
 </script>
 
 <!-- in:fade={{ duration: 80 }} -->

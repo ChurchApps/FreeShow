@@ -3,7 +3,7 @@
     import { uid } from "uid"
     import type { Item, Line } from "../../../../types/Show"
     import { splitCustomDynamicValues } from "../../../show/slides"
-    import { activeEdit, activeShow, activeStage, overlays, redoHistory, refreshListBoxes, showsCache, special, stageShows, templates } from "../../../stores"
+    import { activeEdit, activeShow, activeStage, isOptimizedMode, overlays, redoHistory, refreshListBoxes, showsCache, stageShows, templates } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { getNormalizedKey, isComposing, isFormattingKey } from "../../../utils/shortcuts"
     import T from "../../helpers/T.svelte"
@@ -407,7 +407,7 @@
         }
 
         // chords rebuild one span per character whenever the size changes, so never run those per frame
-        if (chordsMode || lastMeasureDuration > SLOW_MEASURE_MS || $special.optimizedMode) {
+        if (chordsMode || lastMeasureDuration > SLOW_MEASURE_MS || $isOptimizedMode) {
             if (autosizeTimeout) clearTimeout(autosizeTimeout)
             autosizeTimeout = setTimeout(() => {
                 autosizeTimeout = null
