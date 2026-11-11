@@ -267,9 +267,8 @@ const clickActions = {
 
         if (renameById.includes(id)) activeRename.set(id + "_" + data.id)
         else if (renameByIdDirect.includes(id)) activeRename.set(id + "_" + data)
-        else if (id === "slide" || id === "group" || id === "audio_effect") activePopup.set("rename")
         else if (obj.contextElem?.classList?.contains("#layout")) {
-            selected.set({ id: "layout", data: [{ id: id.slice(1) }] })
+            selected.set({ id: "layout", data: [{ id: obj.contextElem?.id.slice(1) }] })
             activePopup.set("rename")
         } else if (obj.contextElem?.classList?.contains("#audio_channel") || obj.contextElem?.classList?.contains("#audio_channel_main")) {
             selected.set({ id: "audio_channel", data: [{ id: obj.contextElem?.id }] })
@@ -280,7 +279,8 @@ const clickActions = {
         } else if (obj.contextElem?.classList?.contains("#calendar_item")) {
             selected.set({ id: "calendar", data: [{ id: obj.contextElem?.id }] })
             activePopup.set("rename")
-        } else if (id === "show") activeRename.set("show_" + data.id + "#" + data.index)
+        } else if (id === "slide" || id === "group" || id === "audio_effect") activePopup.set("rename")
+        else if (id === "show") activeRename.set("show_" + data.id + "#" + data.index)
         else if (obj.contextElem?.classList?.contains("#project_template")) activeRename.set("project_" + id)
         else if (obj.contextElem?.classList?.contains("#video_subtitle")) activeRename.set("subtitle_" + id)
         else if (obj.contextElem?.classList?.contains("#video_marker")) activeRename.set("marker_" + id)
