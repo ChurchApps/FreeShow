@@ -1105,7 +1105,8 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         const outBackground = output?.out?.background || null
         const bgPath = outBackground?.path || ""
 
-        const videoData = keysToID(get(playingVideoState)).find((a) => a.id.includes(outputId) && (!a.type || a.type === "background"))
+        const allVideoStates = keysToID(get(playingVideoState)).filter((a) => !a.type || a.type === "background")
+        const videoData = (outputId ? allVideoStates.find((a) => a.id.includes(outputId)) : null) || allVideoStates.find((a) => !a.paused) || allVideoStates[0]
 
         const playingAudioIds = AudioPlayer.getAllPlaying(false)
         const activeAudio = get(playingAudio)[playingAudioIds[0]]?.audio
