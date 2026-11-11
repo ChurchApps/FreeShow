@@ -1,18 +1,22 @@
 <script lang="ts">
     import type { Item } from "../../../../types/Show"
     import Icon from "../../helpers/Icon.svelte"
+    import { getStyles } from "../../helpers/style"
 
     export let item: Item
     export let ratio = 1
+
+    $: shadow = getStyles(item?.style, true)?.["text-shadow"]
+    $: dropShadowFilter = shadow ? `drop-shadow(${shadow})` : ""
 </script>
 
 <div class="iconItem" style="display: contents;">
     {#if item.customSvg}
-        <div class="customIcon" class:customColor={typeof item?.style === "string" && item.style.includes("color:") && !item.style.includes("color:;")}>
+        <div class="customIcon" class:customColor={typeof item?.style === "string" && item.style.includes("color:") && !item.style.includes("color:;")} style={dropShadowFilter ? `filter: ${dropShadowFilter};` : ""}>
             {@html item.customSvg}
         </div>
     {:else}
-        <Icon style="zoom: {1 / ratio};" id={item.id || ""} fill white custom />
+        <Icon style="zoom: {1 / ratio};{dropShadowFilter ? ` filter: ${dropShadowFilter};` : ''}" id={item.id || ""} fill white custom />
     {/if}
 </div>
 
