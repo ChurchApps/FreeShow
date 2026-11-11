@@ -110,8 +110,17 @@ function registerIpcBridge(id: ServerName) {
 }
 
 let hasStarted = false
-export function startServers({ ports, max, disabled, data }: MainSendPayloads[Main.SERVER_DATA]) {
-    if (hasStarted) closeServers()
+// restarts are serialized: closeServers() is asynchronous, so two overlapping
+// calls would try to bind the same port and the second one fails with EADDRINUSE
+let startQueue: Promise<void> = Promise.resolve()
+
+export function startServers(data: MainSendPayloads[Main.SERVER_DATA]): Promise<void> {
+    startQueue = startQueue.then(() => applyServers(data)).catch((err) => console.error("error starting servers:", err))
+    return startQueue
+}
+
+async function applyServers({ ports, max, disabled, data }: MainSendPayloads[Main.SERVER_DATA]) {
+    if (hasStarted) await closeServers()
     hasStarted = true
 
     const serverList = Object.keys(servers) as ServerName[]
@@ -152,18 +161,27 @@ export function getServerData(id: ServerName) {
     return servers[id]?.data || {}
 }
 
-export function closeServers() {
+export function closeServers(): Promise<void> {
     unpublishPorts()
 
     hasStarted = false
     const serverList = Object.keys(servers) as ServerName[]
-    serverList.forEach((id: ServerName) => {
-        if (!servers[id]?.server) return
-        // close socket.io (disconnects clients and closes the underlying http server)
-        servers[id]!.io.close()
-        // clear connection state so reconnect counts / max limit don't drift across restarts
-        servers[id]!.connections = {}
-    })
+
+    // io.close() is asynchronous: listening again on the same port before every
+    // server has actually released it fails with EADDRINUSE. Wait for the close callbacks.
+    return Promise.all(
+        serverList.map(
+            (id) =>
+                new Promise<void>((resolve) => {
+                    const entry = servers[id]
+                    if (!entry?.server) return resolve()
+                    // clear connection state so reconnect counts / max limit don't drift across restarts
+                    entry.connections = {}
+                    if (!entry.server.listening) return resolve()
+                    entry.io.close(() => resolve())
+                })
+        )
+    ).then(() => undefined)
 }
 
 let responded: { [key: string]: boolean } = {}
