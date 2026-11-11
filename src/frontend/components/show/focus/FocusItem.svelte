@@ -8,6 +8,7 @@
     import MediaPreview from "../media/MediaPreview.svelte"
     import OverlayPreview from "../overlay/OverlayPreview.svelte"
     import PdfPreview from "../pdf/PdfPreview.svelte"
+    import ShowNotes from "../ShowNotes.svelte"
     import Slides from "../Slides.svelte"
 
     export let show: ProjectShowRef
@@ -46,11 +47,7 @@
 {:else}
     <Slides showId={show.id} layout={currentLayout} projectIndex={show.index} />
 
-    <!-- WIP change layout??? -->
-    <!-- <Layouts /> -->
-    {#if $showsCache[show.id]?.layouts?.[$showsCache[show.id]?.settings?.activeLayout]?.notes}
-        <p class="notes">{$showsCache[show.id]?.layouts?.[$showsCache[show.id]?.settings?.activeLayout]?.notes}</p>
-    {/if}
+    <ShowNotes specificShowId={show.id} layoutId={currentLayout} />
 {/if}
 
 <style>
