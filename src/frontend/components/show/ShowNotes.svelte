@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Main } from "../../../types/IPC/Main"
     import { sendMain } from "../../IPC/main"
-    import { activeShow, showNotesActive, showsCache } from "../../stores"
+    import { activeShow, focusMode, showNotesActive, showsCache } from "../../stores"
     import { DEFAULT_WIDTH } from "../../utils/common"
     import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
@@ -62,6 +62,8 @@
             return
         }
 
+        if ($focusMode) return
+
         showNotesActive.set(true)
     }
 
@@ -69,7 +71,7 @@
     // $: if (reference === "lessons") showNotesActive.set(true)
 </script>
 
-{#if $showNotesActive}
+{#if $showNotesActive && !$focusMode}
     <Resizeable id="notes" side="bottom" defaultWidth={DEFAULT_WIDTH * 0.5} maxWidth={DEFAULT_WIDTH * 0.8} minWidth={47}>
         <div class="dark" style="display: contents;">
             <Notes on:edit={edit} value={note} autofocus />
