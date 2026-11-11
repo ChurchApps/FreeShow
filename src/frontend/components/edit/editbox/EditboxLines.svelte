@@ -2,7 +2,7 @@
     import { onDestroy, onMount, tick } from "svelte"
     import { uid } from "uid"
     import type { Item, Line } from "../../../../types/Show"
-    import { splitCustomDynamicValues } from "../../../show/slides"
+    import { copySlideLayoutProperties, splitCustomDynamicValues } from "../../../show/slides"
     import { activeEdit, activeShow, activeStage, isOptimizedMode, overlays, redoHistory, refreshListBoxes, showsCache, stageShows, templates } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { getNormalizedKey, isComposing, isFormattingKey } from "../../../utils/shortcuts"
@@ -224,6 +224,8 @@
         let slideIndex = slideRef.type === "child" ? slideRef.index + 1 : 0
         children = addToPos(children, [id], slideIndex)
         _show().slides([parentId]).set({ key: "children", value: children })
+
+        copySlideLayoutProperties(ref.showId || $activeShow?.id || "", slideRef, id)
 
         let parentIndex = slideRef.type === "child" ? slideRef.parent!.layoutIndex : slideRef.layoutIndex
         let parentsBefore = layoutRef.filter((a, i) => i < parentIndex && a.id === parentId)?.length
