@@ -355,7 +355,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     provider_item: ["GROUP_rename_only", "link_provider", "unlink_provider", "SEPARATOR", "remove", "SEPARATOR", "mark_played", "private"],
     provider_item_unlinked: ["GROUP_rename_only", "link_provider", "SEPARATOR", "remove", "SEPARATOR", "mark_played", "private"],
     project_section: ["GROUP_recolor", "remove"],
-    project_overlay: ["remove"],
+    project_overlay: ["remove", "SEPARATOR", "mark_played"],
     project_effect: ["remove"],
     project_pdf: ["remove", "SEPARATOR", "mark_played"],
     project_ppt: ["remove", "SEPARATOR", "mark_played"],
