@@ -33,6 +33,7 @@
     export let existingActions: string[] = []
     export let actionNameIndex = 0
     export let choosePopup = false
+    export let isDragging = false
 
     $: existingActionsFiltered = choosePopup ? existingActions : existingActions.filter((a) => a !== actionId)
 
@@ -298,20 +299,24 @@
 {:else}
     <div class="box" style={actionNameIndex > 1 ? "margin-top: 5px;" : ""}>
         <div class="part">
-            <p style="font-weight: 600;padding: 0 10px;display: flex;align-items: center;">
-                <T id="midi.start_action" />
-                <span style="color: var(--secondary);display: flex;align-items: center;margin-inline-start: 8px;">
-                    {#if actionNameIndex}#{actionNameIndex}{/if}
-                </span>
-            </p>
+            <span style="display: flex;align-items: center;">
+                {#if actionId && existingActions.length > 1}
+                    <span class="drag_handle" style="display: flex;align-items: center;cursor: grab;opacity: 0.6;padding: 0 4px;">
+                        <Icon id="drag_dots" white />
+                    </span>
+                {/if}
+                <p style="font-weight: 600;padding: 0 4px;display: flex;align-items: center;">
+                    <T id="midi.start_action" />
+                    <span style="color: var(--secondary);display: flex;align-items: center;margin-inline-start: 8px;">
+                        {#if actionNameIndex}#{actionNameIndex}{/if}
+                    </span>
+                </p>
+            </span>
 
             <div style="display: flex;align-items: center;gap: 3px;">
                 {#if actionId && existingActions.length > 1}
-                    {#if actionNameIndex > 1}
-                        <MaterialButton style="padding: 8px;" icon="up" on:click={() => changeAction({ id: "move_up", index: actionNameIndex - 1 })} />
-                    {/if}
-                    <MaterialButton style="padding: 6.5px;" title="actions.remove" on:click={() => changeAction({ id: "remove", index: actionNameIndex - 1 })}>
-                        <Icon id="close" size={1.2} white />
+                    <MaterialButton style="padding: 5px;" title="actions.remove" on:click={() => changeAction({ id: "remove", index: actionNameIndex - 1 })}>
+                        <Icon id="close" white />
                     </MaterialButton>
                 {/if}
             </div>
@@ -343,7 +348,7 @@
     </div>
 {/if}
 
-{#if dataInputs && (dataOpened || dataMenuOpened)}
+{#if dataInputs && !isDragging && (dataOpened || dataMenuOpened)}
     <div class="menu-indent">
         <CustomInput {mainId} inputId={input} actionIndex={actionNameIndex} value={actionValue} actionId={getActionTriggerId(actionId)} on:change={(e) => changeAction({ id: actionId, actionValue: e.detail })} list />
     </div>

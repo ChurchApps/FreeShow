@@ -1,16 +1,18 @@
 <script lang="ts">
     import { activePopup, popupData } from "../../../stores"
     import { translateText } from "../../../utils/language"
-    import { splitGradientValue } from "../../helpers/color"
+    import { registerPopupSubmit } from "../../../utils/popup"
+    import DragItemWrapper from "../../helpers/DragItemWrapper.svelte"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
+    import { splitGradientValue } from "../../helpers/color"
+    import { createDragReorder } from "../../helpers/dragReorder"
     import InputRow from "../../input/InputRow.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialColorInput from "../../inputs/MaterialColorInput.svelte"
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
     import MaterialRadialPicker from "../../inputs/MaterialRadialPicker.svelte"
-    import { registerPopupSubmit } from "../../../utils/popup"
 
     registerPopupSubmit(change)
 
@@ -48,10 +50,23 @@
     ]
     let activeShape = parsedValue.shape || "circle"
 
-    function moveUp(index: number) {
-        let currentColor = parsedValue.colors[index].color
-        parsedValue.colors[index].color = parsedValue.colors[index - 1].color
-        parsedValue.colors[index - 1].color = currentColor
+    const dragReorder = createDragReorder((fromIndices, toIndex) => {
+        parsedValue.colors = getReorderedColors(parsedValue.colors, fromIndices, toIndex)
+    })
+    const { dragOverIndex, draggedIndices } = dragReorder
+
+    function getReorderedColors(colors: any[], from: number[], to: number | null) {
+        const reordered = dragReorder.getReorderedList(colors || [], from, to)
+        return reordered.map((item, idx) => ({ ...item, pos: colors[idx]?.pos ?? item.pos }))
+    }
+
+    $: displayColors = getReorderedColors(parsedValue.colors, $draggedIndices, $dragOverIndex)
+    $: isPlaceholderActive = $dragOverIndex !== null
+
+    function updateColor(index: number, key: "color" | "pos", val: any) {
+        ;(parsedValue.colors[index] as any)[key] = val
+        parsedValue.colors = parsedValue.colors
+        setNewValue()
     }
 
     function deleteColor(index: number) {
@@ -74,23 +89,28 @@
 </InputRow>
 
 <div class="colors" style="margin-top: 10px;">
-    {#each parsedValue.colors as colorPart, i}
+    {#each displayColors as colorPart, i}
         {@const pos = colorPart.pos || 0}
         {@const prevPos = parsedValue.colors[i - 1]?.pos || 0}
         {@const nextPos = parsedValue.colors[i + 1]?.pos || 100}
+        {@const isPlaceholder = isPlaceholderActive && $draggedIndices.some((dIdx) => colorPart.color === parsedValue.colors[dIdx]?.color)}
 
-        <InputRow>
-            <MaterialColorInput style="min-width: 50%;" label="edit.color" value={colorPart.color} on:input={(e) => (colorPart.color = e.detail)} allowOpacity />
-            <MaterialNumberInput label="settings.position" value={pos} min={prevPos} max={nextPos} on:change={(e) => (colorPart.pos = e.detail)} currentProgress={pos} showSlider />
-            {#if i > 0}
-                <MaterialButton icon="up" on:click={() => moveUp(i)} />
-            {/if}
-            {#if parsedValue.colors.length > 2}
-                <MaterialButton title={translateText("actions.delete")} on:click={() => deleteColor(i)}>
-                    <Icon id="delete" white />
-                </MaterialButton>
-            {/if}
-        </InputRow>
+        <DragItemWrapper index={i} controller={dragReorder} {isPlaceholder} handleOnly>
+            <InputRow style="width: 100%;">
+                <span class="drag_handle" style="display: flex;align-items: center;cursor: grab;opacity: 0.6;padding: 0 3px;background-color: var(--primary-darkest);border-bottom: 1.2px solid var(--primary-lighter);">
+                    <Icon id="drag_dots" size={1.2} white />
+                </span>
+
+                <MaterialColorInput style="min-width: 50%;" label="edit.color" value={colorPart.color} on:input={(e) => updateColor(i, "color", e.detail)} allowOpacity />
+                <MaterialNumberInput label="settings.position" value={pos} min={prevPos} max={nextPos} on:change={(e) => updateColor(i, "pos", e.detail)} currentProgress={pos} showSlider />
+
+                {#if parsedValue.colors.length > 2}
+                    <MaterialButton title={translateText("actions.delete")} on:click={() => deleteColor(i)}>
+                        <Icon id="delete" white />
+                    </MaterialButton>
+                {/if}
+            </InputRow>
+        </DragItemWrapper>
     {/each}
 
     <MaterialButton

@@ -2,7 +2,9 @@
     import { uid } from "uid"
     import { activePopup, drawerTabsData, selected, variables } from "../../../stores"
     import { translateText } from "../../../utils/language"
-    import { clone, moveToPos } from "../../helpers/array"
+    import { clone } from "../../helpers/array"
+    import DragItemWrapper from "../../helpers/DragItemWrapper.svelte"
+    import { createDragReorder } from "../../helpers/dragReorder"
     import { createStore, updateStore } from "../../helpers/historyStores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -151,17 +153,27 @@
         })
     }
 
-    function moveTextSetUp(index: number) {
-        if (currentVariable.textSets?.[index] === undefined) return
-
-        currentVariable.textSets = moveToPos(currentVariable.textSets, index, index - 1)
+    const dragReorderSets = createDragReorder((fromIndices, toIndex) => {
+        currentVariable.textSets = dragReorderSets.getReorderedList(currentVariable.textSets || [], fromIndices, toIndex)
         currentVariable = currentVariable
-
         variables.update((a) => {
             a[variableId] = currentVariable
             return a
         })
-    }
+    })
+    const { dragOverIndex: dragOverSetIndex, draggedIndices: draggedSetIndices } = dragReorderSets
+    $: displayTextSets = dragReorderSets.getReorderedList(currentVariable.textSets?.length ? currentVariable.textSets : [{}], $draggedSetIndices, $dragOverSetIndex)
+
+    const dragReorderKeys = createDragReorder((fromIndices, toIndex) => {
+        currentVariable.textSetKeys = dragReorderKeys.getReorderedList(currentVariable.textSetKeys || [], fromIndices, toIndex)
+        currentVariable = currentVariable
+        variables.update((a) => {
+            a[variableId] = currentVariable
+            return a
+        })
+    })
+    const { dragOverIndex: dragOverKeyIndex, draggedIndices: draggedKeyIndices } = dragReorderKeys
+    $: displayKeys = dragReorderKeys.getReorderedList(currentVariable.textSetKeys?.length ? currentVariable.textSetKeys : [""], $draggedKeyIndices, $dragOverKeyIndex)
 
     function removeTextSet(index: number) {
         if (currentVariable.textSets?.[index] === undefined) return
@@ -178,18 +190,6 @@
     function addTextSetVariable() {
         if (!currentVariable.textSetKeys) currentVariable.textSetKeys = [""]
         currentVariable.textSetKeys.push("")
-        currentVariable = currentVariable
-
-        variables.update((a) => {
-            a[variableId] = currentVariable
-            return a
-        })
-    }
-
-    function moveKeyUp(index: number) {
-        if (currentVariable.textSetKeys?.[index] === undefined) return
-
-        currentVariable.textSetKeys = moveToPos(currentVariable.textSetKeys, index, index - 1)
         currentVariable = currentVariable
 
         variables.update((a) => {
@@ -356,43 +356,61 @@
     {:else if currentVariable.type === "text_set"}
         <MaterialButton class="popup-options" icon="reset" iconSize={1.1} title="actions.reset" on:click={resetTextSetValues} white />
 
-        {#each currentVariable.textSets?.length ? currentVariable.textSets : [{}] as textSet, i}
-            <div class="text_set" style={i === 0 ? "" : "margin-top: 10px;"} class:active={(currentVariable.textSets?.length ?? 1) > 1 && (currentVariable.activeTextSet ?? 0) === i}>
-                <p style="border-bottom: 1px solid var(--primary-lighter);" class="part"><span style="color: var(--secondary);">#</span>{i + 1}</p>
+        {#each displayTextSets as textSet, i (textSet)}
+            {@const isSetPlaceholder = $dragOverSetIndex !== null && $draggedSetIndices.some((dIdx) => textSet === currentVariable.textSets?.[dIdx])}
 
-                {#each currentVariable.textSetKeys ?? [""] as key, keyIndex}
-                    <InputRow>
-                        {#if i === 0}
-                            <MaterialTextInput label="inputs.name" disabled={!!(key && textSet?.[key]) || i > 0} value={key} on:input={(e) => updateTextSetVariableName(keyIndex, e)} on:keydown={textSetKeydown} />
-                        {:else}
-                            <p style="width: 50%;display: flex;align-items: center;padding: 0 10px;border-bottom: 1px solid var(--primary-lighter);">{key}</p>
-                        {/if}
-
-                        <MaterialTextInput label="variables.value" disabled={!key} value={textSet[key] || ""} on:change={(e) => updateTextSetValue(i, key, e)} />
-
-                        {#if (currentVariable.textSetKeys?.length ?? 1) > 1 && i === 0}
-                            {#if keyIndex > 0}
-                                <MaterialButton icon="up" on:click={() => moveKeyUp(keyIndex)} />
+            <DragItemWrapper index={i} controller={dragReorderSets} isPlaceholder={isSetPlaceholder} handleOnly>
+                <div class="text_set" style={i === 0 ? "" : "margin-top: 10px;"} class:active={(currentVariable.textSets?.length ?? 1) > 1 && (currentVariable.activeTextSet ?? 0) === i}>
+                    <div style="border-bottom: 1px solid var(--primary-lighter);display: flex;align-items: center;justify-content: space-between;" class="part">
+                        <span style="display: flex;align-items: center;">
+                            {#if (currentVariable.textSets?.length || 0) > 1}
+                                <span class="drag_handle" style="display: flex;align-items: center;cursor: grab;opacity: 0.6;padding-right: 6px;">
+                                    <Icon id="drag_dots" white />
+                                </span>
                             {/if}
-                            <MaterialButton icon="delete" title="actions.delete" on:click={() => removeTextSetVariable(keyIndex)} />
-                        {/if}
-                    </InputRow>
-                {/each}
+                            <span style="color: var(--secondary);">#</span>{i + 1}
+                        </span>
 
-                {#if i === 0}
-                    <MaterialButton style="width: 100%;" icon="add" disabled={!currentVariable.textSetKeys?.length || currentVariable.textSetKeys.find((a) => !a) === ""} on:click={addTextSetVariable}>
-                        <T id="new.variable" />
-                    </MaterialButton>
-                {/if}
-                <!-- removed to clear up confusion in regards to the main variables being editable here -->
-                <!-- || (currentVariable.textSets?.length || 1) > 1 -->
-                {#if i > 0}
-                    <div class="delete">
-                        <MaterialButton style="padding: 8px;" icon="up" on:click={() => moveTextSetUp(i)} />
-                        <MaterialButton style="padding: 8px;" icon="delete" title="actions.delete" on:click={() => removeTextSet(i)} />
+                        {#if i > 0}
+                            <MaterialButton style="padding: 5px;" title="actions.remove" on:click={() => removeTextSet(i)}>
+                                <Icon id="close" white />
+                            </MaterialButton>
+                        {/if}
                     </div>
-                {/if}
-            </div>
+
+                    {#each displayKeys as key, keyIndex (keyIndex)}
+                        {@const isKeyPlaceholder = $dragOverKeyIndex !== null && $draggedKeyIndices.some((dIdx) => key === currentVariable.textSetKeys?.[dIdx])}
+
+                        <DragItemWrapper index={keyIndex} controller={dragReorderKeys} isPlaceholder={isKeyPlaceholder} handleOnly>
+                            <InputRow>
+                                {#if (currentVariable.textSetKeys?.length ?? 1) > 1 && i === 0}
+                                    <span class="drag_handle" style="display: flex;align-items: center;cursor: grab;opacity: 0.6;padding: 0 4px;background-color: var(--primary-darkest);border-bottom: 1.2px solid var(--primary-lighter);">
+                                        <Icon id="drag_dots" size={0.9} white />
+                                    </span>
+                                {/if}
+
+                                {#if i === 0}
+                                    <MaterialTextInput label="inputs.name" disabled={!!(key && textSet?.[key]) || i > 0} value={key} on:input={(e) => updateTextSetVariableName(keyIndex, e)} on:keydown={textSetKeydown} />
+                                {:else}
+                                    <p style="width: 50%;display: flex;align-items: center;padding: 0 10px;border-bottom: 1px solid var(--primary-lighter);">{key}</p>
+                                {/if}
+
+                                <MaterialTextInput label="variables.value" disabled={!key} value={textSet[key] || ""} on:change={(e) => updateTextSetValue(i, key, e)} />
+
+                                {#if (currentVariable.textSetKeys?.length ?? 1) > 1 && i === 0}
+                                    <MaterialButton icon="delete" title="actions.remove" on:click={() => removeTextSetVariable(keyIndex)} />
+                                {/if}
+                            </InputRow>
+                        </DragItemWrapper>
+                    {/each}
+
+                    {#if i === 0}
+                        <MaterialButton style="width: 100%;" icon="add" disabled={!currentVariable.textSetKeys?.length || currentVariable.textSetKeys.find((a) => !a) === ""} on:click={addTextSetVariable}>
+                            <T id="new.variable" />
+                        </MaterialButton>
+                    {/if}
+                </div>
+            </DragItemWrapper>
         {/each}
 
         <MaterialButton variant="outlined" style="margin-top: 10px;width: 100%;" icon="add" disabled={!currentVariable.textSets?.length} on:click={addTextSet}>
@@ -422,17 +440,10 @@
 
     .part {
         width: 100%;
-        padding: 5px 10px;
+        min-height: 27px;
+        padding: 3px;
         /* justify-content: center; */
         font-size: 0.8em;
         font-weight: bold;
-    }
-
-    .delete {
-        position: absolute;
-        top: 0;
-        right: 0;
-
-        display: flex;
     }
 </style>

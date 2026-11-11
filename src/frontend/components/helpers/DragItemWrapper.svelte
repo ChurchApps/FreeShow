@@ -3,10 +3,17 @@
     export let controller: any
     export let isPlaceholder = false
     export let selectedIndices: number[] = []
+    export let handleOnly = false
 
     let elem: HTMLElement
+    let isHandleMouseDown = false
 
     function onDragStart(e: DragEvent) {
+        if (handleOnly && !isHandleMouseDown) {
+            e.preventDefault()
+            return
+        }
+
         e.stopPropagation()
         if (e.dataTransfer && elem) {
             e.dataTransfer.effectAllowed = "move"
@@ -31,26 +38,36 @@
         }
         controller?.onDragStart(index, selectedIndices)
     }
+
+    function onMouseDown(e: MouseEvent) {
+        const target = e.target as HTMLElement | null
+        isHandleMouseDown = !handleOnly || !!(target && target.closest(".drag_handle"))
+    }
 </script>
 
 <div
     bind:this={elem}
     class="drag_item_wrapper {$$props.class || ''}"
     class:is_placeholder={isPlaceholder}
-    draggable="true"
+    draggable={!handleOnly || isHandleMouseDown}
+    on:mousedown={onMouseDown}
     on:dragstart={onDragStart}
     on:dragover={(e) => {
         e.preventDefault()
         e.stopPropagation()
         if (e.dataTransfer) e.dataTransfer.dropEffect = "move"
-        controller?.onDragOver(index)
+        if (!isPlaceholder) controller?.onDragOver(index)
     }}
     on:drop={(e) => {
         e.preventDefault()
         e.stopPropagation()
+        isHandleMouseDown = false
         controller?.onDrop(index)
     }}
-    on:dragend={() => controller?.onDragEnd()}
+    on:dragend={() => {
+        isHandleMouseDown = false
+        controller?.onDragEnd()
+    }}
 >
     <slot />
 </div>
@@ -58,6 +75,7 @@
 <style>
     .drag_item_wrapper {
         display: flex;
+        flex-direction: column;
         width: 100%;
         box-sizing: border-box;
         transition: opacity 0.15s ease;
