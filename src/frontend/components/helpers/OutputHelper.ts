@@ -155,6 +155,7 @@ export class OutputHelper {
             if (!newItem) return
 
             activeFocus.set({ id: newItem.id, index: newIndex, type: newItem.type || "show" })
+            this.currentActiveShow = { time: 0, show: null }
 
             // play directly in focus mode
             if ((newItem.type || "show") === "show") {
