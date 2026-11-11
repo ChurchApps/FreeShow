@@ -98,7 +98,7 @@
         }, 3000)
 
         // scroll to active elem!
-        const MARGIN = 80
+        const MARGIN = 5
         listElem.closest(".center")?.scrollTo(0, slideTop - fromTop - MARGIN)
     }
 
