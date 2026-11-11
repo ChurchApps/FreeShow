@@ -1,17 +1,20 @@
 <script lang="ts">
     import type { ProjectShowRef } from "../../../../types/Projects"
-    import { outputs, showsCache } from "../../../stores"
+    import { activeProject, outputs, projects, showsCache } from "../../../stores"
     import { getActiveOutputs } from "../../helpers/output"
     import AudioPreview from "../AudioPreview.svelte"
+    import EffectPreview from "../effect/EffectPreview.svelte"
     import FolderShow from "../folder/FolderShow.svelte"
     import MediaPreview from "../media/MediaPreview.svelte"
     import OverlayPreview from "../overlay/OverlayPreview.svelte"
-    import EffectPreview from "../effect/EffectPreview.svelte"
     import PdfPreview from "../pdf/PdfPreview.svelte"
     import Slides from "../Slides.svelte"
 
     export let show: ProjectShowRef
     $: type = show.type
+
+    $: projectLayout = show.index !== undefined ? $projects[$activeProject || ""]?.shows?.[show.index]?.layout : undefined
+    $: currentLayout = projectLayout !== undefined ? projectLayout : show.layout || $showsCache[show.id]?.settings?.activeLayout
 
     $: outputId = getActiveOutputs($outputs)[0]
     $: currentOutput = $outputs[outputId] || {}
@@ -41,7 +44,7 @@
 {:else if type === "folder"}
     <FolderShow path={show.id} index={show.index || 0} />
 {:else}
-    <Slides showId={show.id} layout={show.layout} projectIndex={show.index} />
+    <Slides showId={show.id} layout={currentLayout} projectIndex={show.index} />
 
     <!-- WIP change layout??? -->
     <!-- <Layouts /> -->

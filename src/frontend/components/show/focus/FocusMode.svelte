@@ -187,7 +187,7 @@
             {#each list as item, i}
                 <div id={"id_" + getId(item.id) + "_" + i} class="focusId">
                     {#if (item?.type || "show") === "show"}
-                        <ShowHeader showId={item.id} />
+                        <ShowHeader showId={item.id} projectIndex={i} />
                     {:else}
                         <div class="name" style={item.color ? `border-bottom: 2px solid ${item.color}` : ""}>
                             <Icon id={item.icon || "noIcon"} custom={(item.type || "show") === "show"} white right />

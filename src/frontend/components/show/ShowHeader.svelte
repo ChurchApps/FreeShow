@@ -18,6 +18,7 @@
 
     export let showId: string
     export let hideOptions = false
+    export let projectIndex: number | undefined = undefined
 
     let profile = getAccess("shows")
     $: isLocked = currentShow?.locked || profile.global === "read" || profile[currentShow?.category || ""] === "read"
@@ -107,8 +108,8 @@
 
         // set active layout in project
         if (sortedLayouts?.length < 2) return
-        const showIndex = $activeShow?.index
-        if (($activeShow?.type === undefined || $activeShow?.type === "show") && showIndex !== undefined && projectId && project?.shows?.[showIndex]) {
+        const showIndex = projectIndex !== undefined ? projectIndex : $activeShow?.index
+        if (($focusMode || $activeShow?.type === undefined || $activeShow?.type === "show") && showIndex !== undefined && projectId && project?.shows?.[showIndex]) {
             store.update((a) => {
                 if (a[projectId!]?.shows?.[showIndex]) {
                     a[projectId!].shows[showIndex].layout = layoutId
