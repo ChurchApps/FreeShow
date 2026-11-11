@@ -96,9 +96,11 @@
                             <div class="item-row context #effect_item" id={index.toString()} data-index={index} on:mouseenter={() => hoveredEffectItem.set(item.hidden ? null : index)} on:mouseleave={() => hoveredEffectItem.set(null)} role="none">
                                 <InputRow arrow={!!editContent} bind:open={openedMenus[index]}>
                                     <div class="title" style={item.hidden ? "opacity: 0.5;" : ""}>
-                                        <span class="drag_handle" style="display: flex;align-items: center;cursor: grab;opacity: 0.6;padding-right: 8px;">
-                                            <Icon id="drag_dots" size={1.2} white />
-                                        </span>
+                                        {#if displayList.length > 1}
+                                            <span class="drag_handle" style="display: flex;align-items: center;cursor: grab;opacity: 0.6;padding-right: 8px;">
+                                                <Icon id="drag_dots" size={1.2} white />
+                                            </span>
+                                        {/if}
 
                                         <p style="width: 100%;"><T id="effect.{item.type === 'shape' ? item.shape : item.type}" /></p>
                                     </div>

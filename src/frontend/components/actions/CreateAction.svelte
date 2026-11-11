@@ -305,7 +305,8 @@
                         <Icon id="drag_dots" white />
                     </span>
                 {/if}
-                <p style="font-weight: 600;padding: 0 4px;display: flex;align-items: center;">
+
+                <p style="font-weight: 600;padding: 0 4px;padding-left: 6px;display: flex;align-items: center;">
                     <T id="midi.start_action" />
                     <span style="color: var(--secondary);display: flex;align-items: center;margin-inline-start: 8px;">
                         {#if actionNameIndex}#{actionNameIndex}{/if}

@@ -85,7 +85,9 @@
                         }}
                     >
                         <span style="display: flex;align-items: center;width: 100%;gap: 8px;pointer-events: none;">
-                            <Icon id="drag" style="opacity: 0.5;" white />
+                            {#if displayList.length > 1}
+                                <Icon id="drag" style="opacity: 0.5;" white />
+                            {/if}
 
                             <Icon id={type === "icon" ? id || "" : itemBoxes[type]?.icon || "text"} custom={type === "icon"} size={0.8} />
                             <p style="opacity: 0.9;">{getCustomStageLabel(currentItem.type || id, currentItem, $dictionary) || translateText("items." + type)}</p>

@@ -174,7 +174,10 @@
                         >
                             <!-- on:dblclick={() => editOverlay(index)} -->
                             <div class="item-title" style={isHidden ? "opacity: 0.5;" : ""}>
-                                <Icon id="drag" style="opacity: 0.5; margin-right: 2px;" white />
+                                {#if displayOverlays.length > 1}
+                                    <Icon id="drag" style="opacity: 0.5; margin-right: 2px;" white />
+                                {/if}
+
                                 <p style="font-size: 0.9em; flex: 1;">{overlayObj?.name || translateText("main.unnamed")}</p>
                                 <span style="font-size: 0.75em;opacity: 0.5;min-width: 12px;text-align: right;">{displayIndex + 1}</span>
                             </div>

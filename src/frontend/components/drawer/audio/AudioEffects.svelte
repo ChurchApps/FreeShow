@@ -69,9 +69,10 @@
                 }}
             >
                 <div class="effect-info">
-                    <span class="drag_handle" style="display: flex;align-items: center;cursor: grab;opacity: 0.5;">
-                        <Icon id="drag" white />
-                    </span>
+                    {#if displayStack.length > 1}
+                        <Icon id="drag" style="opacity: 0.5;" white />
+                    {/if}
+
                     <span class="effect-name">{translateText(meta.label)}</span>
                 </div>
 
@@ -149,6 +150,7 @@
     }
 
     .effect-name {
+        padding-left: 2px;
         font-size: 0.88em;
         font-weight: 500;
         color: var(--text);
