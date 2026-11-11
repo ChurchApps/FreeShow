@@ -10,11 +10,12 @@
     import InputRow from "../../input/InputRow.svelte"
     import HiddenInput from "../../inputs/HiddenInput.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
-    import SelectElem from "../../system/SelectElem.svelte"
-    import { formatTimeInteraction, getInteraction, initConnection, startInteraction, stopInteraction } from "./interactions"
-    import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
-    import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
+    import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
+    import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
+    import SelectElem from "../../system/SelectElem.svelte"
+    import { exportInteractionCSV } from "./interactionExport"
+    import { formatTimeInteraction, getInteraction, initConnection, startInteraction, stopInteraction } from "./interactions"
 
     export let searchValue: string
     console.log(searchValue)
@@ -246,7 +247,13 @@
         <div class="history" style="display: flex;flex-direction: column;gap: 8px;padding: 10px;overflow: auto;">
             {#each clone(openedInteraction?.history || []).reverse() as entry}
                 <div style="background-color: var(--primary-darkest);padding: 10px;border-radius: 6px;">
-                    <p style="font-size: 0.8em;opacity: 0.7;margin-bottom: 8px;">{new Date(entry.time).toLocaleString()}</p>
+                    <div style="display: flex;justify-content: space-between;align-items: center;">
+                        <p style="font-size: 0.8em;opacity: 0.7;margin-bottom: 8px;">{new Date(entry.time).toLocaleString()}</p>
+
+                        <MaterialButton title="actions.export: CSV" style="padding: 4px;" on:click={() => exportInteractionCSV(entry, openedInteraction?.name)}>
+                            <Icon id="download" size={0.9} white />
+                        </MaterialButton>
+                    </div>
 
                     {#if entry.leaderboard?.length}
                         <div style="margin-bottom: 12px; padding: 8px; background-color: rgba(255, 255, 255, 0.05); border-radius: 4px;">
