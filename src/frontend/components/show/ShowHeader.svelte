@@ -86,7 +86,8 @@
 
     // LAYOUT
 
-    $: activeLayout = currentShow?.settings?.activeLayout
+    $: projectLayout = $focusMode && projectIndex !== undefined ? project?.shows?.[projectIndex]?.layout : undefined
+    $: activeLayout = projectLayout || currentShow?.settings?.activeLayout
     $: activeLayoutData = layouts?.[activeLayout] || Object.values(layouts || {})[0]
 
     $: sortedLayouts = sortByName(keysToID(layouts || {}))
