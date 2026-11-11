@@ -1150,6 +1150,7 @@ const duplicateActions = {
             delete newShowRef.index
             if (!newShowRef.type) newShowRef.type = "show"
             if (newShowRef.type === "show") delete newShowRef.name
+            else if (newShowRef.type === "section") newShowRef.id = uid()
             return newShowRef
         })
 
