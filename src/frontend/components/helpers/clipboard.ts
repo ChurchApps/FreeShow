@@ -145,6 +145,12 @@ export function paste(clip: Clipboard | null = null, extraData: any = {}, custom
 
     if (clip.id === null) return
 
+    // certain clipboard items are only valid on specific "pages"
+    const currentPage = get(activePage)
+    if (clip.id === "stage_item" && currentPage !== "stage") return
+    if (clip.id === "item" && currentPage !== "edit") return
+    if ((clip.id === "slide" || clip.id === "group") && currentPage !== "edit" && currentPage !== "show") return
+
     // custom media paste: only paste on selected ones
     if (clip.id === "media") {
         mediaPaste(clip.data[0])
