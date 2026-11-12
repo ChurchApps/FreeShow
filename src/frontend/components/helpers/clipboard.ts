@@ -135,8 +135,8 @@ export function paste(clip: Clipboard | null = null, extraData: any = {}, custom
     // edit item has its own paste function
     if (activeElem?.closest(".editItem")) return
 
-    if (customElem?.closest(".edit")) activeElem = customElem
-    if (activeElem?.closest(".edit")) {
+    if (!isDuplicating && customElem?.closest(".edit")) activeElem = customElem
+    if (!isDuplicating && activeElem?.closest(".edit")) {
         pasteText(activeElem)
         return
     }
@@ -643,16 +643,9 @@ const pasteActions = {
     },
     group: (data: any, extraData: any = {}, isDuplicating: boolean = false) => pasteActions.slide(data, extraData, isDuplicating),
     overlay: (data: any) => pasteDrawerItem(data, "overlay"),
+    effect: (data: any) => pasteDrawerItem(data, "effect"),
     template: (data: any) => pasteDrawerItem(data, "template"),
     scene: (data: any) => pasteDrawerItem(data, "scene"),
-    effect: (data: any) => {
-        data?.forEach((effect) => {
-            const newEffect = clone(effect)
-            delete newEffect.isDefault
-            newEffect.name += " (2)"
-            history({ id: "UPDATE", newData: { data: newEffect }, location: { page: "drawer", id: "effect" } })
-        })
-    },
     // project items
     show: (data: any) => {
         const isTemplate = !!get(editingProjectTemplate)
@@ -1360,7 +1353,7 @@ const duplicateActions = {
     }
 }
 
-function pasteDrawerItem(data: any, type: "overlay" | "template" | "scene") {
+function pasteDrawerItem(data: any, type: "overlay" | "effect" | "template" | "scene") {
     data?.forEach((item) => {
         const newItem = clone(item)
         delete newItem.isDefault
