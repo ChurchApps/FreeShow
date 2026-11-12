@@ -37,10 +37,11 @@
     // $: console.trace(show)
     // $: console.trace(videoTime)
 
-    $: subtitleData = $media[mediaPath] || {}
-    $: tracks = subtitleData.tracks || []
-    $: subtitle = subtitleData.subtitle || ""
-    $: if (type !== "player" && mediaPath && subtitleData.tracks === undefined) sendMain(Main.MEDIA_TRACKS, { path: mediaPath })
+    $: mediaData = $media[mediaPath] || {}
+
+    $: tracks = mediaData.tracks || []
+    $: subtitle = mediaData.subtitle || ""
+    $: if (type !== "player" && mediaPath && mediaData.tracks === undefined) sendMain(Main.MEDIA_TRACKS, { path: mediaPath })
 
     export let mediaStyle: MediaStyle = {}
 
@@ -195,7 +196,7 @@
         const ignoreLayer = videoType === "foreground" || (videoType !== "background" && (type === "image" || !shouldLoop))
         if (ignoreLayer) clearSlide(true)
 
-        let bg: any = { type, startAt, muted, loop, ...mediaStyle, ignoreLayer }
+        let bg: any = { type, startAt, muted, loop, ...mediaStyle, fit: mediaData.fit || "", ignoreLayer }
 
         if (type === "player") bg.id = mediaPath
         else {
