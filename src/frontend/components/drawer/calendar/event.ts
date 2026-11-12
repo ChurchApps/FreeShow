@@ -35,7 +35,9 @@ export function createRepeatedEvents(event: Event, onlyMissing = false, skipDate
     let currentFromDate = new Date(event.from)
     let currentToDate = new Date(event.to)
     let endingDate = new Date(data.endingDate || "")
-    endingDate = setDate(currentFromDate, { date: endingDate.getDate(), month: endingDate.getMonth(), year: endingDate.getFullYear() })
+    if (!isNaN(endingDate.getTime())) {
+        endingDate = setDate(endingDate, { hours: 23, minutes: 59, seconds: 59 })
+    }
 
     const isCalendarRepeat = ["1st", "2nd", "3rd", "4th", "last"].includes(data.type)
     const originalFromDate = new Date(event.from)
@@ -161,7 +163,10 @@ export const setDate = (date: Date, options: any): Date => {
     const maxDays = new Date(year, month + 1, 0).getDate()
     if (day > maxDays) day = maxDays
     const newDate = [year, month + 1, day]
-    const time = date.getHours() + ":" + date.getMinutes()
+    const hours = options.hours ?? date.getHours()
+    const minutes = options.minutes ?? date.getMinutes()
+    const seconds = options.seconds ?? date.getSeconds()
+    const time = `${hours}:${minutes}:${seconds}`
     return new Date([...newDate, time].join(" "))
 }
 
