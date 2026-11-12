@@ -54,7 +54,7 @@
             <!-- {#key show.settings.autoStretch} -->
             <!-- dynamicResolution={show.settings.autoStretch !== false} -->
             {#key resizeKey}
-                <Zoomed show={$stageLayout} style={getStyleResolution(resolution, width, height) + ";" + `background-color: ${$stageLayout.settings.color || "#000000"};`} dynamicResolution disableStyle>
+                <Zoomed show={$stageLayout} background={$stageLayout?.settings?.color || "#000000"} style={getStyleResolution(resolution, width, height)} dynamicResolution disableStyle>
                     {#each Object.entries($stageLayout.items) as [id, item]}
                         {#if (item.type || item.enabled !== false) && shouldItemBeShown(item, item.type === "slide_text" ? getSlideTextItems($stageLayout, item, $output) : [], { type: "stage" }, conditionsUpdater)}
                             {#key $stageLayout}
