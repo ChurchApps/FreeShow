@@ -255,7 +255,7 @@ aria-label={fullscreen ? "Exit fullscreen preview" : "Toggle fullscreen preview"
                 <OutputPreviewLabel {output} outs={allEnabledOuts} />
             {/if}
 
-            <div class="previewContainer" style={outs.length > 1 && !fullscreen ? `border: 2px solid ${output?.color};` : ""}>
+            <div class="previewContainer" style={outs.length > 1 && gridColumns > 1 && !fullscreen ? `border: 2px solid ${output?.color};border-top: 0;` : ""}>
                 <PreviewOutput outputId={output.id} {disableTransitions} disabled={outs.length > 1 && !fullscreen && !output?.active} {fullscreen} />
 
                 <!-- BADGES (LIVE / REC) -->
