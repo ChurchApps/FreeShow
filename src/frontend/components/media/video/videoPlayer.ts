@@ -174,11 +174,14 @@ export class VideoPlayer {
         const delayMs = hasDelay && durationMs > 0 ? durationMs / 4 + 20 : 0
 
         if (globalOpts.speed && audio instanceof HTMLAudioElement) {
-            const speedVal = parseFloat(globalOpts.speed)
+            const speedVal = Number(globalOpts.speed)
             if (!isNaN(speedVal) && speedVal > 0) this.setTempo(id, speedVal)
         }
 
+        if (!options.paused) (audio as any).isPlayPending = true
+
         const startPlayback = () => {
+            delete (audio as any).isPlayPending
             if (audio instanceof HTMLAudioElement) this.attachToAnalyser(id, audio, linkedOutputIds || [])
 
             if (!options.paused) this.play(id, linkedOutputIds?.[0])
@@ -476,6 +479,7 @@ export class VideoPlayer {
 
         const audio = this.getAudio(path, outputId)
         if (!audio) return
+        delete (audio as any).isPlayPending
 
         if (audio instanceof HTMLAudioElement) {
             audio.pause()
@@ -868,12 +872,13 @@ export class VideoPlayer {
                     const activeAudio = video.audio
                     const outputMuted = this.isOutputMuted(outputId)
                     const isMuted = video.isOnline ? activeAudio.muted || outputId !== audibleOnlineOutputId : activeAudio.muted || outputMuted
+                    const isPaused = (activeAudio as any).isPlayPending ? false : activeAudio.paused
 
                     a[id] = {
                         currentTime: Number.isFinite(activeAudio.currentTime) ? activeAudio.currentTime : 0,
                         at: Date.now(),
                         duration: Number.isFinite(activeAudio.duration) && activeAudio.duration > 0 ? activeAudio.duration : 0,
-                        paused: activeAudio.paused,
+                        paused: isPaused,
                         loop: video.loop || false,
                         muted: isMuted,
                         softLoop,
