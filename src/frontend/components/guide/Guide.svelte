@@ -41,13 +41,12 @@
         const width = window.innerWidth
         flip = bounds.x > width * 0.7
 
-        const isAtTop = bounds.y < 100
-        const topOffset = $os.platform === "darwin" && isAtTop ? 50 : 0
+        const isWindows = $os.platform === "win32"
 
         let top = ""
-        if (bounds.y + bounds.height <= 25 + 40) top = `top: ${bounds.y + bounds.height}px;` + ($os.platform === "win32" ? "transform: translateY(-25px);" : "")
+        if (bounds.y + bounds.height <= (isWindows ? 25 : 0) + 40) top = `top: ${bounds.y + bounds.height}px;` + `transform: translateY(${isWindows ? -25 : 0}px);`
 
-        currentStyle = `left: ${bounds.x}px;top: ${Math.max(top ? 0 : 70 + topOffset, bounds.y)}px;width: ${bounds.width}px;height: ${bounds.height}px;`
+        currentStyle = `left: ${bounds.x}px;top: ${Math.max(top ? 0 : 70, bounds.y)}px;width: ${bounds.width}px;height: ${bounds.height}px;`
         if (flip) currentTextStyle = `max-width: ${bounds.right}px;${top}`
         else currentTextStyle = `max-width: ${width - bounds.left}px;${top}`
     }
