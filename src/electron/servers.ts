@@ -109,19 +109,12 @@ function registerIpcBridge(id: ServerName) {
     })
 }
 
-let hasStarted = false
-// restarts are serialized: closeServers() is asynchronous, so two overlapping
-// calls would try to bind the same port and the second one fails with EADDRINUSE
-let startQueue: Promise<void> = Promise.resolve()
+let isStarting = false
+export async function startServers({ ports, max, disabled, data }: MainSendPayloads[Main.SERVER_DATA]) {
+    if (isStarting) return
+    isStarting = true
 
-export function startServers(data: MainSendPayloads[Main.SERVER_DATA]): Promise<void> {
-    startQueue = startQueue.then(() => applyServers(data)).catch((err) => console.error("error starting servers:", err))
-    return startQueue
-}
-
-async function applyServers({ ports, max, disabled, data }: MainSendPayloads[Main.SERVER_DATA]) {
-    if (hasStarted) await closeServers()
-    hasStarted = true
+    await closeServers()
 
     const serverList = Object.keys(servers) as ServerName[]
     serverList.forEach((id: ServerName) => {
@@ -148,6 +141,8 @@ async function applyServers({ ports, max, disabled, data }: MainSendPayloads[Mai
             publishPort(id, servers[id]!.port)
         }
     })
+
+    isStarting = false
 }
 
 export function updateServerData(data: { [key: string]: ServerData }) {
@@ -161,27 +156,23 @@ export function getServerData(id: ServerName) {
     return servers[id]?.data || {}
 }
 
-export function closeServers(): Promise<void> {
+export function closeServers() {
     unpublishPorts()
 
-    hasStarted = false
     const serverList = Object.keys(servers) as ServerName[]
 
-    // io.close() is asynchronous: listening again on the same port before every
-    // server has actually released it fails with EADDRINUSE. Wait for the close callbacks.
     return Promise.all(
         serverList.map(
             (id) =>
                 new Promise<void>((resolve) => {
                     const entry = servers[id]
-                    if (!entry?.server) return resolve()
-                    // clear connection state so reconnect counts / max limit don't drift across restarts
+                    if (!entry?.server?.listening) return resolve()
+
                     entry.connections = {}
-                    if (!entry.server.listening) return resolve()
                     entry.io.close(() => resolve())
                 })
         )
-    ).then(() => undefined)
+    )
 }
 
 let responded: { [key: string]: boolean } = {}
