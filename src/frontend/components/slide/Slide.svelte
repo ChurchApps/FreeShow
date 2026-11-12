@@ -465,7 +465,7 @@
     </div>
     {#if viewMode === "list" && !noQuickEdit}
         <hr />
-        <div class="quickEdit" style="font-size: {(-1.1 * $slidesOptions.columns + 12) / 6}em;" data-index={index}>
+        <div class="quickEdit" style="font-size: {(-1.1 * $slidesOptions.columns + 12) / 6}em;" data-index={index} on:mousedown|stopPropagation>
             {#key $refreshListBoxes >= 0 && $refreshListBoxes !== index}
                 {#if slide.items}
                     {#each itemsList as item, itemIndex}
