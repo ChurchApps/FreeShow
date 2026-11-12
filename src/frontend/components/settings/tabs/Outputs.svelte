@@ -12,8 +12,9 @@
     import { translateText } from "../../../utils/language"
     import { destroy, receive, send } from "../../../utils/request"
     import { clone, keysToID, sortByName, sortObject } from "../../helpers/array"
-    import { addRtmpDestination, checkFFmpeg, refreshOut, removeRtmpDestination, startRtmpStreaming, startStreaming, stopRtmpStreaming, stopStreaming, toggleOutput, updateOutputRtmpData, updateOutputWebrtcData, updateRtmpDestination } from "../../helpers/output"
+    import { addRtmpDestination, checkFFmpeg, removeRtmpDestination, startRtmpStreaming, startStreaming, stopRtmpStreaming, stopStreaming, toggleOutput, updateOutputRtmpData, updateOutputWebrtcData, updateRtmpDestination } from "../../helpers/output"
     import { hasStreamableDestination } from "../../helpers/rtmpDestinations"
+    import { changeSingleOutputStyle } from "../../helpers/showActions"
     import InputRow from "../../input/InputRow.svelte"
     import Title from "../../input/Title.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
@@ -35,7 +36,10 @@
         if (!outputId) outputId = currentOutput?.id || ""
         if (!outputId || !$outputs[outputId]) return
 
-        if (key === "style") setTimeout(refreshOut)
+        if (key === "style") {
+            changeSingleOutputStyle(outputId, value || "")
+            return
+        }
 
         outputs.update((a: any) => {
             const out = a[outputId]

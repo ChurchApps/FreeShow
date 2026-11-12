@@ -113,7 +113,7 @@ import { getExtension, getFileName, getMediaLayerType, getMediaStyle, getMediaTy
 import { defaultOutput, getCurrentStyle, getFirstActiveOutput, isOutputBound, resolveOutputId, setOutput, toggleOutput, toggleOutputs, updateActiveSceneOutputs } from "../helpers/output"
 import { select } from "../helpers/select"
 import { bindSlidesToOutput, checkName, formatToFileName, getLayoutRef, openShow, removeTemplatesFromShow, updateShowsList } from "../helpers/show"
-import { sendMidi } from "../helpers/showActions"
+import { changeSingleOutputStyle, sendMidi } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 import { getMenuTagId, openTagManager, toggleSelectionTags, toggleTagFilter } from "../helpers/tags"
 import { clearSlide } from "../output/clear"
@@ -1402,12 +1402,7 @@ const clickActions = {
 
         popupData.set({
             active: output.style,
-            trigger: (styleId: string) => {
-                outputs.update((a) => {
-                    a[outputId].style = styleId
-                    return a
-                })
-            }
+            trigger: (styleId: string) => changeSingleOutputStyle(outputId, styleId)
         })
 
         // activeStyle.set(output.style)

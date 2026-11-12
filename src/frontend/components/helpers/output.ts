@@ -759,9 +759,10 @@ export function allOutputsHasStyleTemplate(isScripture: boolean = false, _update
     })
 }
 
-export function refreshOut() {
+export function refreshOut(outputIds: string[] = []) {
+    const targetIds = outputIds.length ? outputIds : getAllActiveOutputs().map((a) => a.id)
     outputs.update((a) => {
-        getAllActiveOutputs().forEach(({ id }) => {
+        targetIds.forEach((id) => {
             if (!a[id]) return
             a[id].out = { ...a[id].out, refresh: Number(a[id].out?.refresh || 0) + 1 }
         })
