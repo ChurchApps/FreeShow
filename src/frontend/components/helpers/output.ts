@@ -1410,7 +1410,7 @@ function getTextFormatSets(item: Item): TextFormatSets {
     )
 }
 
-export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], addOverflowTemplateItems = false, resetAutoSize = true, templateClicked = false, mode: string = "", customDynamicValues: { [key: string]: string | [string, string][] } = {}) {
+export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], addOverflowTemplateItems = false, resetAutoSize = true, templateClicked = false, mode: string = "", customDynamicValues: { [key: string]: string | [string, string][] } = {}, isOutputStyle = false) {
     slideItems = clone(slideItems || []).filter(Boolean)
     if (!templateItems.length) return slideItems
 
@@ -1487,6 +1487,9 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         // NOTE: textFit is already handled above in the auto/textFit logic block
         const extraStyles = ["chords", "actions", "specialStyle", "scrolling", "bindings", "conditions", "clickReveal", "lineReveal", "fit", "filter", "flipped", "flippedY", "blend"]
         extraStyles.forEach((key) => {
+            // output style template: keep slide item bindings unless the template item has any set
+            if (isOutputStyle && key === "bindings" && !templateItem[key]?.length) return
+
             delete item[key]
             if (templateItem[key]) item[key] = templateItem[key]
         })
@@ -1950,7 +1953,7 @@ export function setTemplateStyle(outSlide: OutSlide | null, currentStyle: Styles
     //     outputId
     // })
 
-    const newItems = mergeWithTemplate(slideItems || [], templateItems, true, true, false, mode, customDynamicValues) || []
+    const newItems = mergeWithTemplate(slideItems || [], templateItems, true, true, false, mode, customDynamicValues, true) || []
     newItems.push(...getSlideItemsFromTemplate(template.settings || {}))
 
     // console.log("[DEBUG - setTemplateStyle] After merge", {
