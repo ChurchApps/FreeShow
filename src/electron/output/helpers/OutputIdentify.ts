@@ -15,7 +15,7 @@ export class OutputIdentify {
 
         setTimeout(() => {
             activeWindows.forEach((window) => {
-                window.destroy()
+                if (!window.isDestroyed()) window.destroy()
             })
             this.identifyActive = false
         }, this.IDENTIFY_TIMEOUT)
@@ -28,8 +28,9 @@ export class OutputIdentify {
         window.moveTop()
         window.loadFile("public/identify.html")
 
-        window.webContents.on("did-finish-load", sendNumberToScreen)
+        window.webContents.once("did-finish-load", sendNumberToScreen)
         function sendNumberToScreen() {
+            if (window.isDestroyed() || window.webContents.isDestroyed()) return
             window.webContents.send("NUMBER", i + 1)
         }
 

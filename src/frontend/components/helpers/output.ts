@@ -1636,7 +1636,8 @@ function replaceScriptureValues(items: Item[], templateItems: Item[], customDyna
         Object.keys(customDynamicValues).forEach((key) => {
             const value = customDynamicValues[key]
             if (typeof value === "string") {
-                slideString = slideString.replace(new RegExp(`{${key}}`, "g"), value)
+                const escapedValue = JSON.stringify(value).slice(1, -1)
+                slideString = slideString.replace(new RegExp(`{${key}}`, "g"), escapedValue)
             }
         })
 

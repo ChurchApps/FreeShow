@@ -494,7 +494,9 @@ const ERROR_FILTER = [
     "crash_reporter::DumpWithoutCrashing", // chromium crashes
     "ERR_INTERNET_DISCONNECTED", // internet disconnected
     "First argument to DataView constructor must be an ArrayBuffer", // mp4box issue
-    "mtx_do_lock" // missing or incompatible Visual C++ runtime (Spotify)
+    "mtx_do_lock", // missing or incompatible Visual C++ runtime (Spotify)
+    "libspotifyctl", // spotify native module crash family
+    "EXCEPTION_ACCESS_VIOLATION" // native access violations (non-actionable in JS)
 ]
 export function catchErrors() {
     process.on("uncaughtException", (err) => {

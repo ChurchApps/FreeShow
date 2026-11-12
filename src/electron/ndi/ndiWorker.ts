@@ -109,8 +109,20 @@ export const ndiAdapter: SenderAdapter = {
         if (!sender) return null
         return { sender, sendFrame: (frame: any) => sender.video(frame), sendAudio: (frame: any) => sender.audio(frame), tsKey: "timecode" }
     },
-    connections: (sender: any) => sender?.connections?.() || 0,
-    destroy: (sender: any) => sender.destroy(),
+    connections: (sender: any) => {
+        try {
+            return sender?.connections?.() || 0
+        } catch {
+            return 0
+        }
+    },
+    destroy: (sender: any) => {
+        try {
+            sender?.destroy?.()
+        } catch {
+            // sender already destroyed
+        }
+    },
 
     // NDI's wire format is UYVY 4:2:2, so sending it directly skips the SDK's own conversion: a frame
     // osr-capture converted on the GPU (format 1/2) goes as it is, BGRA is converted here

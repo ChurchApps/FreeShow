@@ -11,15 +11,24 @@ const channelCount2 = 2
 const sampleRate2 = 48000 // Hz
 
 let opusEncoder: TOpusEncoder | null = null
-try {
-    const { OpusEncoder } = require("@discordjs/opus")
-    opusEncoder = new OpusEncoder(sampleRate2, channelCount2)
-} catch (err) {
-    console.error("OPUS not found!")
+let opusLoadFailed = false
+function getOpusEncoder(): TOpusEncoder | null {
+    if (opusEncoder) return opusEncoder
+    if (opusLoadFailed) return null
+
+    try {
+        const { OpusEncoder } = require("@discordjs/opus")
+        opusEncoder = new OpusEncoder(sampleRate2, channelCount2)
+        return opusEncoder
+    } catch (err) {
+        opusLoadFailed = true
+        console.error("Could not initialize OPUS encoder:", err)
+        return null
+    }
 }
 
 export function isAudioEnabled(): boolean {
-    return opusEncoder !== null
+    return !opusLoadFailed
 }
 
 let icecastPcmAccumulator: Buffer = Buffer.alloc(0)
@@ -45,7 +54,9 @@ export async function processAudio(buffer: Buffer, sampleRate = 48000, targetId?
     }
 
     const normalizedIcecast = icecast && icecast.enabled !== false ? icecast : null
-    const needsIcecast = !!(normalizedIcecast && opusEncoder && (!tid || tid === "icecast"))
+    const wantsIcecast = !!(normalizedIcecast && (!tid || tid === "icecast"))
+    const activeOpusEncoder = wantsIcecast ? getOpusEncoder() : null
+    const needsIcecast = !!(wantsIcecast && activeOpusEncoder)
     const needsLegacySinks = (!tid || tid !== "icecast") && (BlackmagicSender.hasOutputs() || !!getServerData("OUTPUT_STREAM")?.sendAudio || WebRtcHost.isRunning() || RtmpStreamer.anyRunning())
 
     if (!needsIcecast && !needsLegacySinks) return
@@ -61,7 +72,7 @@ export async function processAudio(buffer: Buffer, sampleRate = 48000, targetId?
 
             // Fast-path: Skip accumulator if perfectly sized
             if (icecastPcmAccumulator.length === 0 && pcm48k.length === frameByteSize) {
-                const opusFrame = opusEncoder!.encode(pcm48k)
+                const opusFrame = activeOpusEncoder!.encode(pcm48k)
                 IcecastSender.sendAudio(opusFrame, normalizedIcecast)
             } else {
                 icecastPcmAccumulator = Buffer.concat([icecastPcmAccumulator, pcm48k])
@@ -70,7 +81,7 @@ export async function processAudio(buffer: Buffer, sampleRate = 48000, targetId?
                     const chunk = icecastPcmAccumulator.subarray(0, frameByteSize)
                     icecastPcmAccumulator = Buffer.from(icecastPcmAccumulator.subarray(frameByteSize))
 
-                    const opusFrame = opusEncoder!.encode(chunk)
+                    const opusFrame = activeOpusEncoder!.encode(chunk)
                     IcecastSender.sendAudio(opusFrame, normalizedIcecast)
                 }
             }

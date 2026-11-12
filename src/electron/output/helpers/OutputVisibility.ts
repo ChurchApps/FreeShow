@@ -55,8 +55,9 @@ export class OutputVisibility {
 
         const bounds: Rectangle = this.resolveOutputBounds(output, autoPosition)
 
-        const windowCoveringMain = force || output.boundsLocked ? false : this.amountCovered(bounds, mainWindow!.getBounds()) > 0.5
-        const invalidWindowPosition = windowCoveringMain && (autoPosition || autoStartup || window.isAlwaysOnTop() === true)
+        const checkIfCovering = !force && !output.boundsLocked
+        const windowCoveringMain = checkIfCovering ? this.amountCovered(bounds, this.getMainWindowBounds()) > 0.5 : false
+        const invalidWindowPosition = windowCoveringMain && (autoPosition || autoStartup || this.isAlwaysOnTop(window))
 
         if (state === true && !invalidWindowPosition) {
             this.showWindow(window, output.alwaysOnTop !== false)
@@ -95,7 +96,7 @@ export class OutputVisibility {
 
         // 2. Secondary fallback: Look up by target display ID if coordinates are off-screen (e.g. topology changed)
         if (displays.length > 0 && output.screen) {
-            const isCoveringMain = this.amountCovered(outputBounds, mainWindow!.getBounds()) > 0.5
+            const isCoveringMain = this.amountCovered(outputBounds, this.getMainWindowBounds()) > 0.5
             const targetDisplay = isCoveringMain ? null : displays.find((d) => d.id.toString() === output.screen)
             if (targetDisplay) return { ...targetDisplay.bounds }
         }
@@ -113,7 +114,7 @@ export class OutputVisibility {
         const displays = screen.getAllDisplays()
         if (displays.length !== 2) return bounds
 
-        const mainWindowBounds = mainWindow!.getBounds()
+        const mainWindowBounds = this.getMainWindowBounds()
         const amountCoveredByWindow = this.amountCovered(displays[1].bounds, mainWindowBounds)
 
         let secondDisplay = displays[1]
@@ -122,7 +123,9 @@ export class OutputVisibility {
         return { ...secondDisplay.bounds }
     }
 
-    static amountCovered(displayBounds: Rectangle, windowBounds: Rectangle) {
+    static amountCovered(displayBounds: Rectangle, windowBounds: Rectangle | null) {
+        if (!windowBounds) return 0
+
         const overlapX = Math.max(0, Math.min(displayBounds.x + displayBounds.width, windowBounds.x + windowBounds.width) - Math.max(displayBounds.x, windowBounds.x))
         const overlapY = Math.max(0, Math.min(displayBounds.y + displayBounds.height, windowBounds.y + windowBounds.height) - Math.max(displayBounds.y, windowBounds.y))
         const overlapArea = overlapX * overlapY
@@ -131,6 +134,23 @@ export class OutputVisibility {
         const overlapAmount = overlapArea / totalArea
 
         return overlapAmount
+    }
+
+    private static getMainWindowBounds(): Rectangle | null {
+        try {
+            if (!mainWindow || mainWindow.isDestroyed()) return null
+            return mainWindow.getBounds()
+        } catch {
+            return null
+        }
+    }
+
+    private static isAlwaysOnTop(window: BrowserWindow): boolean {
+        try {
+            return !window.isDestroyed() && window.isAlwaysOnTop() === true
+        } catch {
+            return false
+        }
     }
 
     // MacOS Menu Bar

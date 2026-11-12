@@ -14,6 +14,8 @@
         if (outs.length <= 1) return
 
         outputs.update((a) => {
+            if (!a[id]) return a
+
             if (e.detail.ctrl) {
                 let newState = false
                 let getAllActive = Object.values(a).filter((a) => !a.stageOutput && a.active)

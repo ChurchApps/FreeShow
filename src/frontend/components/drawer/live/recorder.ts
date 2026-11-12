@@ -86,8 +86,11 @@ export function toggleMediaRecorder(outputId?: string): boolean {
         mediaRecorder.resume()
         return false
     }
-    mediaRecorder.pause()
-    return true
+    if (mediaRecorder.state === "recording") {
+        mediaRecorder.pause()
+        return true
+    }
+    return false
 }
 
 export function stopOutputRecording(outputId: string): void {

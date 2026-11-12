@@ -555,7 +555,7 @@ function splitContent(content: BibleContent[], perSlide: number): BibleContent[]
     // This uses the first translation as the authority for verse structure.
     const allVersesInOrder: { chapter: number | string; verse: number | string }[] = []
     if (content.length > 0) {
-        content[0].chapters.forEach((chapterNum, chapterIndex) => {
+        content[0].chapters?.forEach((chapterNum, chapterIndex) => {
             const chapterVerses = sortScriptureSelection(content[0].activeVerses[chapterIndex] || [])
             chapterVerses.forEach((verseNum) => {
                 allVersesInOrder.push({ chapter: chapterNum, verse: verseNum })
@@ -792,7 +792,7 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
 
     if (smartSplit) {
         const allVersesInOrder: { chapter: number | string; verse: number | string }[] = []
-        biblesContent[0].chapters.forEach((chapterNum, chapterIndex) => {
+        biblesContent[0].chapters?.forEach((chapterNum, chapterIndex) => {
             const chapterVerses = sortScriptureSelection(biblesContent[0].activeVerses[chapterIndex] || [])
             chapterVerses.forEach((verseNum) => {
                 allVersesInOrder.push({ chapter: chapterNum, verse: verseNum })
@@ -922,7 +922,7 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
             scriptureVerseContent[i][j] = []
 
             // Process verses from all chapters
-            bible.chapters.forEach((chapterNumber, chapterIndex) => {
+            bible.chapters?.forEach((chapterNumber, chapterIndex) => {
                 const versesText = bible.verses[chapterIndex] || {}
                 const chapterVerses = sortScriptureSelection(bible.activeVerses[chapterIndex] || [])
 
@@ -2119,7 +2119,7 @@ export function scriptureRangeSelect(e: any, currentlySelected: (number | string
         return allParts.length > 1 ? allParts : [newSelStr]
     }
 
-    currentlySelected = currentlySelected.map((id) => id.toString())
+    currentlySelected = (currentlySelected || []).map((id) => id.toString())
     newSelection = newSelection.toString()
 
     if (e.ctrlKey || e.metaKey) {

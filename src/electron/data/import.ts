@@ -34,8 +34,12 @@ const specialImports = {
         // https://www.npmjs.com/package/word-extractor
         const extractor = new WordExtractor()
         for await (const filePath of files) {
-            const extracted = await extractor.extract(filePath)
-            data.push({ name: getFileName(filePath), content: extracted.getBody() })
+            try {
+                const extracted = await extractor.extract(filePath)
+                data.push({ name: getFileName(filePath), content: extracted.getBody() })
+            } catch (err) {
+                console.error(`Error importing Word file "${filePath}":`, err)
+            }
         }
 
         return data
