@@ -50,6 +50,11 @@ export const actionData = {
     id_start_effect: { common: true, canAddMultiple: true, name: "actions.id_start_effect", icon: "effects", input: "id" },
     id_select_overlay: { common: true, canAddMultiple: true, name: "actions.id_select_overlay", icon: "overlays", input: "id" },
 
+    // SCRIPTURE
+    start_scripture: { SECTION: "tabs.scripture", name: "tabs.scripture: inputs.start", icon: "scripture" },
+    scripture_next: { name: "tabs.scripture: media.next", icon: "scripture" },
+    scripture_previous: { name: "tabs.scripture: media.previous", icon: "scripture" },
+
     // OUTPUT
     start_scene: { SECTION: "guide_title.output", canAddMultiple: true, name: "actions.start_scene", icon: "scene", input: "id" },
     start_webrtc_stream: { name: "output.start_streaming (WebRTC)", icon: "record", input: "id" },
