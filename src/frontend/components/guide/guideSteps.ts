@@ -36,7 +36,7 @@ export const guideSteps = [
     {
         title: "guide_title.projects",
         description: "guide_description.project_create",
-        query: "#projectsButtons",
+        query: "#projectsArea .addButton",
         pre: () => {
             activeProject.set(null)
             projectView.set(true)
@@ -96,6 +96,7 @@ export const guideSteps = [
         description: "guide_description.create_show_button",
         query: "#newShowBtn",
         pre: () => {
+            activeDrawerTab.set("shows")
             activePopup.set(null)
             openDrawer()
         }
