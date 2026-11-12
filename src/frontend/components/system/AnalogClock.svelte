@@ -35,7 +35,7 @@
 
     <!-- markers -->
     {#each [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55] as minute}
-        <line class="major" y1="36" y2="45" transform="rotate({30 * minute})" />
+        <line class="major" y1="36" y2="45" transform="rotate({30 * minute})" stroke-linecap="round" />
 
         <!-- text -->
         <!-- {#if minute}
@@ -56,20 +56,20 @@
     {/if} -->
 
         {#each [1, 2, 3, 4] as offset}
-            <line class="minor" y1="42" y2="45" transform="rotate({6 * (minute + offset)})" />
+            <line class="minor" y1="42" y2="45" transform="rotate({6 * (minute + offset)})" stroke-linecap="round" />
         {/each}
     {/each}
 
     <!-- hour hand -->
-    <line class="hour" y1="6" y2="-28" transform="rotate({30 * h + m / 2})" />
+    <line class="hour" y1="6" y2="-28" transform="rotate({30 * h + m / 2})" stroke-linecap="round" />
 
     <!-- minute hand -->
-    <line class="minute" y1="6" y2="-42" transform="rotate({6 * m + s / 10})" />
+    <line class="minute" y1="6" y2="-42" transform="rotate({6 * m + s / 10})" stroke-linecap="round" />
 
     {#if seconds}
         <!-- second hand -->
-        <g transform="rotate({6 * $sweep + 1})">
-            <line class="second" y1="10" y2="-36" />
+        <g transform="rotate({6 * $sweep + 2.5})">
+            <line class="second" y1="10" y2="-36" stroke-linecap="round" />
         </g>
     {/if}
 
