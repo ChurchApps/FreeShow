@@ -55,6 +55,7 @@ import { translateText } from "../../utils/language"
 import { confirmCustom } from "../../utils/popup"
 import { send } from "../../utils/request"
 import { hasStageStreamViewers, sendBackgroundToStage } from "../../utils/stageTalk"
+import { checkOptimizedMode } from "../../utils/startup"
 import { TemplateHelper } from "../../utils/templates"
 import { customActionActivation, runAction } from "../actions/actions"
 import type { API_camera, API_screen, API_stage_output_layout } from "../actions/api"
@@ -393,7 +394,7 @@ function checkAudio(type: string, data: any, allOutputIds: string[], outs: strin
 
         // start new video items
         newItems.forEach((item: any) => {
-            VideoPlayer.start(item.src, { loop: item.loop !== false, muted: item.muted, startAt: item.startAt || item.fromTime || 0, fromTime: item.fromTime, toTime: item.toTime, volume: item.volume, type: "item" }, allOutputIds)
+            VideoPlayer.start(item.src, { loop: item.loop !== false, muted: item.muted, startAt: item.startAt || item.fromTime || 0, fromTime: item.fromTime, toTime: item.toTime, volume: item.volume, speed: item.speed, type: "item" }, allOutputIds)
         })
     }
 }
@@ -758,9 +759,10 @@ export function allOutputsHasStyleTemplate(isScripture: boolean = false, _update
     })
 }
 
-export function refreshOut() {
+export function refreshOut(outputIds: string[] = []) {
+    const targetIds = outputIds.length ? outputIds : getAllActiveOutputs().map((a) => a.id)
     outputs.update((a) => {
-        getAllActiveOutputs().forEach(({ id }) => {
+        targetIds.forEach((id) => {
             if (!a[id]) return
             a[id].out = { ...a[id].out, refresh: Number(a[id].out?.refresh || 0) + 1 }
         })
@@ -1056,6 +1058,7 @@ export function updateOutputWebrtcData(outputId: string, key: string, value: any
     if (key === "streaming") {
         if (value) AudioAnalyser.recorderActivate()
         else AudioAnalyser.recorderDeactivate()
+        checkOptimizedMode()
     }
 
     send(OUTPUT, ["SET_VALUE"], { id: resolvedId, key: "webrtcData", value: newData })
@@ -1100,6 +1103,7 @@ export function updateOutputRtmpData(outputId: string, key: string, value: any) 
     if (key === "streaming") {
         if (value) AudioAnalyser.recorderActivate()
         else AudioAnalyser.recorderDeactivate()
+        checkOptimizedMode()
     }
 
     if (key === "encoder") {
@@ -1407,7 +1411,7 @@ function getTextFormatSets(item: Item): TextFormatSets {
     )
 }
 
-export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], addOverflowTemplateItems = false, resetAutoSize = true, templateClicked = false, mode: string = "", customDynamicValues: { [key: string]: string | [string, string][] } = {}) {
+export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], addOverflowTemplateItems = false, resetAutoSize = true, templateClicked = false, mode: string = "", customDynamicValues: { [key: string]: string | [string, string][] } = {}, isOutputStyle = false) {
     slideItems = clone(slideItems || []).filter(Boolean)
     if (!templateItems.length) return slideItems
 
@@ -1484,6 +1488,9 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         // NOTE: textFit is already handled above in the auto/textFit logic block
         const extraStyles = ["chords", "actions", "specialStyle", "scrolling", "bindings", "conditions", "clickReveal", "lineReveal", "fit", "filter", "flipped", "flippedY", "blend"]
         extraStyles.forEach((key) => {
+            // output style template: keep slide item bindings unless the template item has any set
+            if (isOutputStyle && key === "bindings" && !templateItem[key]?.length) return
+
             delete item[key]
             if (templateItem[key]) item[key] = templateItem[key]
         })
@@ -1630,7 +1637,8 @@ function replaceScriptureValues(items: Item[], templateItems: Item[], customDyna
         Object.keys(customDynamicValues).forEach((key) => {
             const value = customDynamicValues[key]
             if (typeof value === "string") {
-                slideString = slideString.replace(new RegExp(`{${key}}`, "g"), value)
+                const escapedValue = JSON.stringify(value).slice(1, -1)
+                slideString = slideString.replace(new RegExp(`{${key}}`, "g"), escapedValue)
             }
         })
 
@@ -1947,7 +1955,7 @@ export function setTemplateStyle(outSlide: OutSlide | null, currentStyle: Styles
     //     outputId
     // })
 
-    const newItems = mergeWithTemplate(slideItems || [], templateItems, true, true, false, mode, customDynamicValues) || []
+    const newItems = mergeWithTemplate(slideItems || [], templateItems, true, true, false, mode, customDynamicValues, true) || []
     newItems.push(...getSlideItemsFromTemplate(template.settings || {}))
 
     // console.log("[DEBUG - setTemplateStyle] After merge", {

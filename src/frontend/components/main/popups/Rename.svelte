@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Line, SlideData } from "../../../../types/Show"
-    import { activePopup, activeShow, audioRouting, calendars, customScriptureBooks, drawerTabsData, effectsLibrary, scripturesCache, selected, showsCache } from "../../../stores"
+    import { activePopup, activeProject, activeShow, audioRouting, calendars, customScriptureBooks, drawerTabsData, effectsLibrary, projects, scripturesCache, selected, showsCache } from "../../../stores"
     import { renameCalendar } from "../../drawer/calendar/calendars"
     import { clone, removeDuplicates } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -32,6 +32,11 @@
                 if (i === 0) groupName = name
             })
             list = removeDuplicates(list)
+        } else if ($selected.id === "layout") {
+            const layoutId = selectionData[0]?.id || ""
+            const currentShow = $activeShow?.id || ""
+            const layout = $showsCache[currentShow].layouts[layoutId] || {}
+            groupName = layout.name || ""
         } else if ($selected.id === "chord") {
             groupName = selectionData[0]?.chord?.key || ""
         } else if ($selected.id === "bible_book") {
@@ -98,7 +103,7 @@
                 // remove global group if active
                 if ($activeShow && $showsCache[showId].slides[slideId].globalGroup) history({ id: "UPDATE", newData: { data: null, key: "slides", keys: [slideId], subkey: "globalGroup" }, oldData: { id: showId }, location: { page: "show", id: "show_key" } })
 
-                history({ id: "UPDATE", newData: { data: groupName, key: "slides", keys: [slideId], subkey: "group" }, oldData: { id: showId }, location: { page: "show", id: "show_key" } })
+                history({ id: "UPDATE", newData: { data: newName, key: "slides", keys: [slideId], subkey: "group" }, oldData: { id: showId }, location: { page: "show", id: "show_key" } })
 
                 if (!ref?.parent) return
                 // make child a parent
@@ -147,8 +152,27 @@
                 // remove global group if active
                 if ($activeShow && $showsCache[$activeShow.id].slides[slideId].globalGroup) history({ id: "UPDATE", newData: { data: null, key: "slides", keys: [slideId], subkey: "globalGroup" }, oldData: { id: $activeShow?.id }, location: { page: "show", id: "show_key" } })
 
-                history({ id: "UPDATE", newData: { data: groupName, key: "slides", keys: [slideId], subkey: "group" }, oldData: { id: $activeShow?.id }, location: { page: "show", id: "show_key" } })
+                history({ id: "UPDATE", newData: { data: newName, key: "slides", keys: [slideId], subkey: "group" }, oldData: { id: $activeShow?.id }, location: { page: "show", id: "show_key" } })
             })
+        },
+        layout: () => {
+            const layoutId = $selected.data?.[0]?.id
+            if (!layoutId) return
+
+            history({ id: "UPDATE", newData: { key: "layouts", keys: [layoutId], subkey: "name", data: newName }, oldData: { id: $activeShow?.id }, location: { page: "show", id: "show_key" } })
+
+            const projectId = $activeProject
+            const project = $projects[projectId!]
+
+            const showIndex = $activeShow?.index
+            if (project?.shows?.[showIndex ?? -1]?.layout === layoutId) {
+                projects.update((a) => {
+                    if (a[projectId!]?.shows?.[showIndex!]) {
+                        a[projectId!].shows[showIndex!].layoutInfo = { name: newName }
+                    }
+                    return a
+                })
+            }
         },
         chord: () => {
             let chord = $selected.data[0]
@@ -161,7 +185,7 @@
             let chords = newLines[chord.index].chords
             if (!Array.isArray(chords)) chords = []
             chords.forEach((a, i: number) => {
-                if (a.id === chord.chord.id) newLines[chord.index].chords![i].key = groupName
+                if (a.id === chord.chord.id) newLines[chord.index].chords![i].key = newName
             })
 
             _show()
@@ -176,7 +200,7 @@
                 const list = c?.channels || []
                 const channel = list.find((m) => m.id === channelId)
                 if (channel) {
-                    channel.name = groupName
+                    channel.name = newName
                     delete channel.outputLink
                 }
                 return { ...c, channels: list, connections: c?.connections || [] }
@@ -186,7 +210,7 @@
             let selectedPath = $selected.data?.[0]?.path
             effectsLibrary.update((a) => {
                 let index = a.findIndex((a) => a.path === selectedPath)
-                if (index > -1) a[index].name = groupName
+                if (index > -1) a[index].name = newName
                 return a
             })
         },
@@ -196,33 +220,37 @@
             scripturesCache.update((a: any) => {
                 if (!a[scriptureId]?.books?.[bookIndex]) return a
 
-                a[scriptureId].books[bookIndex].customName = groupName
+                a[scriptureId].books[bookIndex].customName = newName
                 return a
             })
 
             // update in drawer real time
             customScriptureBooks.update((a) => {
                 if (!a[scriptureId]) a[scriptureId] = []
-                a[scriptureId][bookIndex] = groupName
+                a[scriptureId][bookIndex] = newName
                 return a
             })
         },
         calendar: () => {
-            const oldName = $selected.data?.[0]?.id
-            if (oldName && groupName && groupName.trim() && groupName.trim() !== oldName) {
-                renameCalendar(oldName, groupName.trim())
-            }
+            const id = $selected.data?.[0]?.id
+            renameCalendar(id, newName.trim())
         }
     }
 
     function rename() {
-        if ($selected.id && renameAction[$selected.id]) renameAction[$selected.id]()
+        // must be a new name
+        if (newName?.trim() && newName !== groupName) {
+            if ($selected.id && renameAction[$selected.id]) renameAction[$selected.id]()
+        }
+
         activePopup.set(null)
         groupName = ""
+        newName = ""
         selected.set({ id: null, data: [] })
     }
 
     let groupName = ""
+    let newName = ""
 </script>
 
 {#if list.length > 1}
@@ -234,7 +262,7 @@
     </ul>
 {/if}
 
-<MaterialTextInput label="inputs.name" value={groupName} on:input={(e) => (groupName = e.detail)} on:change={(e) => (groupName = e.detail)} autoselect />
+<MaterialTextInput label="inputs.name" value={groupName} on:input={(e) => (newName = e.detail)} on:change={(e) => (newName = e.detail)} autoselect />
 
 <MaterialButton variant="contained" style="margin-top: 20px;" icon="edit" on:click={rename}>
     <T id="actions.rename" />

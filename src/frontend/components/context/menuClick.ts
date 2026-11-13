@@ -36,7 +36,6 @@ import {
     audioChannelsData,
     audioFolders,
     categories,
-    cloudSyncData,
     colorbars,
     currentOutputSettings,
     drawer,
@@ -93,7 +92,7 @@ import { escapeRegExp, hideDisplay, isOutputWindow, newToast, triggerFunction, w
 import { setExampleEffects, setExampleOverlays, setExampleTemplates } from "../../utils/createData"
 import { translateText } from "../../utils/language"
 import { confirmCustom } from "../../utils/popup"
-import { openLinkProviderDialog, removeProviderLinks } from "../../utils/providerItemLinks"
+import { openLinkProviderDialog, unlinkProjectItems } from "../../utils/providerItemLinks"
 import { send } from "../../utils/request"
 import { initializeClosing, save } from "../../utils/save"
 import { updateThemeValues } from "../../utils/updateSettings"
@@ -114,7 +113,7 @@ import { getExtension, getFileName, getMediaLayerType, getMediaStyle, getMediaTy
 import { defaultOutput, getCurrentStyle, getFirstActiveOutput, isOutputBound, resolveOutputId, setOutput, toggleOutput, toggleOutputs, updateActiveSceneOutputs } from "../helpers/output"
 import { select } from "../helpers/select"
 import { bindSlidesToOutput, checkName, formatToFileName, getLayoutRef, openShow, removeTemplatesFromShow, updateShowsList } from "../helpers/show"
-import { sendMidi } from "../helpers/showActions"
+import { changeSingleOutputStyle, sendMidi } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 import { getMenuTagId, openTagManager, toggleSelectionTags, toggleTagFilter } from "../helpers/tags"
 import { clearSlide } from "../output/clear"
@@ -174,10 +173,6 @@ const clickActions = {
 
         activePage.set("show")
         focusMode.set(!get(focusMode))
-
-        if (!get(focusMode) && get(cloudSyncData).enabled) {
-            showsCache.set({})
-        }
     },
     fullscreen: () => sendMain(Main.FULLSCREEN),
     // edit
@@ -263,12 +258,14 @@ const clickActions = {
         const data = obj.sel?.data?.[0] || {}
 
         const renameById = ["show_drawer", "project", "folder", "stage", "theme", "style", "output", "tag", "profile", "interaction"]
-        const renameByIdDirect = ["overlay", "template", "player", "layout", "effect", "scene"]
+        const renameByIdDirect = ["overlay", "template", "player", "effect", "scene"]
 
         if (renameById.includes(id)) activeRename.set(id + "_" + data.id)
         else if (renameByIdDirect.includes(id)) activeRename.set(id + "_" + data)
-        else if (id === "slide" || id === "group" || id === "audio_effect") activePopup.set("rename")
-        else if (obj.contextElem?.classList?.contains("#audio_channel") || obj.contextElem?.classList?.contains("#audio_channel_main")) {
+        else if (obj.contextElem?.classList?.contains("#layout")) {
+            selected.set({ id: "layout", data: [{ id: obj.contextElem?.id.slice(1) }] })
+            activePopup.set("rename")
+        } else if (obj.contextElem?.classList?.contains("#audio_channel") || obj.contextElem?.classList?.contains("#audio_channel_main")) {
             selected.set({ id: "audio_channel", data: [{ id: obj.contextElem?.id }] })
             activePopup.set("rename")
         } else if (obj.contextElem?.classList?.contains("#bible_book_local")) {
@@ -277,7 +274,8 @@ const clickActions = {
         } else if (obj.contextElem?.classList?.contains("#calendar_item")) {
             selected.set({ id: "calendar", data: [{ id: obj.contextElem?.id }] })
             activePopup.set("rename")
-        } else if (id === "show") activeRename.set("show_" + data.id + "#" + data.index)
+        } else if (id === "slide" || id === "group" || id === "audio_effect") activePopup.set("rename")
+        else if (id === "show") activeRename.set("show_" + data.id + "#" + data.index)
         else if (obj.contextElem?.classList?.contains("#project_template")) activeRename.set("project_" + id)
         else if (obj.contextElem?.classList?.contains("#video_subtitle")) activeRename.set("subtitle_" + id)
         else if (obj.contextElem?.classList?.contains("#video_marker")) activeRename.set("marker_" + id)
@@ -292,6 +290,12 @@ const clickActions = {
     },
     remove: (obj: ObjData) => {
         if (obj.sel && deleteAction(obj.sel)) return
+
+        if (obj.contextElem?.classList.value.includes("#layout")) {
+            const id = obj.contextElem.id?.slice(1) || ""
+            deleteAction({ id: "layout", data: [id] })
+            return
+        }
 
         if (obj.contextElem?.classList.contains("#slide_recorder_item")) {
             const index = obj.contextElem.id.slice(1)
@@ -428,6 +432,12 @@ const clickActions = {
     delete_col: () => window.dispatchEvent(new CustomEvent("delete-col")),
     duplicate: (obj: ObjData) => {
         if (duplicate(obj.sel)) return
+
+        if (obj.contextElem?.classList.value.includes("#layout")) {
+            const id = obj.contextElem.id?.slice(1) || ""
+            duplicate({ id: "layout", data: [{ id }] })
+            return
+        }
 
         if (obj.contextElem?.classList.value.includes("#audio_effect_item")) {
             const effectId = obj.contextElem.id
@@ -1126,7 +1136,7 @@ const clickActions = {
         if (obj.sel?.data?.[0]) openLinkProviderDialog(obj.sel.data[0])
     },
     unlink_provider: (obj: ObjData) => {
-        if (obj.sel) removeProviderLinks(obj.sel.data.map((b) => b.id))
+        if (obj.sel) unlinkProjectItems(obj.sel.data)
     },
     section: (obj: ObjData) => {
         if (get(projects)[get(activeProject)!]?.sectionsLocked) {
@@ -1392,12 +1402,7 @@ const clickActions = {
 
         popupData.set({
             active: output.style,
-            trigger: (styleId: string) => {
-                outputs.update((a) => {
-                    a[outputId].style = styleId
-                    return a
-                })
-            }
+            trigger: (styleId: string) => changeSingleOutputStyle(outputId, styleId)
         })
 
         // activeStyle.set(output.style)
@@ -1822,8 +1827,10 @@ const clickActions = {
         cameraManager.setStartupCameras(cameraIds)
     },
     recording: (obj: ObjData) => {
-        if (obj.contextElem?.classList.contains("#output_preview") || (obj.contextElem?.id && get(outputs)[obj.contextElem.id])) {
-            const outputId = obj.contextElem?.id || ""
+        const previewElem = obj.contextElem?.closest?.(".outputPreview") as HTMLElement | null
+        const outputId = (previewElem && get(outputs)[previewElem.id] ? previewElem.id : "") || (obj.contextElem?.id && get(outputs)[obj.contextElem.id] ? obj.contextElem.id : "")
+
+        if (outputId || obj.contextElem?.classList.contains("#output_preview")) {
             if (outputId) startOutputRecording(outputId)
         } else if (get(activeRecording)) {
             stopMediaRecorder()

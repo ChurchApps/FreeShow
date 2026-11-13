@@ -344,13 +344,6 @@ export class BlackmagicSender {
 
                 this.audioQueuesByOutput[outputId] = { queue: [], offset: 0, length: 0 }
 
-                // CRITICAL: Disable frame callback immediately to prevent debug spam
-                if (typeof playback.onFramePlayed === "function") {
-                    playback.onFramePlayed(() => {
-                        // Do nothing - completely disable frame callbacks
-                    })
-                }
-
                 return true
             } catch (err) {
                 const errorMessage = err instanceof Error ? err.message : String(err)
@@ -450,6 +443,8 @@ export class BlackmagicSender {
         const { width, height } = size
 
         if (pixelFormat.includes("YUV")) {
+            // 10-bit YUVA: rows padded to 256 bytes (64 pixels)
+            if (pixelFormat.includes("YUVA")) return Math.ceil(width / 64) * 256 * height
             // 10-bit YUV uses v210 format: 8/3 bytes per pixel (16 bytes per 6 pixels)
             // rows padded to 128 bytes (48 pixels)
             if (pixelFormat.includes("10")) return cardFrameBytes(width, height, 7)

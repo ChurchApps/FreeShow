@@ -1,9 +1,11 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
     import type { TabsObj } from "../../../types/Tabs"
-    import { activeEdit, activePage, activePopup, activeStyle, overlays, popupData, scenes, selected, settingsTab, styles } from "../../stores"
+    import { activeEdit, activePage, activePopup, activeStyle, overlays, popupData, refreshEditSlide, scenes, selected, settingsTab, styles } from "../../stores"
     import { translateText } from "../../utils/language"
+    import DragItemWrapper from "../helpers/DragItemWrapper.svelte"
     import { clone } from "../helpers/array"
+    import { createDragReorder } from "../helpers/dragReorder"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import { updateActiveSceneOutputs } from "../helpers/output"
@@ -40,10 +42,27 @@
         })
 
         updateActiveSceneOutputs(sceneId)
+        refreshEditSlide.set(true)
     }
 
     // Overlays
     $: overlaysList = (content.overlays || []) as string[]
+    $: invertedOverlaysList = Array.isArray(overlaysList) ? clone(overlaysList).reverse() : []
+
+    const dragReorder = createDragReorder((fromIndices, toIndex) => {
+        const reordered = dragReorder.getReorderedList(invertedOverlaysList, fromIndices, toIndex)
+        const newOverlays = clone(reordered).reverse()
+        updateContent("overlays", newOverlays)
+        if ($selected.id === "scene_overlay" && $selected.data?.[0]?.id) {
+            const newIndex = newOverlays.indexOf($selected.data[0].id)
+            if (newIndex >= 0) selected.set({ id: "scene_overlay", data: [{ id: $selected.data[0].id, index: newIndex }] })
+        }
+    })
+    const { dragOverIndex, draggedIndices } = dragReorder
+
+    $: displayOverlays = dragReorder.getReorderedList(invertedOverlaysList, $draggedIndices, $dragOverIndex)
+    $: isPlaceholderActive = $dragOverIndex !== null
+    $: selectedIndices = $selected.id === "scene_overlay" && $selected.data?.[0]?.index !== undefined ? [invertedOverlaysList.length - 1 - $selected.data[0].index] : []
 
     function openAddOverlay() {
         popupData.set({
@@ -68,18 +87,6 @@
             }
             return a
         })
-    }
-
-    function moveOverlay(index: number, direction: number) {
-        const currentOverlays = clone(overlaysList)
-        const targetIndex = index + direction
-        if (targetIndex < 0 || targetIndex >= currentOverlays.length) return
-
-        const temp = currentOverlays[index]
-        currentOverlays[index] = currentOverlays[targetIndex]
-        currentOverlays[targetIndex] = temp
-
-        updateContent("overlays", currentOverlays)
     }
 
     // function editOverlay(index: number) {
@@ -143,36 +150,39 @@
             </div>
 
             <div class="items" style="display: flex;flex-direction: column;">
-                {#each overlaysList as overlayId, index (index + "_" + overlayId)}
+                {#each displayOverlays as overlayId, displayIndex (overlayId)}
                     {@const overlayObj = $overlays[overlayId]}
                     {@const isHidden = (content.hiddenOverlays || []).includes(overlayId)}
-                    <div
-                        id="#{index}"
-                        data-index={index}
-                        data-overlay-id={overlayId}
-                        class="overlay-item context #scene_overlay"
-                        class:selected={$selected.id === "scene_overlay" && $selected.data?.[0]?.index === index}
-                        on:click={() => toggleSelectOverlay(index, overlayId)}
-                        on:mousedown={(e) => {
-                            if (e.button === 2) {
-                                selected.set({ id: "scene_overlay", data: [{ id: overlayId, index }] })
-                            }
-                        }}
-                        role="none"
-                    >
-                        <!-- on:dblclick={() => editOverlay(index)} -->
-                        <div class="item-title" style={isHidden ? "opacity: 0.5;" : ""}>
-                            <span style="font-size: 0.75em;opacity: 0.5;min-width: 12px;text-align: center;">{index + 1}</span>
-                            <p style="font-size: 0.9em;">{overlayObj?.name || translateText("main.unnamed")}</p>
-                        </div>
+                    {@const originalIndex = overlaysList.indexOf(overlayId)}
+                    {@const index = originalIndex >= 0 ? originalIndex : overlaysList.length - displayIndex - 1}
+                    {@const isPlaceholder = isPlaceholderActive && $draggedIndices.some((dIdx) => overlayId === invertedOverlaysList[dIdx])}
 
-                        {#if index < overlaysList.length - 1}
-                            <MaterialButton class="down" icon="down" on:click={() => moveOverlay(index, 1)} />
-                        {/if}
-                        {#if index > 0}
-                            <MaterialButton class="up" icon="up" on:click={() => moveOverlay(index, -1)} />
-                        {/if}
-                    </div>
+                    <DragItemWrapper index={displayIndex} controller={dragReorder} {isPlaceholder} {selectedIndices}>
+                        <div
+                            id="#{index}"
+                            data-index={index}
+                            data-overlay-id={overlayId}
+                            class="overlay-item context #scene_overlay"
+                            class:selected={$selected.id === "scene_overlay" && $selected.data?.[0]?.index === index}
+                            on:click={() => toggleSelectOverlay(index, overlayId)}
+                            on:mousedown={(e) => {
+                                if (e.button === 2) {
+                                    selected.set({ id: "scene_overlay", data: [{ id: overlayId, index }] })
+                                }
+                            }}
+                            role="none"
+                        >
+                            <!-- on:dblclick={() => editOverlay(index)} -->
+                            <div class="item-title" style={isHidden ? "opacity: 0.5;" : ""}>
+                                {#if displayOverlays.length > 1}
+                                    <Icon id="drag" style="opacity: 0.5; margin-right: 2px;" white />
+                                {/if}
+
+                                <p style="font-size: 0.9em; flex: 1;">{overlayObj?.name || translateText("main.unnamed")}</p>
+                                <span style="font-size: 0.75em;opacity: 0.5;min-width: 12px;text-align: right;">{displayIndex + 1}</span>
+                            </div>
+                        </div>
+                    </DragItemWrapper>
                 {/each}
             </div>
 
@@ -211,7 +221,7 @@
         background-color: var(--primary-darkest);
         border-bottom: 1px solid var(--primary-lighter);
         user-select: none;
-        cursor: pointer;
+        cursor: grab;
     }
 
     .overlay-item:hover,

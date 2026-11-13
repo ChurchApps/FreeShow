@@ -706,6 +706,21 @@ export const itemBoxes: Box2 = {
         icon: "star",
         sections: {
             default: { inputs: [[{ id: "style", key: "color", type: "color", value: "", values: { label: "edit.color", allowOpacity: true, allowEmpty: true } }]] },
+            shadow: {
+                expandAutoValue: {
+                    "text-shadow": "0 0 5px rgb(0 0 0 / 0.5)"
+                },
+                inputs: [
+                    [
+                        { id: "style", key: "text-shadow", valueIndex: 2, type: "number", value: 0, extension: "px", values: { label: "edit.blur", style: "flex: 4;" } },
+                        { id: "style", key: "text-shadow", valueIndex: 3, type: "color", value: "#000000", values: { label: "edit.color", allowOpacity: true, noLabel: true, style: "flex: 1;" } }
+                    ],
+                    [
+                        { id: "style", key: "text-shadow", valueIndex: 0, type: "number", value: 0, extension: "px", values: { label: "edit.offsetX", min: -1000 } },
+                        { id: "style", key: "text-shadow", valueIndex: 1, type: "number", value: 0, extension: "px", values: { label: "edit.offsetY", min: -1000 } }
+                    ]
+                ]
+            },
             special: {
                 inputs: [[{ id: "button.press", type: "dropdown", value: "", values: { label: "edit.press_action", options: "actions", allowEmpty: true } }], [{ id: "button.release", type: "dropdown", value: "", values: { label: "edit.release_action", options: "actions", allowEmpty: true } }]]
             }

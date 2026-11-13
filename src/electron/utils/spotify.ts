@@ -119,9 +119,10 @@ let lastCrashTime = 0
 let currentBackoffMs = 60000 // Start with 1 minute backoff
 const MAX_BACKOFF_MS = 600000 // Max backoff capped at 10 minutes
 let hasLoggedCrash = false
+let isDisabled = false
 
 export function initSpotify() {
-    if (initialized || !isWin) return
+    if (initialized || !isWin || isDisabled) return
 
     if (crashCount > 0) {
         const elapsed = Date.now() - lastCrashTime
@@ -142,12 +143,26 @@ export function initSpotify() {
                     pending(r?.title ? { isPlaying: r.statusName === "PLAYING", title: r.title, artist: r.artist, albumArt: r.albumArtBase64, positionSec: (r.positionMs || 0) / 1000, durationSec: (r.durationMs || 0) / 1000, volume: r.appVolume ?? 1, platform: "win32" } : null)
                     pending = null
                 } else if (msg.type === "error") {
-                    console.error("[Spotify] Bridge error:", msg.error)
+                    if (msg.error?.includes("Visual C++ Redistributable") || msg.error?.includes("Failed to load shared library")) isDisabled = true
+                    console.warn("[Spotify] Bridge error:", msg.error)
                 }
             })
             .on("exit", (code, signal) => {
                 initialized = false
                 bridge = null
+
+                // Windows fatal exit codes:
+                // 3221225477 (0xC0000005) is STATUS_ACCESS_VIOLATION (e.g. mtx_do_lock MSVCP140 mismatch)
+                // 3221225781 (0xC0000135) is STATUS_DLL_NOT_FOUND (missing MSVCP140.dll / VCRUNTIME140.dll)
+                if (code === 3221225477 || code === -1073741819 || code === 3221225781 || code === -1073741515) {
+                    isDisabled = true
+                    if (!hasLoggedCrash) {
+                        hasLoggedCrash = true
+                        console.warn(`[Spotify] Spotify controller bridge disabled due to missing or incompatible Visual C++ Redistributable (exit code: ${code}).`)
+                    }
+                    return
+                }
+
                 if (code !== 0 || signal) {
                     crashCount++
                     lastCrashTime = Date.now()

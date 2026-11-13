@@ -519,7 +519,7 @@ export async function togglePlayingMedia(e: Event | null = null, back = false, a
             const videoData = get(playingVideoState)[key] || {}
             if (videoData.type && videoData.type !== "background") return
 
-            VideoPlayer.start(currentlyPlaying, { paused: !videoData.paused }, [outputId])
+            VideoPlayer.start(currentlyPlaying, { paused: !videoData.paused, isOnline: type === "player" }, [outputId])
             return
         }
 
@@ -536,10 +536,18 @@ export async function togglePlayingMedia(e: Event | null = null, back = false, a
         const ignoreLayer = videoType === "foreground" || (videoType !== "background" && (type === "image" || !shouldLoop))
         if (ignoreLayer) clearSlide(true)
 
-        const located = await getMedia(item.id)
-        if (!located) return
+        const bg: any = { type, startAt: 0, muted: shouldBeMuted, loop: shouldLoop, ...mediaStyle, ignoreLayer }
 
-        setOutput("background", { type, path: located.path, muted: shouldBeMuted, loop: shouldLoop, ...mediaStyle, ignoreLayer })
+        if (type === "player") {
+            bg.id = item.id
+        } else {
+            const located = await getMedia(item.id)
+            if (!located) return
+            bg.path = located.path
+        }
+
+        // timeout to not pause "player" video instantly when pressing "space"
+        setTimeout(() => setOutput("background", bg))
     } else if (type === "audio") {
         AudioPlayer.start(item.id, { name: (item as any).name || "" }, { pauseIfPlaying: true })
     } else if (type === "folder") {

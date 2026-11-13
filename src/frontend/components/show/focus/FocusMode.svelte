@@ -12,6 +12,7 @@
     import { getAllProjectItems } from "./focus"
     import FocusItem from "./FocusItem.svelte"
     import { hasNewerUpdate } from "../../../utils/common"
+    import ShowHeader from "../ShowHeader.svelte"
 
     $: projectId = $activeProject || ""
     $: project = $projects[projectId]
@@ -97,7 +98,7 @@
         }, 3000)
 
         // scroll to active elem!
-        const MARGIN = 80
+        const MARGIN = 5
         listElem.closest(".center")?.scrollTo(0, slideTop - fromTop - MARGIN)
     }
 
@@ -185,10 +186,15 @@
         <div class="list" bind:this={listElem}>
             {#each list as item, i}
                 <div id={"id_" + getId(item.id) + "_" + i} class="focusId">
-                    <div class="name" style={item.color ? `border-bottom: 2px solid ${item.color}` : ""}>
-                        <Icon id={item.icon || "noIcon"} custom={(item.type || "show") === "show"} white right />
-                        <p>{item.name}</p>
-                    </div>
+                    {#if (item?.type || "show") === "show"}
+                        <ShowHeader showId={item.id} projectIndex={i} />
+                    {:else}
+                        <div class="name" style={item.color ? `border-bottom: 2px solid ${item.color}` : ""}>
+                            <Icon id={item.icon || "noIcon"} custom={(item.type || "show") === "show"} white right />
+                            <p>{item.name}</p>
+                        </div>
+                    {/if}
+
                     <FocusItem show={{ ...item, index: i }} />
                 </div>
             {/each}

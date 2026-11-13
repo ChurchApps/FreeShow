@@ -98,6 +98,7 @@ export function importProject(files: { content: string; path?: string; name?: st
         history({ id: "SHOWS", newData: { data: newShows, projectImport: true } })
 
         // create project
+        project.used = Date.now()
         history({ id: "UPDATE", newData: { data: project }, oldData: { id: projectId }, location: { page: "show", id: "project" } })
     })
 

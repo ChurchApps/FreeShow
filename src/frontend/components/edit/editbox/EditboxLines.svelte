@@ -2,8 +2,8 @@
     import { onDestroy, onMount, tick } from "svelte"
     import { uid } from "uid"
     import type { Item, Line } from "../../../../types/Show"
-    import { splitCustomDynamicValues } from "../../../show/slides"
-    import { activeEdit, activeShow, activeStage, overlays, redoHistory, refreshListBoxes, showsCache, special, stageShows, templates } from "../../../stores"
+    import { copySlideLayoutProperties, splitCustomDynamicValues } from "../../../show/slides"
+    import { activeEdit, activeShow, activeStage, isOptimizedMode, overlays, redoHistory, refreshListBoxes, showsCache, stageShows, templates } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { getNormalizedKey, isComposing, isFormattingKey } from "../../../utils/shortcuts"
     import T from "../../helpers/T.svelte"
@@ -225,6 +225,8 @@
         children = addToPos(children, [id], slideIndex)
         _show().slides([parentId]).set({ key: "children", value: children })
 
+        copySlideLayoutProperties(ref.showId || $activeShow?.id || "", slideRef, id)
+
         let parentIndex = slideRef.type === "child" ? slideRef.parent!.layoutIndex : slideRef.layoutIndex
         let parentsBefore = layoutRef.filter((a, i) => i < parentIndex && a.id === parentId)?.length
         let newIndex = $activeEdit.slide! + (parentsBefore + 1)
@@ -407,7 +409,7 @@
         }
 
         // chords rebuild one span per character whenever the size changes, so never run those per frame
-        if (chordsMode || lastMeasureDuration > SLOW_MEASURE_MS || $special.optimizedMode) {
+        if (chordsMode || lastMeasureDuration > SLOW_MEASURE_MS || $isOptimizedMode) {
             if (autosizeTimeout) clearTimeout(autosizeTimeout)
             autosizeTimeout = setTimeout(() => {
                 autosizeTimeout = null

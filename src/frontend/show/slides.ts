@@ -8,7 +8,7 @@ import { addParents, cloneSlide, getCurrentLayout } from "../components/helpers/
 import { addToPos } from "../components/helpers/mover"
 import { getLayoutRef } from "../components/helpers/show"
 import { _show } from "../components/helpers/shows"
-import { activeEdit, activeShow, refreshEditSlide, slidesOptions } from "../stores"
+import { activeEdit, activeShow, refreshEditSlide, showsCache, slidesOptions } from "../stores"
 
 // only available with right click: "simple", "groups"
 const slidesViews = { grid: "list", list: "lyrics", lyrics: "grid", simple: "grid", groups: "grid" }
@@ -678,9 +678,31 @@ export function splitItemInTwo(slideRef: LayoutRef, itemIndex: number | number[]
     slides[parentId].children = children
 
     const showId = get(activeShow)?.id || ""
+    copySlideLayoutProperties(showId, slideRef, slideId)
+
     history({ id: "UPDATE", newData: { key: "slides", data: clone(slides) }, oldData: { id: showId }, location: { page: "show", id: "show_key", override: "show_slides_" + showId } })
 
     refreshEditSlide.set(true)
+}
+
+export function copySlideLayoutProperties(showId: string, slideRef: LayoutRef, newSlideId: string) {
+    if (!slideRef?.data?.transition && !slideRef?.data?.mediaTransition && !slideRef?.data?.bindings) return
+    showsCache.update((a) => {
+        if (!a[showId]) return a
+        const activeLayout = a[showId].settings?.activeLayout
+        const parentLayoutIndex = slideRef.type === "child" ? slideRef.parent!.index : slideRef.index
+        const layoutSlide = a[showId].layouts?.[activeLayout]?.slides?.[parentLayoutIndex]
+        if (layoutSlide) {
+            if (!layoutSlide.children) layoutSlide.children = {}
+            if (!layoutSlide.children[newSlideId]) layoutSlide.children[newSlideId] = {}
+
+            // only chosen values
+            if (slideRef.data.transition) layoutSlide.children[newSlideId].transition = clone(slideRef.data.transition)
+            if (slideRef.data.mediaTransition) layoutSlide.children[newSlideId].mediaTransition = clone(slideRef.data.mediaTransition)
+            if (slideRef.data.bindings) layoutSlide.children[newSlideId].bindings = clone(slideRef.data.bindings)
+        }
+        return a
+    })
 }
 
 export function splitCustomDynamicValues(originalDV: any, firstItems?: Item[], secondItems?: Item[]): { firstDV: any; secondDV: any } | null {

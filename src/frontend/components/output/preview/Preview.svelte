@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { actions, activePage, activePopup, activeShow, activeTimers, contextActive, groups, guideActive, outLocked, outputs, overlayTimers, playingAudio, playingMetronome, resized, slideTimers, special } from "../../../stores"
+    import { actions, activePage, activePopup, activeShow, activeTimers, contextActive, groups, guideActive, isOptimizedMode, outLocked, outputs, overlayTimers, playingAudio, playingMetronome, resized, slideTimers, special } from "../../../stores"
     import { DEFAULT_WIDTH, isDarkTheme } from "../../../utils/common"
     import { formatSearch } from "../../../utils/search"
     import { getNormalizedKey, previewCtrlShortcuts, previewShortcuts } from "../../../utils/shortcuts"
@@ -23,8 +23,8 @@
     import Show from "../tools/Show.svelte"
     import TimerControls from "../tools/TimerControls.svelte"
     import ClearButtons from "./ClearButtons.svelte"
-    import MultiOutputs from "./MultiOutputs.svelte"
     import IcecastStatus from "./IcecastStatus.svelte"
+    import MultiOutputs from "./MultiOutputs.svelte"
     import SpotifyController from "./SpotifyController.svelte"
 
     $: allActiveOutputs = getActiveOutputs($outputs, true, true, true)
@@ -245,7 +245,7 @@
     // $: if ($activePage === "draw") enablePreview = false
 
     const light = !isDarkTheme()
-    $: isOptimized = $special.optimizedMode
+    $: isOptimized = $isOptimizedMode
     $: isSplitted = $resized.rightPanel > DEFAULT_WIDTH * 1.8
 </script>
 

@@ -109,10 +109,12 @@ function registerIpcBridge(id: ServerName) {
     })
 }
 
-let hasStarted = false
-export function startServers({ ports, max, disabled, data }: MainSendPayloads[Main.SERVER_DATA]) {
-    if (hasStarted) closeServers()
-    hasStarted = true
+let isStarting = false
+export async function startServers({ ports, max, disabled, data }: MainSendPayloads[Main.SERVER_DATA]) {
+    if (isStarting) return
+    isStarting = true
+
+    await closeServers()
 
     const serverList = Object.keys(servers) as ServerName[]
     serverList.forEach((id: ServerName) => {
@@ -139,6 +141,8 @@ export function startServers({ ports, max, disabled, data }: MainSendPayloads[Ma
             publishPort(id, servers[id]!.port)
         }
     })
+
+    isStarting = false
 }
 
 export function updateServerData(data: { [key: string]: ServerData }) {
@@ -155,15 +159,20 @@ export function getServerData(id: ServerName) {
 export function closeServers() {
     unpublishPorts()
 
-    hasStarted = false
     const serverList = Object.keys(servers) as ServerName[]
-    serverList.forEach((id: ServerName) => {
-        if (!servers[id]?.server) return
-        // close socket.io (disconnects clients and closes the underlying http server)
-        servers[id]!.io.close()
-        // clear connection state so reconnect counts / max limit don't drift across restarts
-        servers[id]!.connections = {}
-    })
+
+    return Promise.all(
+        serverList.map(
+            (id) =>
+                new Promise<void>((resolve) => {
+                    const entry = servers[id]
+                    if (!entry?.server?.listening) return resolve()
+
+                    entry.connections = {}
+                    entry.io.close(() => resolve())
+                })
+        )
+    )
 }
 
 let responded: { [key: string]: boolean } = {}

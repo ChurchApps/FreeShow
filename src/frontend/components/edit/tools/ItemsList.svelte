@@ -2,13 +2,20 @@
     import type { Item, ItemType } from "../../../../types/Show"
     import { activeEdit, selected, timers, variables } from "../../../stores"
     import { translateText } from "../../../utils/language"
-    import { clone } from "../../helpers/array"
+    import DragItemWrapper from "../../helpers/DragItemWrapper.svelte"
+    import { createDragReorder } from "../../helpers/dragReorder"
     import Icon from "../../helpers/Icon.svelte"
     import { getFileName } from "../../helpers/media"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
-    import { rearrangeItems } from "../scripts/itemHelpers"
+    import { moveInvertedItems } from "../scripts/itemHelpers"
     import { getItemText } from "../scripts/textStyle"
     import { itemBoxes } from "../values/boxes"
+
+    const dragReorder = createDragReorder((fromIndices, toIndex) => {
+        const reordered = dragReorder.getReorderedList(invertedItemList, fromIndices, toIndex)
+        moveInvertedItems(reordered, fromIndices)
+    })
+    const { dragOverIndex, draggedIndices } = dragReorder
 
     const getIdentifier = {
         text: (item: Item) => {
@@ -38,7 +45,10 @@
     }
 
     export let allSlideItems: Item[]
-    $: invertedItemList = Array.isArray(allSlideItems) ? clone(allSlideItems).reverse() : []
+    $: invertedItemList = Array.isArray(allSlideItems) ? allSlideItems.map((_, i) => allSlideItems[allSlideItems.length - 1 - i]) : []
+    $: selectedIndices = ($activeEdit.items || []).map((idx) => invertedItemList.length - idx - 1)
+    $: displayList = dragReorder.getReorderedList(invertedItemList, $draggedIndices, $dragOverIndex)
+    $: isPlaceholderActive = $dragOverIndex !== null
 
     const getType = (item: Item) => (item?.type as ItemType) || "text"
 </script>
@@ -52,51 +62,49 @@
             </span>
         </div>
 
-        <div
-            class="items {invertedItemList.length > 1 ? 'context #items_list_item' : ''}"
-            style="display: flex;flex-direction: column;"
-            on:mousedown={(e) => {
-                if (e.button !== 2) return
-                // select on right click for context menu
-                const index = Number((e.target?.closest(".item_button")?.id || "").slice(1))
-                activeEdit.set({ ...$activeEdit, items: [index] })
-            }}
-        >
-            {#each invertedItemList as currentItem, i}
-                {@const index = invertedItemList.length - i - 1}
+        <div class="items" style="display: flex;flex-direction: column;">
+            {#each displayList as currentItem, i}
+                {@const originalIndex = allSlideItems.indexOf(currentItem)}
+                {@const index = originalIndex >= 0 ? originalIndex : allSlideItems.length - i - 1}
                 {@const type = getType(currentItem)}
+                {@const isPlaceholder = isPlaceholderActive && $draggedIndices.some((dIdx) => currentItem === invertedItemList[dIdx])}
                 <!-- TODO: context menu (delete / move to top/bottom / etc.) -->
 
-                <MaterialButton
-                    id="#{index}"
-                    variant="outlined"
-                    class="item_button"
-                    style="width: 100%;justify-content: space-between;padding: 2px 8px;"
-                    isActive={$activeEdit.items.includes(index)}
-                    tab
-                    on:click={(e) => {
-                        selected.set({ id: null, data: [] })
-                        activeEdit.update((ae) => {
-                            if (e.detail.ctrl) {
-                                if (ae.items.includes(index)) ae.items.splice(ae.items.indexOf(index), 1)
-                                else ae.items.push(index)
-                            } else if (!ae.items.includes(index)) ae.items = [index]
-                            else ae.items = []
-                            return ae
-                        })
-                    }}
-                >
-                    <span style="display: flex;align-items: center;max-width: 70%;">
-                        <p style="opacity: 0.7;margin-inline-end: 10px;">{i + 1}</p>
-                        <Icon id={type === "icon" ? currentItem.id || "" : itemBoxes[type]?.icon || "text"} custom={type === "icon"} size={0.8} />
-                        <p style="opacity: 0.9;margin-inline-start: 10px;">{translateText("items." + type)}</p>
-                        {#if getIdentifier[type]}<p style="margin-inline-start: 10px;max-width: 120px;opacity: 0.5;font-size: 0.8em;max-width: 40%;">{getIdentifier[type](currentItem)}</p>{/if}
-                    </span>
-                    <span>
-                        <MaterialButton disabled={i === allSlideItems.length - 1} icon="down" title="actions.backward" style="padding: 8px;" on:click={() => rearrangeItems("backward", index)} />
-                        <MaterialButton disabled={i === 0} icon="up" title="actions.forward" style="padding: 8px;" on:click={() => rearrangeItems("forward", index)} />
-                    </span>
-                </MaterialButton>
+                <DragItemWrapper index={i} controller={dragReorder} {isPlaceholder} {selectedIndices}>
+                    <MaterialButton
+                        id="#{index}"
+                        variant="outlined"
+                        class="item_button"
+                        style="width: 100%;justify-content: space-between;padding: 6px 8px;cursor: grab;"
+                        isActive={$activeEdit.items.includes(index)}
+                        tab
+                        on:click={(e) => {
+                            selected.set({ id: null, data: [] })
+                            activeEdit.update((ae) => {
+                                if (e.detail.ctrl) {
+                                    if (ae.items.includes(index)) ae.items.splice(ae.items.indexOf(index), 1)
+                                    else ae.items.push(index)
+                                } else if (!ae.items.includes(index)) ae.items = [index]
+                                else ae.items = []
+                                return ae
+                            })
+                        }}
+                    >
+                        <span style="display: flex;align-items: center;width: 100%;gap: 8px;pointer-events: none;">
+                            {#if displayList.length > 1}
+                                <Icon id="drag" style="opacity: 0.5;" white />
+                            {/if}
+
+                            <Icon id={type === "icon" ? currentItem.id || "" : itemBoxes[type]?.icon || "text"} custom={type === "icon"} size={0.8} />
+                            <p style="opacity: 0.9;">{translateText("items." + type)}</p>
+                            {#if getIdentifier[type]}
+                                <p style="flex: 1;text-align: left;opacity: 0.5;font-size: 0.8em;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;">{getIdentifier[type](currentItem)}</p>
+                            {/if}
+
+                            <p style="opacity: 0.5;font-size: 0.75em;margin-inline-start: auto;">{i + 1}</p>
+                        </span>
+                    </MaterialButton>
+                </DragItemWrapper>
             {/each}
         </div>
     </div>

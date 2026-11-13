@@ -581,6 +581,18 @@ export async function startShow(showId: string) {
     updateOut(showId, index, slideRef, true, "", 1200)
 }
 
+export function changeSingleOutputStyle(outputId: string, styleId: string) {
+    const output = get(outputs)[outputId]
+    if (!output || (output.style || "") === styleId) return
+
+    outputs.update((a) => {
+        if (a[outputId]) a[outputId].style = styleId
+        return a
+    })
+
+    refreshOut([outputId])
+}
+
 export function changeOutputStyle(data: API_output_style) {
     // pre 1.5.0 (deprecated)
     let outputStyle: string | undefined = (data as any).outputStyle
@@ -589,34 +601,16 @@ export function changeOutputStyle(data: API_output_style) {
         const type = styleOutputs?.type || "active"
         const outputsList = styleOutputs?.outputs || []
 
-        const chosenOutputs = getActiveOutputs(get(outputs), type === "active", true, true)
-        chosenOutputs.forEach(changeStyle)
-
-        function changeStyle(outputId: string) {
-            if (type === "specific") outputStyle = outputsList[outputId]
-            if (!outputStyle) return
-
-            outputs.update((a) => {
-                a[outputId].style = outputStyle
-                return a
-            })
-        }
-
-        refreshOut()
+        getActiveOutputs(get(outputs), type === "active", true, true).forEach((outputId) => {
+            const targetStyle = type === "specific" ? outputsList[outputId] : outputStyle
+            if (targetStyle) changeSingleOutputStyle(outputId, targetStyle)
+        })
         return
     }
 
     const targetId = data.outputId ? resolveOutputId(data.outputId) : null
     const outputIds = targetId ? [targetId] : getAllNormalOutputs().map((a) => a.id)
-    outputs.update((a) => {
-        outputIds.forEach((outputId) => {
-            if (!a[outputId]) return
-            a[outputId].style = data.styleId || ""
-        })
-        return a
-    })
-
-    refreshOut()
+    outputIds.forEach((outputId) => changeSingleOutputStyle(outputId, data.styleId || ""))
 }
 
 function playGroup(globalGroupIds: string[], { showRef, outSlide, currentShowId }, extra = true, direction: "next" | "previous" = "next") {
@@ -1105,7 +1099,8 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         const outBackground = output?.out?.background || null
         const bgPath = outBackground?.path || ""
 
-        const videoData = keysToID(get(playingVideoState)).find((a) => a.id.includes(outputId) && (!a.type || a.type === "background"))
+        const allVideoStates = keysToID(get(playingVideoState)).filter((a) => !a.type || a.type === "background")
+        const videoData = (outputId ? allVideoStates.find((a) => a.id.includes(outputId)) : null) || allVideoStates.find((a) => !a.paused) || allVideoStates[0]
 
         const playingAudioIds = AudioPlayer.getAllPlaying(false)
         const activeAudio = get(playingAudio)[playingAudioIds[0]]?.audio

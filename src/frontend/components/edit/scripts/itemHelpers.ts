@@ -200,7 +200,53 @@ export function getEditItems(onlyActive = false) {
     return editItems || []
 }
 
+// rearrange (drag and drop)
+
+export function moveInvertedItems(reorderedInvertedItems: Item[], activeIndices: number[]) {
+    if (!reorderedInvertedItems?.length) return
+    const newItems = clone(reorderedInvertedItems).reverse()
+
+    if (!get(activeEdit).id) {
+        const ref = getLayoutRef()
+        const slideId = ref[get(activeEdit).slide!]?.id
+        history({ id: "UPDATE", newData: { data: newItems, key: "slides", dataIsArray: true, keys: [slideId], subkey: "items" }, oldData: { id: get(activeShow)?.id }, location: { page: "edit", id: "show_key", override: "rearrange_items" } })
+    } else {
+        history({ id: "UPDATE", newData: { data: newItems, key: "items" }, oldData: { id: get(activeEdit).id }, location: { page: "edit", id: get(activeEdit).type, override: "rearrange_items" } })
+    }
+
+    activeEdit.update((a) => {
+        a.items = activeIndices
+            .map((idx) => {
+                const item = reorderedInvertedItems[idx]
+                return newItems.indexOf(item)
+            })
+            .filter((i) => i >= 0)
+        return a
+    })
+
+    refreshEditSlide.set(true)
+}
+
+export function moveStageInvertedItems(reorderedInvertedItems: any[]) {
+    if (!reorderedInvertedItems?.length) return
+    const newItems = clone(reorderedInvertedItems).reverse()
+
+    stageShows.update((a) => {
+        a[get(activeStage).id!].itemOrder = newItems.map((item) => item.id)
+        a[get(activeStage).id!].modified = Date.now()
+        return a
+    })
+
+    activeStage.update((a) => {
+        a.items = a.items || []
+        return a
+    })
+
+    refreshEditSlide.set(true)
+}
+
 // rearrange
+
 export function rearrangeItems(type: string, startIndex: number = get(activeEdit).items[0]) {
     let items = getEditItems()
     if (!items?.length) return

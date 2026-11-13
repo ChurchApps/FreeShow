@@ -32,6 +32,7 @@ export interface ProjectShowRef extends ShowRef {
     icon?: string // focus mode
     data?: any // section settings
     scheduleLength?: number // currently only from PCO import
+    providerItemId?: string // the content provider item this was imported from
     played?: boolean
 }
 

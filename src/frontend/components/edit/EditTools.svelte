@@ -417,7 +417,9 @@
         {#if active === "text"}
             <div class="content">
                 {#if item}
-                    <BoxStyle id={item?.type || "text"} bind:allSlideItems bind:item {customLocalFonts} />
+                    {#key item.type || "text"}
+                        <BoxStyle id={item?.type || "text"} bind:allSlideItems bind:item {customLocalFonts} />
+                    {/key}
                 {:else}
                     <Center faded>
                         <T id="empty.items" />

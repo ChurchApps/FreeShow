@@ -4,10 +4,11 @@
     import type { TabsObj } from "../../../types/Tabs"
     import { activeEdit, effects, hoveredEffectItem } from "../../stores"
     import { clone } from "../helpers/array"
-    import { addToPos } from "../helpers/mover"
+    import DragItemWrapper from "../helpers/DragItemWrapper.svelte"
+    import { createDragReorder } from "../helpers/dragReorder"
+    import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import InputRow from "../input/InputRow.svelte"
-    import MaterialButton from "../inputs/MaterialButton.svelte"
     import MaterialColorInput from "../inputs/MaterialColorInput.svelte"
     import MaterialNumberInput from "../inputs/MaterialNumberInput.svelte"
     import Tabs from "../main/Tabs.svelte"
@@ -40,23 +41,25 @@
         return { default: clone(effectSections[item.type]) }
     }
 
-    let moved = false
-    function move(index: number, newIndex: number) {
-        openedMenus = {}
-
-        effects.update((a) => {
-            const item = a[effectId].items.splice(index, 1)
-            a[effectId].items = addToPos(a[effectId].items, item, newIndex)
-            return a
-        })
-
-        moved = true
-        setTimeout(() => (moved = false))
-    }
-
     let currentItems: any[]
     $: currentItems = currentEffect.items || []
     $: invertedItems = Array.isArray(currentItems) ? clone(currentItems).reverse() : []
+
+    const dragReorder = createDragReorder((fromIndices, toIndex) => {
+        const reordered = dragReorder.getReorderedList(invertedItems, fromIndices, toIndex)
+        effects.update((a) => {
+            if (!a[effectId]) return a
+            a[effectId].items = clone(reordered).reverse()
+            return a
+        })
+    })
+    const { dragOverIndex, draggedIndices } = dragReorder
+
+    // close all opened menus when dragging starts
+    $: if ($draggedIndices.length) openedMenus = {}
+
+    $: displayList = dragReorder.getReorderedList(invertedItems, $draggedIndices, $dragOverIndex)
+    $: isPlaceholderActive = $dragOverIndex !== null
 
     let openedMenus: { [key: string]: boolean } = {}
 
@@ -83,23 +86,24 @@
         {#if active === "effect"}
             {#if currentEffect}
                 <div class="items">
-                    {#key moved}
-                        {#each invertedItems as item, displayIndex}
-                            {@const index = currentItems.length - displayIndex - 1}
-                            {@const editContent = getItemSections(item)}
+                    {#each displayList as item, displayIndex}
+                        {@const originalIndex = currentItems.indexOf(item)}
+                        {@const index = originalIndex >= 0 ? originalIndex : currentItems.length - displayIndex - 1}
+                        {@const editContent = getItemSections(item)}
+                        {@const isPlaceholder = isPlaceholderActive && $draggedIndices.some((dIdx) => item === invertedItems[dIdx])}
 
+                        <DragItemWrapper index={displayIndex} controller={dragReorder} {isPlaceholder} handleOnly>
                             <div class="item-row context #effect_item" id={index.toString()} data-index={index} on:mouseenter={() => hoveredEffectItem.set(item.hidden ? null : index)} on:mouseleave={() => hoveredEffectItem.set(null)} role="none">
                                 <InputRow arrow={!!editContent} bind:open={openedMenus[index]}>
                                     <div class="title" style={item.hidden ? "opacity: 0.5;" : ""}>
+                                        {#if displayList.length > 1}
+                                            <span class="drag_handle" style="display: flex;align-items: center;cursor: grab;opacity: 0.6;padding-right: 8px;">
+                                                <Icon id="drag_dots" size={1.2} white />
+                                            </span>
+                                        {/if}
+
                                         <p style="width: 100%;"><T id="effect.{item.type === 'shape' ? item.shape : item.type}" /></p>
                                     </div>
-
-                                    {#if displayIndex < invertedItems.length - 1}
-                                        <MaterialButton class="down" icon="down" on:click={() => move(index, index - 1)} />
-                                    {/if}
-                                    {#if displayIndex > 0}
-                                        <MaterialButton class="up" icon="up" on:click={() => move(index, index + 1)} />
-                                    {/if}
 
                                     <svelte:fragment slot="menu">
                                         {#if editContent}
@@ -108,8 +112,8 @@
                                     </svelte:fragment>
                                 </InputRow>
                             </div>
-                        {/each}
-                    {/key}
+                        </DragItemWrapper>
+                    {/each}
                 </div>
             {/if}
 

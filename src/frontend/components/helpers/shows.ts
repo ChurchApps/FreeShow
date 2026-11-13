@@ -49,7 +49,7 @@ export function _show(id = "active") {
                     a[id][key] = value
                 }
 
-                touchShowModified(a[id])
+                if (key !== "timestamps.used") touchShowModified(a[id])
                 return a
             })
             return prev

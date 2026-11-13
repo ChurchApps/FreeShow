@@ -1,6 +1,7 @@
 import * as Sentry from "@sentry/electron/main"
 import type { BrowserWindow, DesktopCapturerSource } from "electron"
 import { app, desktopCapturer, screen, shell, systemPreferences } from "electron"
+import fs from "fs"
 import os from "os"
 import path from "path"
 import { getMainWindow, isProd, mainWindow, maximizeMain, setGlobalMenu } from ".."
@@ -492,7 +493,10 @@ const ERROR_FILTER = [
     "::internal::", // internal errors (v8 / partition_alloc)
     "crash_reporter::DumpWithoutCrashing", // chromium crashes
     "ERR_INTERNET_DISCONNECTED", // internet disconnected
-    "First argument to DataView constructor must be an ArrayBuffer" // mp4box issue
+    "First argument to DataView constructor must be an ArrayBuffer", // mp4box issue
+    "mtx_do_lock", // missing or incompatible Visual C++ runtime (Spotify)
+    "libspotifyctl", // spotify native module crash family
+    "EXCEPTION_ACCESS_VIOLATION" // native access violations (non-actionable in JS)
 ]
 export function catchErrors() {
     process.on("uncaughtException", (err) => {
@@ -518,9 +522,16 @@ export function autoErrorReport() {
     if (config.get("autoErrorReporting") === false) return
 
     // prevent random forks from sending error reports
-    // dots to prevent auto find/replace
-    const originalName = "f.r.e.e.s.h.o.w".replace(/\./g, "")
-    if (app.name !== originalName) return
+    try {
+        const releasePath = path.join(__dirname, "../../../public/release.json")
+        if (!fs.existsSync(releasePath)) return
+        const release = JSON.parse(fs.readFileSync(releasePath, "utf8"))
+        // dots to prevent auto find/replace
+        const officialRepo = "Church.Apps/F.r.e.e.S.h.o.w".replace(/\./g, "")
+        if (release?.repo !== officialRepo) return
+    } catch {
+        return
+    }
 
     console.info("Starting Sentry error reporting...")
 
@@ -528,9 +539,8 @@ export function autoErrorReport() {
         dsn: "https://5d1069c3cb6faaa6e7ad0d9dc0145361@o4510419080445952.ingest.us.sentry.io/4510419082346496",
         beforeSend(event) {
             // filter out known non-critical errors
-            const errorMessage = event.exception?.values?.[0]?.value || ""
-            const shouldFilter = ERROR_FILTER.some((filter) => errorMessage.includes(filter))
-            return shouldFilter ? null : event
+            const eventStr = JSON.stringify(event)
+            return ERROR_FILTER.some((filter) => eventStr.includes(filter)) ? null : event
         }
     })
 }

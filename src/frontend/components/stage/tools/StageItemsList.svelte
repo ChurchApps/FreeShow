@@ -3,14 +3,21 @@
     import type { StageItem } from "../../../../types/Stage"
     import { activeStage, dictionary, selected, stageShows, timers } from "../../../stores"
     import { translateText } from "../../../utils/language"
-    import { getSortedStageItems, rearrangeStageItems } from "../../edit/scripts/itemHelpers"
+    import { getSortedStageItems, moveStageInvertedItems } from "../../edit/scripts/itemHelpers"
     import { getItemText } from "../../edit/scripts/textStyle"
     import { itemBoxes } from "../../edit/values/boxes"
+    import DragItemWrapper from "../../helpers/DragItemWrapper.svelte"
     import Icon from "../../helpers/Icon.svelte"
-    import { clone } from "../../helpers/array"
+    import { createDragReorder } from "../../helpers/dragReorder"
     import { getFileName } from "../../helpers/media"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import { getCustomStageLabel } from "../stage"
+
+    const dragReorder = createDragReorder((fromIndices, toIndex) => {
+        const reordered = dragReorder.getReorderedList(invertedItemList, fromIndices, toIndex)
+        moveStageInvertedItems(reordered)
+    })
+    const { dragOverIndex, draggedIndices } = dragReorder
 
     $: stageId = $activeStage.id || ""
 
@@ -34,7 +41,12 @@
     }
 
     $: allItems = getSortedStageItems(stageId, $stageShows)
-    $: invertedItemList = Array.isArray(allItems) ? clone(allItems).reverse() : []
+    $: invertedItemList = Array.isArray(allItems) ? allItems.map((_, i) => allItems[allItems.length - 1 - i]) : []
+    $: selectedIndices = ($activeStage.items || []).map((itemId) => invertedItemList.findIndex((it) => it.id === itemId)).filter((idx) => idx >= 0)
+    $: displayList = dragReorder.getReorderedList(invertedItemList, $draggedIndices, $dragOverIndex)
+    $: isPlaceholderActive = $dragOverIndex !== null
+
+    const getType = (item: StageItem) => item?.type || "text"
 </script>
 
 {#if invertedItemList.length}
@@ -46,50 +58,47 @@
             </span>
         </div>
 
-        <div
-            class="items {invertedItemList.length > 1 ? 'context #items_list_item_stage' : ''}"
-            style="display: flex;flex-direction: column;"
-            on:mousedown={(e) => {
-                if (e.button !== 2) return
-                // select on right click for context menu
-                const itemId = (e.target?.closest(".item_button")?.id || "").slice(1)
-                activeStage.set({ ...$activeStage, items: [itemId] })
-            }}
-        >
-            {#each invertedItemList as currentItem, i}
+        <div class="items" style="display: flex;flex-direction: column;">
+            {#each displayList as currentItem, i}
                 {@const id = currentItem.id}
-                {@const type = currentItem.type || "text"}
+                {@const type = getType(currentItem)}
+                {@const isPlaceholder = isPlaceholderActive && $draggedIndices.some((dIdx) => currentItem === invertedItemList[dIdx])}
 
-                <MaterialButton
-                    id="#{id}"
-                    variant="outlined"
-                    class="item_button"
-                    style="width: 100%;justify-content: space-between;padding: 2px 8px;"
-                    isActive={$activeStage.items.includes(id)}
-                    tab
-                    on:click={(e) => {
-                        selected.set({ id: null, data: [] })
-                        activeStage.update((ae) => {
-                            if (e.detail.ctrl) {
-                                if (ae.items.includes(id)) ae.items.splice(ae.items.indexOf(id), 1)
-                                else ae.items.push(id)
-                            } else if (!ae.items.includes(id)) ae.items = [id]
-                            else ae.items = []
-                            return ae
-                        })
-                    }}
-                >
-                    <span style="display: flex;align-items: center;max-width: 70%;">
-                        <p style="opacity: 0.7;margin-inline-end: 10px;">{i + 1}</p>
-                        <Icon id={type === "icon" ? id || "" : itemBoxes[type]?.icon || "text"} custom={type === "icon"} size={0.8} />
-                        <p style="opacity: 0.9;margin-inline-start: 10px;;">{getCustomStageLabel(currentItem.type || id, currentItem, $dictionary) || translateText("items." + type)}</p>
-                        {#if getIdentifier[type]}<p style="margin-inline-start: 10px;max-width: 120px;opacity: 0.5;font-size: 0.8em;max-width: 40%;">{getIdentifier[type](currentItem)}</p>{/if}
-                    </span>
-                    <span>
-                        <MaterialButton disabled={i === allItems.length - 1} icon="down" title="actions.backward" style="padding: 8px;" on:click={() => rearrangeStageItems("backward", id)} />
-                        <MaterialButton disabled={i === 0} icon="up" title="actions.forward" style="padding: 8px;" on:click={() => rearrangeStageItems("forward", id)} />
-                    </span>
-                </MaterialButton>
+                <DragItemWrapper index={i} controller={dragReorder} {isPlaceholder} {selectedIndices}>
+                    <MaterialButton
+                        id="#{id}"
+                        variant="outlined"
+                        class="item_button"
+                        style="width: 100%;justify-content: space-between;padding: 6px 8px;cursor: grab;"
+                        isActive={$activeStage.items.includes(id)}
+                        tab
+                        on:click={(e) => {
+                            selected.set({ id: null, data: [] })
+                            activeStage.update((ae) => {
+                                if (e.detail.ctrl) {
+                                    if (ae.items.includes(id)) ae.items.splice(ae.items.indexOf(id), 1)
+                                    else ae.items.push(id)
+                                } else if (!ae.items.includes(id)) ae.items = [id]
+                                else ae.items = []
+                                return ae
+                            })
+                        }}
+                    >
+                        <span style="display: flex;align-items: center;width: 100%;gap: 8px;pointer-events: none;">
+                            {#if displayList.length > 1}
+                                <Icon id="drag" style="opacity: 0.5;" white />
+                            {/if}
+
+                            <Icon id={type === "icon" ? id || "" : itemBoxes[type]?.icon || "text"} custom={type === "icon"} size={0.8} />
+                            <p style="opacity: 0.9;">{getCustomStageLabel(currentItem.type || id, currentItem, $dictionary) || translateText("items." + type)}</p>
+                            {#if getIdentifier[type]}
+                                <p style="flex: 1;text-align: left;opacity: 0.5;font-size: 0.8em;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;">{getIdentifier[type](currentItem)}</p>
+                            {/if}
+
+                            <p style="opacity: 0.5;font-size: 0.75em;margin-inline-start: auto;">{i + 1}</p>
+                        </span>
+                    </MaterialButton>
+                </DragItemWrapper>
             {/each}
         </div>
     </div>

@@ -1,24 +1,28 @@
 <script lang="ts">
     import type { ProjectShowRef } from "../../../../types/Projects"
-    import { outputs, showsCache } from "../../../stores"
+    import { activeProject, outputs, projects, showsCache } from "../../../stores"
     import { getActiveOutputs } from "../../helpers/output"
     import AudioPreview from "../AudioPreview.svelte"
+    import EffectPreview from "../effect/EffectPreview.svelte"
     import FolderShow from "../folder/FolderShow.svelte"
     import MediaPreview from "../media/MediaPreview.svelte"
     import OverlayPreview from "../overlay/OverlayPreview.svelte"
-    import EffectPreview from "../effect/EffectPreview.svelte"
     import PdfPreview from "../pdf/PdfPreview.svelte"
+    import ShowNotes from "../ShowNotes.svelte"
     import Slides from "../Slides.svelte"
 
     export let show: ProjectShowRef
     $: type = show.type
+
+    $: projectLayout = show.index !== undefined ? $projects[$activeProject || ""]?.shows?.[show.index]?.layout : undefined
+    $: currentLayout = projectLayout !== undefined ? projectLayout : show.layout || $showsCache[show.id]?.settings?.activeLayout
 
     $: outputId = getActiveOutputs($outputs)[0]
     $: currentOutput = $outputs[outputId] || {}
 </script>
 
 {#if type === "video" || type === "image" || type === "player"}
-    <div class="outline" class:active={currentOutput?.out?.background?.path === show.id}>
+    <div class="outline" class:active={(currentOutput?.out?.background?.path || currentOutput?.out?.background?.id) === show.id}>
         <MediaPreview projectShow={show} />
     </div>
 {:else if type === "audio"}
@@ -41,13 +45,9 @@
 {:else if type === "folder"}
     <FolderShow path={show.id} index={show.index || 0} />
 {:else}
-    <Slides showId={show.id} layout={show.layout} projectIndex={show.index} />
+    <Slides showId={show.id} layout={currentLayout} projectIndex={show.index} />
 
-    <!-- WIP change layout??? -->
-    <!-- <Layouts /> -->
-    {#if $showsCache[show.id]?.layouts?.[$showsCache[show.id]?.settings?.activeLayout]?.notes}
-        <p class="notes">{$showsCache[show.id]?.layouts?.[$showsCache[show.id]?.settings?.activeLayout]?.notes}</p>
-    {/if}
+    <ShowNotes specificShowId={show.id} layoutId={currentLayout} />
 {/if}
 
 <style>

@@ -8,7 +8,7 @@ import type { DropData, Selected } from "../../../types/Main"
 import type { Item, Slide, SlideAction } from "../../../types/Show"
 import { sendMain } from "../../IPC/main"
 import { changeLayout, changeSlideGroups } from "../../show/slides"
-import { activeDrawerTab, activeEdit, activePage, activePopup, activeProject, activeShow, alertMessage, audioFolders, audioPlaylists, audioStreams, drawerTabsData, editingProjectTemplate, effectsLibrary, media, mediaFolders, overlays, playerVideos, projects, projectTemplates, scenes, scriptureSettings, shows, showsCache, slidesOptions, templates, timers } from "../../stores"
+import { activeDrawerTab, activeEdit, activePage, activePopup, activeProject, activeShow, alertMessage, audioFolders, audioPlaylists, audioStreams, drawerTabsData, editingProjectTemplate, effectsLibrary, media, mediaFolders, overlays, playerVideos, projects, projectTemplates, refreshEditSlide, scenes, scriptureSettings, shows, showsCache, slidesOptions, templates, timers } from "../../stores"
 import { newToast } from "../../utils/common"
 import { getAccess } from "../../utils/profile"
 import { audioExtensions, imageExtensions, mediaExtensions, presentationExtensions, videoExtensions } from "../../values/extensions"
@@ -23,6 +23,7 @@ import { projectDropFolders } from "./drop"
 import { history, historyAwait } from "./history"
 import { downloadOnlineMedia, getExtension, getFileName, getMediaLayerType, getMediaStyle, getMediaType, removeExtension } from "./media"
 import { addToPos, getIndexes, mover } from "./mover"
+import { updateActiveSceneOutputs } from "./output"
 import { getLayoutRef } from "./show"
 import { getVariableNameId } from "./showActions"
 import { _show } from "./shows"
@@ -199,12 +200,12 @@ export const dropActions = {
                     if (url.includes("youtube.com") || url.includes("youtu.be")) {
                         const id = trimPlayerId(url, "youtube")
                         const name = (await getYouTubeData(id)).name
-                        return { id: "-", type: "player", data: { type: "youtube", id, name } }
+                        return { id: uid(5), type: "player", data: { type: "youtube", id, name } }
                     }
                     if (url.includes("vimeo.com")) {
                         const id = trimPlayerId(url, "vimeo")
                         const name = (await getVimeoData(id)).name
-                        return { id: "-", type: "player", data: { type: "vimeo", id, name } }
+                        return { id: uid(5), type: "player", data: { type: "vimeo", id, name } }
                     }
 
                     return { id: url, type: "url" }
@@ -582,6 +583,37 @@ export const dropActions = {
             })
             return effects
         })
+    },
+    scenes: ({ drag, drop }: Data, history: History) => {
+        const sceneId = drop.data?.id || (typeof drop.data === "string" ? drop.data : "") || (get(activePage) === "edit" && get(activeEdit).type === "scene" ? get(activeEdit).id || "" : "")
+        const scene = get(scenes)[sceneId]
+        if (!scene) return
+
+        let key: "overlays" | "media" | null = null
+        let value: any = null
+
+        if (drag.id === "overlay") {
+            const newOverlays = (Array.isArray(drag.data) ? drag.data : [drag.data]).filter((id) => typeof id === "string" && get(overlays)[id])
+            if (!newOverlays.length) return
+            key = "overlays"
+            value = removeDuplicates([...(scene.content?.overlays || []), ...newOverlays])
+        } else if (["camera", "screen", "ndi", "omt", "blackmagic"].includes(drag.id || "") && drag.data?.[0]) {
+            const item = drag.data[0]
+            key = "media"
+            value = { id: item.id || "", name: item.name || "", type: item.type || drag.id, group: item.group || item.cameraGroup || "" }
+        }
+
+        if (!key || value === null) return
+
+        history.id = "UPDATE"
+        history.newData = { key: "content", data: { ...clone(scene.content || {}), [key]: value } }
+        history.oldData = { id: sceneId }
+        history.location = { page: "drawer", id: "scene_key", override: `content_${key}_${sceneId}` }
+
+        updateActiveSceneOutputs(sceneId)
+        refreshEditSlide.set(true)
+
+        return history
     }
 }
 

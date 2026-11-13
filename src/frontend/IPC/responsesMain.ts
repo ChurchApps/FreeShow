@@ -504,13 +504,28 @@ export const mainResponses: MainResponses = {
         }
 
         const allProjects = get(projects)
+        const allFolders = get(folders)
         const createdProjectIds: string[] = []
+        const createdFolderIds = new Set<string>()
+        const providerFolderId = `provider_${data.providerId}`
+        const providerFolderName = data.categoryName || data.providerId
+        function ensureFolder(folderId: string, parent: string, name: string) {
+            const folder = allFolders[folderId]
+            if (folder && !folder.deleted && folder.name === name && folder.parent === parent) return
+
+            history({ id: "UPDATE", newData: { replace: { parent, name } }, oldData: { id: folderId }, location: { page: "show", id: "project_folder" } })
+            allFolders[folderId] = { ...(allFolders[folderId] || {}), parent, name, deleted: false }
+        }
+        ensureFolder(providerFolderId, "/", providerFolderName)
 
         data.projects.forEach((currentProject) => {
             // CREATE PROJECT FOLDER
-            const folderId = currentProject.folderId
-            if (folderId && (!get(folders)[folderId] || get(folders)[folderId].deleted)) {
-                history({ id: "UPDATE", newData: { replace: { parent: "/", name: currentProject.folderName } }, oldData: { id: folderId }, location: { page: "show", id: "project_folder" } })
+            const providerProjectFolderName = (currentProject.folderName || "").trim()
+            const providerProjectFolderId = (currentProject.folderId || "").trim()
+            const folderId = providerProjectFolderName ? (providerProjectFolderId ? `${providerFolderId}_${providerProjectFolderId}` : `${providerFolderId}_${getLabelId(providerProjectFolderName)}`) : ""
+            if (folderId && !createdFolderIds.has(folderId)) {
+                ensureFolder(folderId, providerFolderId, providerProjectFolderName)
+                createdFolderIds.add(folderId)
             }
 
             // CREATE PROJECT
@@ -518,8 +533,9 @@ export const mainResponses: MainResponses = {
                 name: currentProject.name,
                 created: currentProject.created,
                 used: Date.now(), // show on top in last used list
-                parent: folderId || "/",
-                shows: currentProject.items || [],
+                parent: folderId || providerFolderId,
+                // the provider item stays known after its show is replaced, so links follow the item
+                shows: (currentProject.items || []).map((a) => ((a.type || "show") === "show" ? { ...a, providerItemId: a.id } : a)),
                 origin
             }
             const project = createProviderProject(data.providerId, projectBase)

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { fade } from "svelte/transition"
-    import { special } from "../../stores"
+    import { isOptimizedMode } from "../../stores"
 
     export let x = 0
     export let y = 0
@@ -8,7 +8,7 @@
     export let style = ""
     export let parsed: { text: string; isShortcut: boolean }[] = []
 
-    $: isOptimized = $special.optimizedMode
+    $: isOptimized = $isOptimizedMode
 </script>
 
 {#if visible}

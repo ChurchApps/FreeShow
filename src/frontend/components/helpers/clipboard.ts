@@ -135,8 +135,8 @@ export function paste(clip: Clipboard | null = null, extraData: any = {}, custom
     // edit item has its own paste function
     if (activeElem?.closest(".editItem")) return
 
-    if (customElem?.closest(".edit")) activeElem = customElem
-    if (activeElem?.closest(".edit")) {
+    if (!isDuplicating && customElem?.closest(".edit")) activeElem = customElem
+    if (!isDuplicating && activeElem?.closest(".edit")) {
         pasteText(activeElem)
         return
     }
@@ -144,6 +144,12 @@ export function paste(clip: Clipboard | null = null, extraData: any = {}, custom
     if (!hasCustomClip && isFormField(activeElem)) return
 
     if (clip.id === null) return
+
+    // certain clipboard items are only valid on specific "pages"
+    const currentPage = get(activePage)
+    if (clip.id === "stage_item" && currentPage !== "stage") return
+    if (clip.id === "item" && currentPage !== "edit") return
+    if ((clip.id === "slide" || clip.id === "group") && currentPage !== "edit" && currentPage !== "show") return
 
     // custom media paste: only paste on selected ones
     if (clip.id === "media") {
@@ -643,16 +649,9 @@ const pasteActions = {
     },
     group: (data: any, extraData: any = {}, isDuplicating: boolean = false) => pasteActions.slide(data, extraData, isDuplicating),
     overlay: (data: any) => pasteDrawerItem(data, "overlay"),
+    effect: (data: any) => pasteDrawerItem(data, "effect"),
     template: (data: any) => pasteDrawerItem(data, "template"),
     scene: (data: any) => pasteDrawerItem(data, "scene"),
-    effect: (data: any) => {
-        data?.forEach((effect) => {
-            const newEffect = clone(effect)
-            delete newEffect.isDefault
-            newEffect.name += " (2)"
-            history({ id: "UPDATE", newData: { data: newEffect }, location: { page: "drawer", id: "effect" } })
-        })
-    },
     // project items
     show: (data: any) => {
         const isTemplate = !!get(editingProjectTemplate)
@@ -1150,6 +1149,7 @@ const duplicateActions = {
             delete newShowRef.index
             if (!newShowRef.type) newShowRef.type = "show"
             if (newShowRef.type === "show") delete newShowRef.name
+            else if (newShowRef.type === "section") newShowRef.id = uid()
             return newShowRef
         })
 
@@ -1190,18 +1190,22 @@ const duplicateActions = {
         history({ id: "UPDATE", newData: { data: stage.items, key: "items" }, oldData: { id: stageId }, location: { page: "stage", id: "stage_item_content" } })
         updateSortedStageItems()
     },
-    layout: (data: any) => {
+    layout: (data?: { name?: string; id?: string; newId?: string }[]) => {
         const showId = get(activeShow)?.id
         if (!showId) return
 
-        const layoutId = data?.[0] || get(showsCache)[showId]?.settings?.activeLayout
+        const layoutId = data?.[0]?.id || get(showsCache)[showId]?.settings?.activeLayout
         if (!layoutId) return
 
         const newLayout = clone(get(showsCache)[showId]?.layouts?.[layoutId])
         if (!newLayout) return
 
-        newLayout.name += " 2"
-        history({ id: "UPDATE", newData: { key: "layouts", subkey: uid(), data: newLayout }, oldData: { id: get(activeShow)?.id }, location: { page: "show", id: "show_layout" } })
+        const customName = data?.[0]?.name
+        if (customName) newLayout.name = customName
+        else newLayout.name += " 2"
+
+        const newId = data?.[0]?.newId || uid()
+        history({ id: "UPDATE", newData: { key: "layouts", subkey: newId, data: newLayout }, oldData: { id: get(activeShow)?.id }, location: { page: "show", id: "show_layout" } })
     },
     folder: (data: any) => {
         // duplicate projects folder and all of the projects inside
@@ -1355,7 +1359,7 @@ const duplicateActions = {
     }
 }
 
-function pasteDrawerItem(data: any, type: "overlay" | "template" | "scene") {
+function pasteDrawerItem(data: any, type: "overlay" | "effect" | "template" | "scene") {
     data?.forEach((item) => {
         const newItem = clone(item)
         delete newItem.isDefault

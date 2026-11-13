@@ -32,6 +32,7 @@
 
     $: slideId = (customOffset !== null || slideIndex !== null) && showRef ? showRef[(customOffset ?? slideIndex)!]?.id || null : null
     $: slide = currentSlide?.id === "temp" ? getTempSlides(slideOffset) : currentSlide && slideId ? $showsCache[currentSlide?.id]?.slides?.[slideId] : null
+    $: slideBackgroundColor = (slide as any)?.settings?.color || currentSlide?.settings?.color || "transparent"
 
     function getTempSlides(slideOffset: number) {
         if (slideOffset < 0) {
@@ -118,7 +119,7 @@
 {#if style}
     {#if slide}
         <Main let:resolution let:width let:height>
-            <Zoomed background="transparent" style={getStyleResolution(resolution, width, height, "fit")} center>
+            <Zoomed background={slideBackgroundColor} style={getStyleResolution(resolution, width, height, "fit")} center>
                 <div class:loading={items1 && !firstActive}>
                     {#each items1 as item, i}
                         {#if !itemNumber || slide?.items?.length === 1 || itemNumber - 1 === i}

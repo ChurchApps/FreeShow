@@ -58,7 +58,8 @@
         }
 
         // mainly for overlay preview
-        if ($activeShow?.id && ($activeShow.type || "show") !== "show" && (!$activeEdit.id || $activeEdit.type === $activeShow.type)) {
+        const isOverlay = $activeShow?.type === "overlay" || $activeEdit?.type === "overlay"
+        if ($activeShow?.id && ($activeShow.type || "show") !== "show" && (!isOverlay ? !$activeEdit.id || $activeEdit.type === $activeShow.type : !$activeEdit.id)) {
             activeEdit.set({ id: $activeShow.id, type: $activeShow.type, items: [] } as any)
         }
     })

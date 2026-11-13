@@ -17,13 +17,19 @@ export function applyCommandLineSwitches() {
 }
 
 function applyMacSwitches() {
-    // Skia Graphite renders pixelated with hardware acceleration (since the Electron 37 -> 45 upgrade),
-    // so use the Ganesh backend. FS_MAC_GRAPHITE=1 keeps Graphite for testing newer Electron versions.
+    // Skia Graphite renders pixelated with hardware acceleration on macOS (Chromium bug with
+    // downsampling, MSAA, and Retina text/graphics scaling in Chromium 156 / Electron 45),
+    // so we use the Ganesh backend. FS_MAC_GRAPHITE=1 keeps Graphite for testing newer Electron versions.
     if (process.env.FS_MAC_GRAPHITE === "1") {
         console.info("[MAC] FS_MAC_GRAPHITE=1: Skia Graphite kept enabled")
         return
     }
     app.commandLine.appendSwitch("disable-features", "SkiaGraphite")
+
+    // Under Ganesh on macOS, Chromium disables VideoToolbox hardware HEVC decoding unless explicitly
+    // enabled, and needs the Metal ANGLE backend to bind CVPixelBuffer/IOSurface textures properly.
+    appendEnableFeatures("PlatformHEVCDecoderSupport,VideoToolboxVideoDecoder")
+    app.commandLine.appendSwitch("use-angle", "metal")
 }
 
 function applyLinuxSwitches() {

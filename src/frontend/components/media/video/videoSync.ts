@@ -114,9 +114,10 @@ export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: numbe
     // a seek restarts if another lands before it, so the measured seek time is added to the cooldown
     const seekCooldownMs = 500 + (seekLatencyEMA.get(vid) ?? 0) * 1000
     const inSeekCooldown = now - (lastSeekTimestamps.get(vid) || 0) < seekCooldownMs
-    const driftThreshold = Math.max(0.4, 0.8 * rate)
+    const rateScale = rate < 1 ? 1 / Math.max(0.2, rate) : 1
+    const driftThreshold = Math.max(0.4, 0.8 * rate) * rateScale
     const driftCount = !inSeekCooldown && wrapDiff > driftThreshold ? (prevRecord.driftCount ?? 0) + 1 : 0
-    const shouldHardSeek = (isExplicitSeek && wrapDiff > 0.05) || (vid.paused && wrapDiff > 0.05) || driftCount >= 3 || (!inSeekCooldown && wrapDiff > 5)
+    const shouldHardSeek = (isExplicitSeek && wrapDiff > 0.05) || (vid.paused && wrapDiff > 0.05) || driftCount >= 3 || (!inSeekCooldown && wrapDiff > Math.max(5, 5 * rateScale))
 
     if (shouldHardSeek) {
         lastSeekTimestamps.set(vid, now)
@@ -148,8 +149,8 @@ export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: numbe
     let targetRate = rate
 
     if (!vid.paused && !inWrapZone && vid.readyState >= 2) {
-        const deadband = Math.max(0.08, 0.08 * rate)
-        const hysteresis = Math.max(0.03, 0.03 * rate)
+        const deadband = rate < 1 ? Math.max(0.08, 0.08 / rate) : Math.max(0.08, 0.08 * rate)
+        const hysteresis = rate < 1 ? Math.max(0.03, 0.03 / rate) : Math.max(0.03, 0.03 * rate)
         if (isNudging && absDiff <= hysteresis) {
             isNudging = false
         } else if (isNudging || absDiff > deadband) {
@@ -164,7 +165,7 @@ export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: numbe
 
     // each playbackRate write resyncs the pipeline, so the rate moves in coarse steps;
     // a video dropping frames or short of data is never sped up
-    const step = 0.05 * rate
+    const step = Math.max(0.01, 0.05 * rate)
     let steppedRate = rate + Math.round((targetRate - rate) / step) * step
     if (steppedRate > rate && isStruggling(vid, now)) steppedRate = rate
     const safeRate = clampPlaybackRate(steppedRate)

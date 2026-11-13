@@ -32,6 +32,7 @@
         data = newData
 
         playerVideos.update((a) => {
+            if (!a[currentId]) newToast("info.created")
             a[currentId] = newData
             return a
         })

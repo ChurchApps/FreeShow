@@ -39,7 +39,7 @@ function releaseFrame(frame: { data: Buffer }) {
     freeBuffers.push(b)
 }
 
-const PREVIEW_MAX_WIDTH = 480
+const PREVIEW_MAX_WIDTH = 960
 // prefix of the targets that are the capture worker rather than a window
 // a drawer tile is drawn at this interval from a receiver kept open while the tile is shown
 const TILE_INTERVAL_MS = 200

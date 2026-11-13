@@ -3,7 +3,7 @@
     import type { MediaStyle } from "../../../types/Main"
     import type { Item, Media, Show, Slide, SlideData } from "../../../types/Show"
     import { removeTagsAndContent } from "../../show/slides"
-    import { activeEdit, activePage, activeShow, activeTimers, editMode, effects, focusMode, fullColors, groups, media, outputs, overlays, playerVideos, refreshListBoxes, refreshSlideThumbnails, slideDeleteHighlight, slideNotesActive, slidesOptions, slideTimers, special, styles } from "../../stores"
+    import { activeEdit, activePage, activeShow, activeTimers, editMode, effects, focusMode, fullColors, groups, isOptimizedMode, media, outputs, overlays, playerVideos, refreshListBoxes, refreshSlideThumbnails, slideDeleteHighlight, slideNotesActive, slidesOptions, slideTimers, special, styles } from "../../stores"
     import { wait } from "../../utils/common"
     import { translateText } from "../../utils/language"
     import { getAccess } from "../../utils/profile"
@@ -52,7 +52,7 @@
 
     let ghostBackground: Media | null = null
     // don't show ghost slides above 40 when using optimized mode
-    $: if (!background && ($special.optimizedMode ? index < 40 : true) && layoutSlides.length) setTimeout(checkGhostBackground)
+    $: if (!background && ($isOptimizedMode ? index < 40 : true) && layoutSlides.length) setTimeout(checkGhostBackground)
     function checkGhostBackground() {
         ghostBackground = null
         layoutSlides.forEach((a, i) => {
@@ -79,7 +79,7 @@
     let thumbnailPath = ""
     let mediaStyle: MediaStyle = {}
 
-    let ghostSize = $special.optimizedMode || index + 1 > 28 ? mediaSize.small : mediaSize.drawerSize
+    let ghostSize = $isOptimizedMode || index + 1 > 28 ? mediaSize.small : mediaSize.drawerSize
 
     $: bg = clone(background || ghostBackground)
     $: bgPath = bg?.path || bg?.id || ""
@@ -118,7 +118,7 @@
         if (!bgPath.startsWith("http")) {
             getMedia(bgPath, mediaSize.drawerSize)
             const refs = _show().layouts().ref()
-            if ($special.optimizedMode || refs.some((a) => a.length > 28)) getMedia(bgPath, mediaSize.small)
+            if ($isOptimizedMode || refs.some((a) => a.length > 28)) getMedia(bgPath, mediaSize.small)
         }
 
         const media = await getMedia(bgPath, mediaSize.slideSize)
@@ -465,7 +465,7 @@
     </div>
     {#if viewMode === "list" && !noQuickEdit}
         <hr />
-        <div class="quickEdit" style="font-size: {(-1.1 * $slidesOptions.columns + 12) / 6}em;" data-index={index}>
+        <div class="quickEdit" style="font-size: {(-1.1 * $slidesOptions.columns + 12) / 6}em;" data-index={index} on:mousedown|stopPropagation>
             {#key $refreshListBoxes >= 0 && $refreshListBoxes !== index}
                 {#if slide.items}
                     {#each itemsList as item, itemIndex}

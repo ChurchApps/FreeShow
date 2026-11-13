@@ -766,9 +766,16 @@ async function captureAndSend(id: string, source: any, opts: { pipe?: number; si
     const activeMembers = membersAll.filter((m) => SENDERS[m]?.sender)
     // members may use different protocols: load each, skip members whose library is unavailable
     const libs: { [tag: string]: any } = {}
-    for (const m of activeMembers) {
-        const ad = SENDERS[m]!.adapter
-        if (!(ad.tag in libs)) libs[ad.tag] = await ad.load()
+    try {
+        for (const m of activeMembers) {
+            const ad = SENDERS[m]!.adapter
+            if (!(ad.tag in libs)) libs[ad.tag] = await ad.load()
+        }
+    } catch (err) {
+        console.error("Worker sender library load error:", err)
+        port.postMessage({ type: "releaseTexture", id, seq })
+        port.postMessage({ type: "captureDone", id, seq, failed: true })
+        return
     }
     const sendMembers = activeMembers.filter((m) => !!libs[SENDERS[m]!.adapter.tag])
     const hasSenders = sendMembers.length > 0
@@ -829,6 +836,7 @@ async function captureAndSend(id: string, source: any, opts: { pipe?: number; si
     if (framePbuf) heldBufs.push(framePbuf)
     heldBufs.push(...targetPbufs)
     const queued = new Set<PacerBuf>()
+    let failed = false
     try {
         let buffer: Buffer
         let scaled: Buffer | undefined
@@ -1105,6 +1113,7 @@ async function captureAndSend(id: string, source: any, opts: { pipe?: number; si
         if (tl) tl.enq = Date.now() // pacer enqueue complete (memcpy + fan-out done) — nonzero = clean path
     } catch (err) {
         console.error("Worker readback error:", err)
+        failed = true
     } finally {
         // buffers no member queued (error, or a target/main nobody used): return them to their pools
         for (const pb of heldBufs) {
@@ -1116,7 +1125,7 @@ async function captureAndSend(id: string, source: any, opts: { pipe?: number; si
         releaseTexture() // safety: ensure the texture is released even on error
         releaseReadbackSlot(id, slot)
         // frees this pipeline slot, so main may forward the next frame
-        port.postMessage({ type: "captureDone", id, seq, tl })
+        port.postMessage({ type: "captureDone", id, seq, tl, failed })
     }
 }
 

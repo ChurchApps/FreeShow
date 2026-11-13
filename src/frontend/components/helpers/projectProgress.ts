@@ -18,8 +18,10 @@ function isOutputMatch(projectItem: any, outData: any) {
     const outSlide = outData?.slide || null
     const outBackground = outData?.background || null
     const outOverlays: string[] = Array.isArray(outData?.overlays) ? outData.overlays : []
+    const outEffects: string[] = Array.isArray(outData?.effects) ? outData.effects : []
 
     if (type === "overlay") return outOverlays.includes(projectId)
+    if (type === "effect") return outEffects.includes(projectId)
 
     if (type === "show") {
         if (outSlide?.id !== projectId) return false

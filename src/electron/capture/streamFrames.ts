@@ -34,20 +34,23 @@ function loadPreviewNative() {
     return previewNative
 }
 
-export function previewStreamFrame(full: StreamFrame, maxWidth = 480): StreamFrame {
-    const osr = loadPreviewNative()
-    if (osr) {
-        try {
-            const small = osr.previewFrame(full.data, full.xres, full.yres, NATIVE_FORMAT[full.format], maxWidth)
-            return { xres: small.width, yres: small.height, data: small.data, format: "rgba" }
-        } catch {
-            // fall through to the loop below
+export function previewStreamFrame(full: StreamFrame, maxWidth = 960): StreamFrame {
+    // osr-capture previewFrame() forces alpha to 255; only use native preview for uyvy which is opaque anyway
+    if (full.format === "uyvy") {
+        const osr = loadPreviewNative()
+        if (osr) {
+            try {
+                const small = osr.previewFrame(full.data, full.xres, full.yres, NATIVE_FORMAT[full.format], maxWidth)
+                return { xres: small.width, yres: small.height, data: small.data, format: "rgba" }
+            } catch {
+                // fall through to the loop below
+            }
         }
     }
     return previewStreamFrameJs(full, maxWidth)
 }
 
-export function previewStreamFrameJs(full: StreamFrame, maxWidth = 480): StreamFrame {
+export function previewStreamFrameJs(full: StreamFrame, maxWidth = 960): StreamFrame {
     const scale = Math.max(1, Math.ceil(full.xres / maxWidth))
     const width = Math.floor(full.xres / scale)
     const height = Math.floor(full.yres / scale)

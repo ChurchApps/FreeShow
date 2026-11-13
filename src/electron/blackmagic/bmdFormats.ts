@@ -119,6 +119,8 @@ export function getBmdPixelFormats(): Map<string, any> {
         ["8BitYUV", macadam.bmdFormat8BitYUV], // extra
         ["10-bit YUV", macadam.bmdFormat10BitYUV],
         ["10BitYUV", macadam.bmdFormat10BitYUV], // extra
+        ["10-bit YUVA", macadam.bmdFormat10BitYUVA],
+        ["10BitYUVA", macadam.bmdFormat10BitYUVA], // extra
         ["8BitARGB", macadam.bmdFormat8BitARGB],
         ["8-bit ARGB", macadam.bmdFormat8BitARGB], // extra
         ["8BitBGRA", macadam.bmdFormat8BitBGRA],

@@ -278,7 +278,7 @@ export function convertCalendar(data: any) {
                             ending: repeatData.UNTIL ? "date" : "after",
                             count: Number(repeatData.INTERVAL || 1),
                             endingDate: date || "",
-                            afterRepeats: Number(repeatData.COUNT || 10)
+                            afterRepeats: Number(repeatData.COUNT || 52)
                         }
 
                         newEvents.push(ev)
@@ -295,6 +295,12 @@ export function convertCalendar(data: any) {
                             if (typeof weekday !== "number") return
 
                             const shiftedStart = shiftDateToWeekdayOnOrAfter(start, weekday)
+                            // If UNTIL is set and the initial shifted weekday starts after UNTIL date, skip it
+                            if (date) {
+                                const untilDate = new Date(date + "T23:59:59")
+                                if (shiftedStart > untilDate) return
+                            }
+
                             const shiftedEnd = new Date(shiftedStart.getTime() + duration)
 
                             const ev = clone(newEvent)

@@ -42,7 +42,7 @@
     $: currentStyle = getCurrentStyle($styles, currentOutput.style)
 
     let mediaStyle: MediaStyle = {}
-    $: mediaData = $media[path] || {}
+    $: mediaData = $media[mediaPath] || {}
     $: if (show) mediaStyle = getMediaStyle(mediaData, currentStyle)
 
     $: mediaStyleString = `width: 100%;height: 100%;object-fit: ${mediaStyle.fit === "blur" ? "contain" : mediaStyle.fit || "contain"};filter: ${mediaStyle.filter || ""};transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});mix-blend-mode: ${mediaStyle.blend || "normal"};`
@@ -69,7 +69,7 @@
                         const type = getMediaLayerType(mediaPath, mediaStyle)
                         if (type === "foreground" || type !== "background") clearSlide(true)
 
-                        setOutput("background", { path: mediaPath, ...mediaStyle })
+                        setOutput("background", { path: mediaPath, ...mediaStyle, fit: mediaData.fit || "" })
                     }}
                 >
                     {#if mediaStyle.fit === "blur"}

@@ -1350,10 +1350,16 @@ export async function loadShowsAsync(returnShows = false, reCacheNames: string[]
 function getTextCacheString(show: Show) {
     if (!show?.slides || show?.reference?.type) return ""
 
+    const getLineText = (line: any) => {
+        const text = line?.text
+        if (Array.isArray(text)) return text.map((a) => a?.value || "").join("")
+        return ""
+    }
+
     return Object.values(show.slides)
         .flatMap((slide) => slide?.items)
         .flatMap((item) => item?.lines || [])
-        .map((line) => (line?.text || []).map((text) => text?.value || "").join(""))
+        .map((line) => getLineText(line))
         .join(" ")
         .toLowerCase()
 }

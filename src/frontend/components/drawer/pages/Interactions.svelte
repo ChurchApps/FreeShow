@@ -3,21 +3,37 @@
     import { uid } from "uid"
     import { activeInteractions, activePopup, activeRename, interactions, labelsDisabled, openedInteractionId, popupData } from "../../../stores"
     import { translateText } from "../../../utils/language"
+    import DragItemWrapper from "../../helpers/DragItemWrapper.svelte"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, keysToID, sortByName } from "../../helpers/array"
+    import { createDragReorder } from "../../helpers/dragReorder"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
     import InputRow from "../../input/InputRow.svelte"
     import HiddenInput from "../../inputs/HiddenInput.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
-    import SelectElem from "../../system/SelectElem.svelte"
-    import { formatTimeInteraction, getInteraction, initConnection, startInteraction, stopInteraction } from "./interactions"
-    import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
-    import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
+    import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
+    import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
+    import SelectElem from "../../system/SelectElem.svelte"
+    import { exportInteractionCSV } from "./interactionExport"
+    import { formatTimeInteraction, getInteraction, initConnection, startInteraction, stopInteraction } from "./interactions"
 
     export let searchValue: string
     console.log(searchValue)
+
+    const dragReorder = createDragReorder((fromIndices, toIndex) => {
+        interactions.update((a) => {
+            const inputs = a[openedId]?.inputs
+            if (!inputs?.length) return a
+            a[openedId].inputs = dragReorder.getReorderedList(inputs, fromIndices, toIndex)
+            return a
+        })
+    })
+    const { dragOverIndex, draggedIndices } = dragReorder
+
+    $: displayInputs = dragReorder.getReorderedList(openedInteraction?.inputs || [], $draggedIndices, $dragOverIndex)
+    $: isPlaceholderActive = $dragOverIndex !== null
 
     function createNew() {
         const id = uid()
@@ -56,22 +72,6 @@
     function addInput() {
         popupData.set({ id: openedId })
         activePopup.set("interaction_input")
-    }
-
-    function rearrangeInputs(direction: "forward" | "backward", index: number) {
-        interactions.update((a) => {
-            const items = clone(a[openedId]?.inputs)
-            if (!items) return a
-
-            const currentItem = items.splice(index, 1)[0]
-
-            if (direction === "forward") index = Math.min(index + 1, items.length)
-            else if (direction === "backward") index = Math.max(index - 1, 0)
-
-            a[openedId].inputs = [...items.slice(0, index), currentItem, ...items.slice(index)]
-
-            return a
-        })
     }
 
     const inputTypeIcons = {
@@ -246,7 +246,13 @@
         <div class="history" style="display: flex;flex-direction: column;gap: 8px;padding: 10px;overflow: auto;">
             {#each clone(openedInteraction?.history || []).reverse() as entry}
                 <div style="background-color: var(--primary-darkest);padding: 10px;border-radius: 6px;">
-                    <p style="font-size: 0.8em;opacity: 0.7;margin-bottom: 8px;">{new Date(entry.time).toLocaleString()}</p>
+                    <div style="display: flex;justify-content: space-between;align-items: center;">
+                        <p style="font-size: 0.8em;opacity: 0.7;margin-bottom: 8px;">{new Date(entry.time).toLocaleString()}</p>
+
+                        <MaterialButton title="actions.export: CSV" style="padding: 4px;" on:click={() => exportInteractionCSV(entry, openedInteraction?.name)}>
+                            <Icon id="download" size={0.9} white />
+                        </MaterialButton>
+                    </div>
 
                     {#if entry.leaderboard?.length}
                         <div style="margin-bottom: 12px; padding: 8px; background-color: rgba(255, 255, 255, 0.05); border-radius: 4px;">
@@ -270,7 +276,7 @@
                                         <li style="margin-bottom: 4px;">
                                             <div style="display: flex;gap: 8px;">
                                                 <span style="font-weight: bold;opacity: 0.9;">{answer.name}:</span>
-                                                <span style="flex: 1;">
+                                                <span style="flex: 1;user-select: text;">
                                                     {#each Array.isArray(answer.value) ? answer.value : [answer.value] as value, i}
                                                         {i > 0 ? ", " : ""}
                                                         <span>{value}</span>
@@ -312,91 +318,94 @@
             {#if $activeInteractions.includes(openedId) && inputIndex === -1 && openedInteraction?.options?.allAtOnce !== true}<div style="border: 1px solid var(--secondary);"></div>{/if}
             <!-- <div style="border: 1px solid {inputIndex === -1 ? 'var(--secondary)' : 'transparent'};"></div> -->
 
-            {#each openedInteraction?.inputs || [] as input, i}
-                <InputRow arrow={$activeInteractions.includes(openedId) && Object.keys(answers[i] || {}).length > 0}>
-                    <div
-                        class="input {$activeInteractions.includes(openedId) ? '' : 'context #interaction_input'}"
-                        class:active={$activeInteractions.includes(openedId) && (i === inputIndex || openedInteraction?.options?.allAtOnce)}
-                        style="width: 100%;"
-                        id="#{i}"
-                        data-title={$activeInteractions.includes(openedId) && !openedInteraction?.options?.allAtOnce && i !== inputIndex ? "Go to this input" : ""}
-                        on:click={(e) => {
-                            if ($activeInteractions.includes(openedId)) {
-                                if (openedInteraction?.options?.allAtOnce) return
+            {#each displayInputs as input, i}
+                {@const isPlaceholder = isPlaceholderActive && $draggedIndices.some((dIdx) => input === openedInteraction?.inputs?.[dIdx])}
+                {@const active = $activeInteractions.includes(openedId)}
 
-                                getInteraction(openedId)?.goto(i)
-                                return
-                            }
-
-                            if (e.target?.closest(".rearrange")) return
-
-                            popupData.set({ id: openedId, inputIndex: i })
-                            activePopup.set("interaction_input")
-                        }}
-                        role="none"
-                    >
-                        <Icon id={input.type === "heading" ? "info" : input.type} size={1.5} gradient />
-                        {#if input.inputType && input.inputType !== "none"}
-                            <Icon id={inputTypeIcons[input.inputType]} white />
-                        {/if}
-
-                        <p style="flex: 1;{input.question ? '' : 'font-style: italic;opacity: 0.7;'}">
-                            {input.question || translateText("main.unnamed")}
-                        </p>
-
-                        {#if $activeInteractions.includes(openedId)}
-                            {#if input.type === "heading"}
-                                <!-- show nothing -->
-                            {:else}
-                                <!-- timer -->
-                                {#if i === inputIndex}
-                                    <span style="font-family: monospace; opacity: 0.8; margin-right: 8px;" class:closed>
-                                        {#if autoTimerText}
-                                            {autoTimerText}
-                                        {:else if closed}
-                                            CLOSED
-                                        {:else if openedInteraction?.options?.maxTime && openedInteraction.options.maxTime > 0}
-                                            {formatTimeInteraction(openedInteraction.options.maxTime - seconds)}
-                                        {:else}
-                                            {formatTimeInteraction(seconds)}
-                                        {/if}
-                                    </span>
-                                {/if}
-
-                                <!-- answers count -->
-                                <span style="font-family: monospace; opacity: 0.7;">
-                                    {Object.keys(answers[i] || {}).length || 0}
+                <DragItemWrapper index={i} controller={dragReorder} {isPlaceholder} handleOnly={!active}>
+                    <InputRow arrow={active && Object.keys(answers[i] || {}).length > 0}>
+                        <div
+                            class="input {active ? '' : 'context #interaction_input'}"
+                            class:active={active && (i === inputIndex || openedInteraction?.options?.allAtOnce)}
+                            style="width: 100%;"
+                            id="#{i}"
+                            data-title={active && !openedInteraction?.options?.allAtOnce && i !== inputIndex ? "Go to this input" : ""}
+                            on:click={(e) => {
+                                if (e.target?.closest(".drag_handle")) return
+                                if (active) {
+                                    if (openedInteraction?.options?.allAtOnce) return
+                                    getInteraction(openedId)?.goto(i)
+                                    return
+                                }
+                                popupData.set({ id: openedId, inputIndex: i })
+                                activePopup.set("interaction_input")
+                            }}
+                            role="none"
+                        >
+                            {#if !active}
+                                <span class="drag_handle" style="display: flex;align-items: center;cursor: grab;opacity: 0.6;padding-right: 4px;">
+                                    <Icon id="drag_dots" size={1.2} white />
                                 </span>
                             {/if}
-                        {:else}
-                            <span>
-                                <MaterialButton class="rearrange" disabled={i === openedInteraction?.inputs.length - 1} icon="down" title="actions.backward" style="padding: 8px;" on:click={() => rearrangeInputs("forward", i)} />
-                                <MaterialButton class="rearrange" disabled={i === 0} icon="up" title="actions.forward" style="padding: 8px;border-left: none !important;" on:click={() => rearrangeInputs("backward", i)} />
-                            </span>
-                        {/if}
-                    </div>
 
-                    <div slot="menu">
-                        {#each Object.entries(answers[i] || {}).sort((a, b) => (a[1]?.time || 0) - (b[1]?.time || 0)) as [clientId, answerValue]}
-                            {@const questionStartTime = startTimes[i] || startTime}
-                            <p style="display: flex; gap: 8px;padding: 4px 8px;">
-                                <span style="font-weight: bold; opacity: 0.9;">{clients[clientId]?.name || `User #${Object.keys(clients).indexOf(clientId) + 1}`}:</span>
-                                <span style="flex: 1;white-space: normal;">
-                                    {#each Array.isArray(answerValue?.value) ? answerValue.value : [answerValue?.value] as value, i}
-                                        {i > 0 ? ", " : ""}
-                                        <span style={isCorrect(input, value) ? "color: #31ed31; font-weight: bold;" : ""}>{value}</span>
-                                    {/each}
-                                </span>
+                            <Icon id={input.type === "heading" ? "info" : input.type} size={1.5} gradient />
+                            {#if input.inputType && input.inputType !== "none"}
+                                <Icon id={inputTypeIcons[input.inputType]} white />
+                            {/if}
 
-                                {#if questionStartTime && answerValue?.time}
+                            <p style="flex: 1;{input.question ? '' : 'font-style: italic;opacity: 0.7;'}">
+                                {input.question || translateText("main.unnamed")}
+                            </p>
+
+                            {#if active}
+                                {#if input.type === "heading"}
+                                    <!-- show nothing -->
+                                {:else}
+                                    <!-- timer -->
+                                    {#if i === inputIndex}
+                                        <span style="font-family: monospace; opacity: 0.8; margin-right: 8px;" class:closed>
+                                            {#if autoTimerText}
+                                                {autoTimerText}
+                                            {:else if closed}
+                                                CLOSED
+                                            {:else if openedInteraction?.options?.maxTime && openedInteraction.options.maxTime > 0}
+                                                {formatTimeInteraction(openedInteraction.options.maxTime - seconds)}
+                                            {:else}
+                                                {formatTimeInteraction(seconds)}
+                                            {/if}
+                                        </span>
+                                    {/if}
+
+                                    <!-- answers count -->
                                     <span style="font-family: monospace; opacity: 0.7;">
-                                        {Math.max(0, (answerValue.time - questionStartTime) / 1000).toFixed(1)}s
+                                        {Object.keys(answers[i] || {}).length || 0}
                                     </span>
                                 {/if}
-                            </p>
-                        {/each}
-                    </div>
-                </InputRow>
+                            {/if}
+                        </div>
+
+                        <div slot="menu">
+                            {#each Object.entries(answers[i] || {}).sort((a, b) => (a[1]?.time || 0) - (b[1]?.time || 0)) as [clientId, answerValue]}
+                                {@const questionStartTime = startTimes[i] || startTime}
+                                <p style="display: flex; gap: 8px;padding: 4px 8px;">
+                                    <span style="font-weight: bold; opacity: 0.9;">{clients[clientId]?.name || `User #${Object.keys(clients).indexOf(clientId) + 1}`}:</span>
+                                    <span style="flex: 1;white-space: normal;">
+                                        {#each Array.isArray(answerValue?.value) ? answerValue.value : [answerValue?.value] as value, i}
+                                            {i > 0 ? ", " : ""}
+                                            <span style={isCorrect(input, value) ? "color: #31ed31; font-weight: bold;" : ""}>{value}</span>
+                                        {/each}
+                                    </span>
+
+                                    {#if questionStartTime && answerValue?.time}
+                                        <span style="font-family: monospace; opacity: 0.7;">
+                                            {Math.max(0, (answerValue.time - questionStartTime) / 1000).toFixed(1)}s
+                                        </span>
+                                    {/if}
+                                </p>
+                            {/each}
+                        </div>
+                    </InputRow>
+                </DragItemWrapper>
             {/each}
 
             {#if !$activeInteractions.includes(openedId)}

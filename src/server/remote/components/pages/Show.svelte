@@ -7,21 +7,23 @@
     import { translate } from "../../util/helpers"
     import { GetLayout } from "../../util/output"
     import { send } from "../../util/socket"
-    import { _set, activeShow, activeTab, dictionary, isCleared, outLayout, outShow, outSlide, textCache } from "../../util/stores"
+    import { _set, active, activeShow, activeTab, dictionary, isCleared, outLayout, outShow, outSlide, textCache } from "../../util/stores"
     import Clear from "../show/Clear.svelte"
     import Slides from "../show/Slides.svelte"
     import AddGroups from "./AddGroups.svelte"
     import GroupsEdit from "./GroupsEdit.svelte"
     import TextEdit from "./TextEdit.svelte"
 
-    // Memoize layout calculation
-    $: layout = $outShow ? GetLayout($outShow, $outLayout) : null
-    $: _set("layout", layout)
+    $: isLoading = !$activeShow || ($active?.id ? $activeShow.id !== $active.id : false)
 
-    $: slideNum = $outSlide ?? -1
+    // Memoize layout calculation for active show
+    $: activeLayout = $activeShow ? GetLayout($activeShow, $activeShow?.settings?.activeLayout || Object.keys($activeShow?.layouts || {})[0] || "default") : null
+    $: _set("layout", activeLayout)
+
+    $: slideNum = $outShow?.id === $activeShow?.id ? ($outSlide ?? -1) : -1
 
     // Memoize totalSlides calculation
-    $: totalSlides = layout ? layout.length : 0
+    $: totalSlides = activeLayout ? activeLayout.length : 0
 
     let scrollElem: HTMLElement | undefined
     let lyricsScroll: any
@@ -130,7 +132,9 @@
 </script>
 
 <!-- GetLayout($activeShow, $activeShow?.settings?.activeLayout).length -->
-{#if $activeShow?.layouts}
+{#if isLoading}
+    <Center faded>{translate("remote.loading", $dictionary)}</Center>
+{:else if $activeShow?.layouts}
     <h2 class="header">{$activeShow.name || ""}</h2>
 
     {#if (groupsOpened || editOpened) && !($activeShow.id === $outShow?.id)}
@@ -171,7 +175,7 @@
                     <Button on:click={() => navigate("previous_slide")} variant="outlined" center compact>
                         <Icon id="previous" size={1.2} />
                     </Button>
-                    <span class="counter">{slideNum + 1}/{totalSlides}</span>
+                    <span class="counter">{slideNum < 0 ? 0 : slideNum + 1}/{totalSlides}</span>
                     <!-- disabled={slideNum + 1 >= totalSlides} -->
                     <Button on:click={() => navigate("next_slide")} variant="outlined" center compact>
                         <Icon id="next" size={1.2} />

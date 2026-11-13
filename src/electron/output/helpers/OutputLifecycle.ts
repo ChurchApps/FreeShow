@@ -636,6 +636,15 @@ export class OutputLifecycle {
         return this.addonMaxPool
     }
     private static globalInFlight = 0
+    // outputs that dropped a frame while other outputs held the whole pool, so none of their own captures will finish
+    private static poolWaiters = new Map<string, () => void>()
+    private static releasePool(id: string) {
+        for (const [oid, retry] of [...this.poolWaiters]) {
+            if (oid === id) continue
+            this.poolWaiters.delete(oid)
+            retry()
+        }
+    }
     private static lastClampLogged = 0
     private static lastGateLogged = 0
     private static offMain = new Map<string, OffMainState>()
@@ -1195,6 +1204,13 @@ export class OutputLifecycle {
                             releaseTex(pendingFrame.tex)
                             pendingFrame = null
                             parkedDropped = true
+                            if (offMainInFlight === 0) {
+                                OutputLifecycle.poolWaiters.set(id, () => {
+                                    if (!parkedDropped) return
+                                    parkedDropped = false
+                                    OutputLifecycle.requestRepaint(id)
+                                })
+                            }
                             return
                         }
                         tryAdmit()
@@ -1224,7 +1240,7 @@ export class OutputLifecycle {
         SenderCapture.releaseTextureCallbacks[id] = releaseHeldSeq
         // captureDone = the whole capture (incl. the slow read) is finished -> a pipeline slot frees up.
         // The forwardAt ledger dedupes: in-flight counters only move for a seq this map still tracks.
-        SenderCapture.captureDoneCallbacks[id] = (seq, tl) => {
+        SenderCapture.captureDoneCallbacks[id] = (seq, tl, failed) => {
             releaseHeldSeq(seq)
             const now = Date.now()
             const fwd = forwardAt.get(seq)
@@ -1232,6 +1248,7 @@ export class OutputLifecycle {
                 forwardAt.delete(seq)
                 offMainInFlight = Math.max(0, offMainInFlight - 1)
                 OutputLifecycle.globalInFlight = Math.max(0, OutputLifecycle.globalInFlight - 1)
+                OutputLifecycle.releasePool(id)
                 // feed the depth estimator (always-on, not stats-gated); segments clamped ≥0 so a skewed
                 // frame can't inject a negative service time into the min estimator
                 const seg = tl && tl.enq ? { consume: Math.max(0, tl.cE - tl.cS), finish: Math.max(0, tl.fE - tl.fS), enqueue: Math.max(0, tl.enq - tl.fE), doneMain: Math.max(0, now - tl.enq) } : undefined
@@ -1257,6 +1274,9 @@ export class OutputLifecycle {
                     tryAdmit()
                 } else if (parkedDropped) {
                     parkedDropped = false
+                    OutputLifecycle.requestRepaint(id)
+                } else if (failed && seq === offMainSeq) {
+                    // the newest frame never reached the receivers, and a still page sends no other
                     OutputLifecycle.requestRepaint(id)
                 }
             }
@@ -1418,6 +1438,8 @@ export class OutputLifecycle {
             }
             OutputLifecycle.globalInFlight = Math.max(0, OutputLifecycle.globalInFlight - forwardAt.size)
             forwardAt.clear()
+            OutputLifecycle.poolWaiters.delete(id)
+            OutputLifecycle.releasePool(id)
             offMainInFlight = 0
             this.offMain.delete(id)
             this.offMainRendererCount = Math.max(0, this.offMainRendererCount - 1)

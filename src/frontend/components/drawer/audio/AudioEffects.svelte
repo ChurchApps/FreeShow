@@ -1,7 +1,9 @@
 <script lang="ts">
-    import { EFFECTS_LIST, getEffectStack, moveEffectInStack, toggleEffectInStack } from "../../../audio/effects/audioEffectsHelpers"
+    import { EFFECTS_LIST, getEffectStack, toggleEffectInStack } from "../../../audio/effects/audioEffectsHelpers"
     import { activeAudioEffects, activePopup, audioEffects, popupData } from "../../../stores"
     import { translateText } from "../../../utils/language"
+    import DragItemWrapper from "../../helpers/DragItemWrapper.svelte"
+    import { createDragReorder } from "../../helpers/dragReorder"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
@@ -10,6 +12,15 @@
 
     $: channelId = $activeAudioEffects || "main"
     $: stack = getEffectStack($audioEffects, channelId)
+
+    const dragReorder = createDragReorder((fromIndices, toIndex) => {
+        const reordered = dragReorder.getReorderedList(stack, fromIndices, toIndex)
+        audioEffects.update((all) => {
+            return { ...all, [channelId]: { ...(all[channelId] || {}), stack: reordered } }
+        })
+    })
+    const { dragOverIndex, draggedIndices } = dragReorder
+    $: displayStack = dragReorder.getReorderedList(stack, $draggedIndices, $dragOverIndex)
 
     function openEffectPopup(effectItem: any) {
         popupData.set({
@@ -28,18 +39,6 @@
     function handleToggle(item: any) {
         toggleEffectInStack(item.id, channelId)
     }
-
-    function handleUp(index: number) {
-        if (index > 0) {
-            moveEffectInStack(index, index - 1, channelId)
-        }
-    }
-
-    function handleDown(index: number) {
-        if (index < stack.length - 1) {
-            moveEffectInStack(index, index + 1, channelId)
-        }
-    }
 </script>
 
 <!-- header (go back) -->
@@ -49,43 +48,43 @@
 </Button>
 
 <div class="stack-list">
-    {#each stack as effectItem, i (effectItem.id || `${effectItem.type}_${i}`)}
+    {#each displayStack as effectItem, i (effectItem.id || `${effectItem.type}_${i}`)}
         {@const meta = EFFECTS_LIST.find((e) => e.id === effectItem.type) || { label: effectItem.type, color: "var(--secondary)" }}
         {@const isEnabled = effectItem.enabled !== false}
+        {@const isPlaceholder = $dragOverIndex !== null && $draggedIndices.some((dIdx) => (effectItem.id ? effectItem.id === stack[dIdx]?.id : effectItem === stack[dIdx]))}
 
-        <div
-            class="effect-card context #audio_effect_item"
-            id={effectItem.id}
-            data-index={i}
-            data-channel={channelId}
-            class:bypassed={!isEnabled}
-            style="--accent-color: {meta.color};"
-            on:click={() => openEffectPopup(effectItem)}
-            role="button"
-            tabindex={0}
-            on:keydown={(e) => {
-                if (e.key === "Enter" || e.key === " ") openEffectPopup(effectItem)
-            }}
-        >
-            <div class="effect-info">
-                <span class="slot-number">{i + 1}</span>
-                <span class="effect-name">{translateText(meta.label)}</span>
+        <DragItemWrapper index={i} controller={dragReorder} {isPlaceholder}>
+            <div
+                class="effect-card context #audio_effect_item"
+                id={effectItem.id}
+                data-index={i}
+                data-channel={channelId}
+                class:bypassed={!isEnabled}
+                style="--accent-color: {meta.color};"
+                on:click={() => openEffectPopup(effectItem)}
+                role="button"
+                tabindex={0}
+                on:keydown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") openEffectPopup(effectItem)
+                }}
+            >
+                <div class="effect-info">
+                    {#if displayStack.length > 1}
+                        <Icon id="drag" style="opacity: 0.5;" white />
+                    {/if}
+
+                    <span class="effect-name">{translateText(meta.label)}</span>
+                </div>
+
+                <!-- stopPropagation prevents popup from opening -->
+                <div class="effect-actions" role="none" on:click|stopPropagation={() => {}}>
+                    <span class="slot-number">{i + 1}</span>
+
+                    <!-- power button -->
+                    <MaterialButton style="padding: 3px;margin: 4px;min-height: initial;border: 1px solid var(--primary-lighter);background-color: {isEnabled ? 'var(--connected)' : 'var(--primary-lighter)'} !important;" title="actions.{isEnabled ? 'disable' : 'enable'}" on:click={() => handleToggle(effectItem)}></MaterialButton>
+                </div>
             </div>
-
-            <!-- stopPropagation prevents popup from opening -->
-            <div class="effect-actions" role="none" on:click|stopPropagation={() => {}}>
-                <!-- rearrange -->
-                <MaterialButton disabled={i === stack.length - 1} title="actions.backward" style="padding: 6px;" on:click={() => handleDown(i)}>
-                    <Icon id="down" size={0.8} white />
-                </MaterialButton>
-                <MaterialButton disabled={i === 0} title="actions.forward" style="padding: 6px;" on:click={() => handleUp(i)}>
-                    <Icon id="up" size={0.8} white />
-                </MaterialButton>
-
-                <!-- power button -->
-                <MaterialButton style="padding: 3px;margin: 4px;min-height: initial;border: 1px solid var(--primary-lighter);background-color: {isEnabled ? 'var(--connected)' : 'var(--primary-lighter)'} !important;" title="actions.{isEnabled ? 'disable' : 'enable'}" on:click={() => handleToggle(effectItem)}></MaterialButton>
-            </div>
-        </div>
+        </DragItemWrapper>
     {/each}
 
     {#if stack.length === 0}
@@ -117,7 +116,7 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 2px 4px;
+        padding: 4px 5px;
         background-color: var(--primary-darker);
         border: 1px solid var(--primary-lighter);
         border-left: 4px solid var(--accent-color);
@@ -151,6 +150,7 @@
     }
 
     .effect-name {
+        padding-left: 2px;
         font-size: 0.88em;
         font-weight: 500;
         color: var(--text);

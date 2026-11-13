@@ -39,8 +39,9 @@
         for (const item of items) {
             if ((item?.type || "text") !== "text" || !Array.isArray(item?.lines)) continue
             for (const line of item.lines) {
-                const text = (line?.text || [])
-                    .map((part: any) => (part?.value || "").replaceAll("\n", " ").trim())
+                const rawText = line?.text
+                const text = (Array.isArray(rawText) ? rawText.map((part: any) => part?.value || "") : [])
+                    .map((part: string) => part.replaceAll("\n", " ").trim())
                     .filter(Boolean)
                     .join(" ")
                 if (text) lines.push(text)

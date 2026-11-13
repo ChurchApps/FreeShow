@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
     import type { DrawerTabIds } from "../../../types/Tabs"
-    import { activeDrawerTab, activeEdit, activePage, activePopup, activeProject, activeShow, activeTriggerFunction, dictionary, drawer, drawerOpenedInEdit, drawerTabsData, focusMode, labelsDisabled, mediaOptions, os, previousShow, projects, quickTextCache, scriptureSettings, selected, showsCache } from "../../stores"
+    import { activeDrawerTab, activeEdit, activeFocus, activePage, activePopup, activeProject, activeShow, activeTriggerFunction, dictionary, drawer, drawerOpenedInEdit, drawerTabsData, focusMode, labelsDisabled, mediaOptions, os, previousShow, projects, quickTextCache, scriptureSettings, selected, showsCache } from "../../stores"
     import { DEFAULT_DRAWER_HEIGHT, DEFAULT_WIDTH, MENU_BAR_HEIGHT } from "../../utils/common"
     import { startResizing, stopResizing } from "../../utils/cursor"
     import { translateText } from "../../utils/language"
@@ -184,7 +184,7 @@
         } else if (ctrlKey === "d" && !isTypingTarget(document.activeElement)) {
             if (!$selected?.id && !$activeEdit.items.length) click(null)
         } else if (e.key === "Enter") {
-            if (document.activeElement !== searchElem || !searchValue.trim().length || !firstMatch || $focusMode) return
+            if (document.activeElement !== searchElem || !searchValue.trim().length || !firstMatch) return
             if ($activeDrawerTab !== "shows") return
 
             let match = $activeShow?.data?.searchInput === true ? { id: $activeShow.id } : firstMatch
@@ -199,7 +199,8 @@
 
             if (!$activeProject) {
                 // open the show
-                activeShow.set({ id: match.id, type: "show" })
+                if ($focusMode) activeFocus.set({ id: match.id, type: "show" })
+                else activeShow.set({ id: match.id, type: "show" })
                 return
             }
 
@@ -219,9 +220,11 @@
             }
 
             searchElem.select()
-            let newIndex = ($activeShow?.index ?? $projects[$activeProject]?.shows?.length - 1) + 1
+            const currentIndex = $focusMode ? $activeFocus?.index : $activeShow?.index
+            let newIndex = (currentIndex ?? $projects[$activeProject]?.shows?.length - 1) + 1
             if ($activePage === "show") history({ id: "UPDATE", newData: { key: "shows", index: newIndex, data: { id: match.id } }, oldData: { id: $activeProject }, location: { page: "show", id: "project_ref" } })
-            activeShow.set({ ...match, index: newIndex })
+            if ($focusMode) activeFocus.set({ ...match, index: newIndex, type: "show" })
+            else activeShow.set({ ...match, index: newIndex })
             searchValue = ""
         }
     }

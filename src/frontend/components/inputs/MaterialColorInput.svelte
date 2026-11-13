@@ -171,31 +171,10 @@
 
     // A layer with 100% opacity is completely solid and visible, while a layer with 0% opacity is completely transparent and invisible.
     let opacity = 100
-    let updated: NodeJS.Timeout | null = null
-    let gotUpdate = false
-    // don't update if value just changed
-    $: if (value) remount()
-    function remount() {
-        mounted = false
-        setTimeout(() => (mounted = true))
-    }
-    $: if (opacity !== undefined) opacityChanged()
-    function opacityChanged() {
-        if (!allowOpacity || !mounted) return
 
-        if (updated) {
-            gotUpdate = true
-            return
-        }
-
-        updated = setTimeout(() => {
-            selectColor(hexValue, false)
-            updated = null
-            if (gotUpdate) {
-                gotUpdate = false
-                opacityChanged()
-            }
-        }, 50)
+    function updateOpacity(newOpacity: number) {
+        opacity = newOpacity
+        selectColor(hexValue, false)
     }
 </script>
 
@@ -239,7 +218,7 @@
 
                     {#if allowOpacity && value && hexValue.includes("gradient")}
                         <div class="opacity">
-                            <MaterialNumberInput label="edit.opacity" value={Math.round(opacity)} max={100} on:change={(e) => (opacity = Math.round(e.detail))} showSlider />
+                            <MaterialNumberInput label="edit.opacity" value={Math.round(opacity)} max={100} on:change={(e) => updateOpacity(Math.round(e.detail))} showSlider />
                         </div>
                     {/if}
 
@@ -293,7 +272,7 @@
 
                     {#if allowOpacity && value && !hexValue.includes("gradient")}
                         <div class="opacity">
-                            <MaterialNumberInput label="edit.opacity" value={Math.round(opacity)} max={100} on:change={(e) => (opacity = Math.round(e.detail))} showSlider />
+                            <MaterialNumberInput label="edit.opacity" value={Math.round(opacity)} max={100} on:change={(e) => updateOpacity(Math.round(e.detail))} showSlider />
                         </div>
                     {/if}
 

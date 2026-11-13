@@ -355,7 +355,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     provider_item: ["GROUP_rename_only", "link_provider", "unlink_provider", "SEPARATOR", "remove", "SEPARATOR", "mark_played", "private"],
     provider_item_unlinked: ["GROUP_rename_only", "link_provider", "SEPARATOR", "remove", "SEPARATOR", "mark_played", "private"],
     project_section: ["GROUP_recolor", "remove"],
-    project_overlay: ["remove"],
+    project_overlay: ["remove", "SEPARATOR", "mark_played"],
     project_effect: ["remove"],
     project_pdf: ["remove", "SEPARATOR", "mark_played"],
     project_ppt: ["remove", "SEPARATOR", "mark_played"],
@@ -410,12 +410,10 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     stage_item: ["GROUP_conditions", "rearrange_stage", "SEPARATOR", "duplicate", "delete"], // "GROUP_duplicate_delete"
     stage_item_output: ["GROUP_conditions", "rearrange_stage", "SEPARATOR", "delete"],
     stage_text_item: ["GROUP_dynamic", "rearrange_stage", "SEPARATOR", "duplicate", "delete"], // "GROUP_duplicate_delete"
-    items_list_item_stage: ["to_front_stage", "forward_stage", "backward_stage", "to_back_stage"],
 
     // EDIT
     edit_box: ["GROUP_dynamic", "item_actions", "item_bind_to", "format", "rearrange", "transition", "SEPARATOR", "duplicate", "delete"], // "copy", "paste" (shortcut or top menubar) // "GROUP_duplicate_delete"
     editbox_text: ["text_copy", "text_cut", "text_paste", "text_select_all", "SEPARATOR", "insert_virtual_break"],
-    items_list_item: ["to_front", "forward", "backward", "to_back"],
     effect_item: ["hide", "SEPARATOR", "duplicate", "delete"],
     scene_overlay: ["GROUP_edit", "hide", "SEPARATOR", "delete"],
     table_context: ["delete_row", "delete_col"],

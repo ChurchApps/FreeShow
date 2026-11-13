@@ -2,6 +2,7 @@
     import { onDestroy, onMount } from "svelte"
 
     export let show: any
+    export let background: string = "#000000"
     export let disableStyle: boolean = false
     export let dynamicResolution: boolean = true
     export let relative: boolean = false
@@ -37,7 +38,7 @@
 </script>
 
 <div class="center">
-    <div bind:this={slideElem} class:disableStyle class:relative class="slide" style="{$$props.style || ''}aspect-ratio: {resolution?.width}/{resolution?.height};">
+    <div bind:this={slideElem} class:disableStyle class:relative class="slide" style="{background ? `background-color: ${background};` : ''}{$$props.style || ''}aspect-ratio: {resolution?.width}/{resolution?.height};">
         <!-- Use transform scale for cross-browser support (Safari/Firefox do not support CSS zoom) -->
         <span style="display: inline-block; width: {resolution?.width || 1920}px; height: {resolution?.height || 1080}px; transform: scale({isFinite(ratio) && ratio > 0 ? ratio : 1}); transform-origin: top left; will-change: transform;">
             <slot />

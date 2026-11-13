@@ -32,7 +32,7 @@ function getSlideContent(slide: Slide | undefined) {
         settings: slide.settings || {},
         timeline: slide.timeline || null,
         items: (slide.items || []).map((item) => {
-            const lines = item.lines?.map((line) => ({
+            const lines = item?.lines?.map((line) => ({
                 align: line.align,
                 text: line.text?.map((t) => ({ ...t, value: t.value?.trim() || "" })),
                 chords: line.chords?.map(({ pos, key }) => ({ pos, key }))

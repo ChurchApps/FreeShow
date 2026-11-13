@@ -36,7 +36,9 @@
         if (elem?.querySelector(".droparea")) elem = elem.querySelector(".droparea")
 
         if (!elem) return
-        elem.setAttribute("style", (elem.getAttribute("style") || "") + ";scroll-behavior: smooth;")
+        if (!(elem.getAttribute("style") || "").includes("scroll-behavior: smooth")) {
+            elem.setAttribute("style", (elem.getAttribute("style") || "") + ";scroll-behavior: smooth;")
+        }
 
         // don't scroll if already in view
         // if (offset > elem.scrollTop && offset < elem.scrollTop + elem.clientHeight) return

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
     import { fade } from "svelte/transition"
-    import { activePage, activePopup, contextActive, contextData, currentWindow, dictionary, localeDirection, os, serverData, slideDeleteHighlight, special, spellcheck, theme, themes } from "../../stores"
+    import { activePage, activePopup, contextActive, contextData, currentWindow, dictionary, isOptimizedMode, localeDirection, os, serverData, slideDeleteHighlight, spellcheck, theme, themes } from "../../stores"
     import { translateText } from "../../utils/language"
     import { closeContextMenu } from "../../utils/shortcuts"
     import { getEditItems } from "../edit/scripts/itemHelpers"
@@ -186,7 +186,7 @@
         rgb = { r: Math.max(0, newRgb.r - 1), g: Math.max(0, newRgb.g - 5), b: Math.max(0, newRgb.b - 5) }
     }
 
-    $: isOptimized = $special.optimizedMode
+    $: isOptimized = $isOptimizedMode
 
     $: if (activeMenu) {
         flatMenuItems = flattenMenuItems(activeMenu, contextMenuItems)

@@ -156,7 +156,7 @@
         })
     }
 
-    $: playbackRate = item.speed ?? 1
+    $: playbackRate = item.speed ?? (Number($media[mediaPath]?.speed) || 1)
     let _lastAppliedRate = 1
     $: if (playbackRate !== _lastAppliedRate) {
         _lastAppliedRate = playbackRate

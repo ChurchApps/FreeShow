@@ -2,6 +2,7 @@ import { get } from "svelte/store"
 import type { ContentProviderId } from "../../electron/contentProviders/base/types"
 import { history } from "../components/helpers/history"
 import { loadShows } from "../components/helpers/setShow"
+import type { Project, ProjectShowRef } from "../../types/Projects"
 import { activePopup, activeProject, activeShow, popupData, projects, providerItemLinks, shows, showsCache } from "../stores"
 
 export function getProviderItemLink(providerId: ContentProviderId, itemId: string) {
@@ -11,14 +12,6 @@ export function getProviderItemLink(providerId: ContentProviderId, itemId: strin
 
 export function setProviderItemLink(providerId: ContentProviderId, itemId: string, showId: string, mode: "online" | "local" | "manual") {
     providerItemLinks.update((a) => ({ ...a, [`${providerId}:${itemId}`]: { showId, mode } }))
-}
-
-export function isShowLinked(showId: string, links = get(providerItemLinks)) {
-    return Object.values(links).some((link) => link.showId === showId)
-}
-
-export function removeProviderLinks(showIds: string[]) {
-    providerItemLinks.update((a) => Object.fromEntries(Object.entries(a).filter(([, link]) => !showIds.includes(link.showId))))
 }
 
 const LEGACY_LINK_KEYS: { [key in ContentProviderId]?: string } = { planningcenter: "pcoLink", churchApps: "chumsLink", amazinglife: "alLink", onstage: "onstageLink" }
@@ -47,10 +40,15 @@ function getProviderFromOrigin(origin?: string | null): ContentProviderId | null
     if (origin === "pco") return "planningcenter"
     return (origin as ContentProviderId) || null
 }
-function getProviderItemIdFromShowId(showId: string, providerId: ContentProviderId, links = get(providerItemLinks)): string | null {
-    const entry = Object.entries(links).find(([key, link]) => key.startsWith(`${providerId}:`) && link.showId === showId)
-    if (entry) return entry[0].slice(providerId.length + 1)
-    return showId
+
+function getProjectItemLinkKey(project: Project | null | undefined, item: ProjectShowRef | undefined): string {
+    const providerId = getProviderFromOrigin(project?.origin)
+    const itemId = item?.providerItemId || item?.id
+    return providerId && itemId ? `${providerId}:${itemId}` : ""
+}
+
+export function isProjectItemLinked(project: Project | null | undefined, item: ProjectShowRef | undefined, links = get(providerItemLinks)) {
+    return !!links[getProjectItemLinkKey(project, item)]
 }
 
 export function openLinkProviderDialog(item: { id: string; index?: number }) {
@@ -59,19 +57,18 @@ export function openLinkProviderDialog(item: { id: string; index?: number }) {
     const projectId = get(activeProject)
     const currentProject = projectId ? get(projects)[projectId] : null
     const providerId = getProviderFromOrigin(currentProject?.origin)
-    if (!providerId) return
+    if (!projectId || !currentProject || !providerId) return
 
-    const currentShowId = item.id
-    const providerItemId = getProviderItemIdFromShowId(currentShowId, providerId) || currentShowId
-    const itemIndex = item.index ?? currentProject?.shows?.findIndex((s) => s.id === currentShowId)
+    const itemIndex = item.index ?? currentProject.shows?.findIndex((s) => s.id === item.id) ?? -1
+    const providerItemId = currentProject.shows?.[itemIndex]?.providerItemId || item.id
 
     popupData.set({
         action: "select_show",
-        active: currentShowId,
+        active: item.id,
         trigger: (chosenShowId: string) => {
             setProviderItemLink(providerId, providerItemId, chosenShowId, "manual")
 
-            if (projectId && currentProject && itemIndex !== undefined && itemIndex >= 0) {
+            if (itemIndex >= 0) {
                 const newShows = [...(currentProject.shows || [])]
                 newShows[itemIndex] = { ...newShows[itemIndex], id: chosenShowId }
 
@@ -87,4 +84,19 @@ export function openLinkProviderDialog(item: { id: string; index?: number }) {
         }
     })
     activePopup.set("select_show")
+}
+
+export function unlinkProjectItems(items: { id: string; index?: number }[]) {
+    const projectId = get(activeProject)
+    const currentProject = projectId ? get(projects)[projectId] : null
+    if (!currentProject) return
+
+    providerItemLinks.update((a) => {
+        items.forEach((item) => {
+            const index = item.index ?? currentProject.shows?.findIndex((s) => s.id === item.id) ?? -1
+            const key = getProjectItemLinkKey(currentProject, currentProject.shows?.[index])
+            if (key) delete a[key]
+        })
+        return a
+    })
 }

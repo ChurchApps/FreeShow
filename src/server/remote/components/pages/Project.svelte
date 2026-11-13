@@ -177,18 +177,19 @@
                                                 <Icon id={showType} box={showType === "ppt" ? 50 : 24} right />
                                                 <p>{showType}</p>
                                             </div>
-                                        {:else if showData}
-                                            <div class="show-button-wrapper" class:active={($active.type || "show") === "show" && $activeShow?.id === showData.id}>
+                                        {:else if showId}
+                                            {@const itemShow = showData || { id: showId, name: show.name, private: false }}
+                                            <div class="show-button-wrapper" class:active={($active.type || "show") === "show" && $activeShow?.id === showId}>
                                                 <ShowButton
                                                     class="project-show-button"
                                                     on:click={(e) => {
-                                                        _set("active", show)
+                                                        _set("active", { id: e.detail, type: "show" })
                                                         _set("activeTab", "show")
                                                         send("SHOW", e.detail)
                                                     }}
                                                     activeShow={($active.type || "show") === "show" && $activeShow}
-                                                    show={showData}
-                                                    icon={showData.private ? "private" : "slide"}
+                                                    show={itemShow}
+                                                    icon={itemShow.private ? "private" : "slide"}
                                                 />
                                             </div>
                                         {/if}

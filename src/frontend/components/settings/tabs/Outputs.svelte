@@ -12,8 +12,9 @@
     import { translateText } from "../../../utils/language"
     import { destroy, receive, send } from "../../../utils/request"
     import { clone, keysToID, sortByName, sortObject } from "../../helpers/array"
-    import { addRtmpDestination, checkFFmpeg, refreshOut, removeRtmpDestination, startRtmpStreaming, startStreaming, stopRtmpStreaming, stopStreaming, toggleOutput, updateOutputRtmpData, updateOutputWebrtcData, updateRtmpDestination } from "../../helpers/output"
+    import { addRtmpDestination, checkFFmpeg, removeRtmpDestination, startRtmpStreaming, startStreaming, stopRtmpStreaming, stopStreaming, toggleOutput, updateOutputRtmpData, updateOutputWebrtcData, updateRtmpDestination } from "../../helpers/output"
     import { hasStreamableDestination } from "../../helpers/rtmpDestinations"
+    import { changeSingleOutputStyle } from "../../helpers/showActions"
     import InputRow from "../../input/InputRow.svelte"
     import Title from "../../input/Title.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
@@ -35,7 +36,10 @@
         if (!outputId) outputId = currentOutput?.id || ""
         if (!outputId || !$outputs[outputId]) return
 
-        if (key === "style") setTimeout(refreshOut)
+        if (key === "style") {
+            changeSingleOutputStyle(outputId, value || "")
+            return
+        }
 
         outputs.update((a: any) => {
             const out = a[outputId]
@@ -276,6 +280,7 @@
         setTimeout(() => {
             if (key === "deviceId") {
                 let device = blackmagicDevices.find((a) => a.id === value)
+                alphaSupported = isAlphaSupported()
                 if (!device) return
 
                 let displayModes = device.data?.displayModes || []
@@ -335,6 +340,7 @@
                     supportsExternalKeying: a.supportsExternalKeying || false
                 }
             }))
+            alphaSupported = isAlphaSupported()
             // auto-select first available device (not in use)
             if (blackmagicDevices.length && (!currentOutput?.blackmagicData?.deviceId || !currentOutput?.blackmagicData?.displayModes?.length)) {
                 const usedIds = getUsedBlackmagicDeviceIds(currentOutput?.id)
@@ -346,6 +352,7 @@
     receive(BLACKMAGIC, receiveBMD, listenerId)
 
     // Check if alpha keying is supported by the device
+    let alphaSupported = false
     function isAlphaSupported(): boolean {
         const device = blackmagicDevices.find((a) => a.id === currentOutput?.blackmagicData?.deviceId)
         if (!device) return false
@@ -414,7 +421,7 @@
             <MaterialToggleSwitch label="SDR" title="SDR Encoding (Rec. 709)" checked={currentOutput.blackmagicData?.sdr !== false} defaultValue={true} on:change={(e) => updateBlackmagicData(e.detail, "sdr")} />
         {/if}
 
-        {#if isAlphaSupported()}
+        {#if alphaSupported}
             <MaterialToggleSwitch label="settings.alpha_key" checked={currentOutput.blackmagicData?.alphaKey} on:change={(e) => updateBlackmagicData(e.detail, "alphaKey")} />
         {/if}
     {/if}

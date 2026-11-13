@@ -422,13 +422,13 @@
             <span style="pointer-events: none;width: 100%;height: 100%;{item.type === 'current_output' ? 'position: relative;' : ''}">
                 {#if item.type === "current_output" || id.includes("current_output")}
                     <!-- use PreviewCanvas only in remote StageShow -->
-                    <!-- {#if $currentWindow === "output" && !$special.optimizedMode} -->
+                    <!-- {#if $currentWindow === "output" && !$isOptimizedMode} -->
                     <!-- <PreviewCanvas capture={$previewBuffers[outputWindowId]} id={outputWindowId} fullscreen /> -->
                     {#if ($outputs[outputWindowId] || $allOutputs[outputWindowId])?.stageOutput}
                         {#if !disableStagePreview}
                             <StageLayout outputId={outputWindowId} stageId={($outputs[outputWindowId] || $allOutputs[outputWindowId])?.stageOutput} edit={false} disableStagePreview={true} />
                         {/if}
-                    {:else}
+                    {:else if ($outputs[outputWindowId] || $allOutputs[outputWindowId])?.enabled !== false}
                         <Output outputId={outputWindowId} mirror style="width: 100%; height: 100%;" />
                     {/if}
 
@@ -441,7 +441,7 @@
                     {#if (item.type ? item.includeMedia : !id.includes("_text")) && currentBackground}
                         {@const slideBackground = slideOffset === 0 ? currentBackground : slideOffset === 1 ? currentBackground.next : slideOffset === 2 ? currentBackground.next2 : null}
                         <!-- WIP this only includes "next" slide background -->
-                        {#if typeof slideBackground?.path === "string"}
+                        {#if typeof slideBackground?.path === "string" && slideBackground.path}
                             <div class="image" style="position: absolute;left: 0;top: 0;width: 100%;height: 100%;">
                                 <!-- bind:video on:loaded={loaded} -->
                                 <Media outputId={outputWindowId} path={slideBackground.path} path2={slideBackground.filePath} mediaStyle={slideBackground.mediaStyle || {}} mirror pauseCenter={slideOffset !== 0} />
