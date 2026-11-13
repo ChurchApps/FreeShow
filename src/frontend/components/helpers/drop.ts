@@ -21,6 +21,7 @@ const areas = {
     project: ["show_drawer", "media", "audio", "audio_effect", "overlay", "player", "scripture", "effect", "screen", "ndi", "camera", "omt", "blackmagic"],
     overlays: ["slide"],
     templates: ["slide"],
+    scenes: ["overlay", "camera", "screen", "ndi", "omt", "blackmagic"],
     edit: ["media", "global_timer", "variable", "camera", "screen", "ndi", "omt", "blackmagic"],
     effects_library: ["audio", "audio_effect", "media"]
     // media_drawer: ["file"],

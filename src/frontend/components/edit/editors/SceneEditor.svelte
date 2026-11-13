@@ -8,6 +8,7 @@
     import { getStyleResolution } from "../../slide/getStyleResolution"
     import Zoomed from "../../slide/Zoomed.svelte"
     import Center from "../../system/Center.svelte"
+    import DropArea from "../../system/DropArea.svelte"
     import { centerZoom } from "../scripts/zoom"
 
     $: currentId = $activeEdit.id!
@@ -34,19 +35,21 @@
 </script>
 
 <div class="editArea">
-    <div class="parent" bind:this={scrollElem} bind:offsetWidth={width} bind:offsetHeight={height}>
-        {#if scene}
-            <div class="scene-preview-container">
-                <Zoomed background="transparent" border {resolution} styleIdOverride={sceneStyleId} style={widthOrHeight} center>
-                    <ScenePreview {scene} />
-                </Zoomed>
-            </div>
-        {:else}
-            <Center size={2} faded>
-                <T id="empty.general" />
-            </Center>
-        {/if}
-    </div>
+    <DropArea id="scenes">
+        <div class="parent" bind:this={scrollElem} bind:offsetWidth={width} bind:offsetHeight={height}>
+            {#if scene}
+                <div class="scene-preview-container">
+                    <Zoomed background="transparent" border {resolution} styleIdOverride={sceneStyleId} style={widthOrHeight} center>
+                        <ScenePreview {scene} />
+                    </Zoomed>
+                </div>
+            {:else}
+                <Center size={2} faded>
+                    <T id="empty.general" />
+                </Center>
+            {/if}
+        </div>
+    </DropArea>
 
     <FloatingInputs side="left">
         <MaterialZoom columns={zoom} min={0.2} max={4} defaultValue={1} addValue={0.1} on:change={updateZoom} on:origin={(e) => (zoomOrigin = e.detail)} />
