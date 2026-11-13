@@ -109,6 +109,7 @@ export class BlackmagicManager {
      * Only 8-bit ARGB and BGRA are supported
      */
     static isAlphaSupported(pixelFormat: string): boolean {
+        if (pixelFormat.includes("YUVA")) return true
         if (!pixelFormat.includes("8")) return false
         return pixelFormat.includes("BGRA") || pixelFormat.includes("ARGB")
     }
