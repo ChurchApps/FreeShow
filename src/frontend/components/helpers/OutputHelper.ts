@@ -295,9 +295,9 @@ export class OutputHelper {
             return (outBackground?.path || outBackground?.id) === item.id
         }
 
-        if (item.type === "overlay") {
-            const outOverlays = out.overlays || []
-            return outOverlays.includes(item.id || "")
+        if (item.type === "overlay" || item.type === "effect") {
+            const list = item.type === "effect" ? out.effects || [] : out.overlays || []
+            return list.includes(item.id || "")
         }
 
         if (item.type === "audio") {
@@ -534,9 +534,10 @@ export class OutputHelper {
         this.previousOutputted = null
         const out = this.getOut(outputId)
 
-        // Overlays
-        if (item.type === "overlay") {
-            setOutput("overlays", item.id, false, "", true)
+        // Overlays & Effects
+        if (item.type === "overlay" || item.type === "effect") {
+            const key = item.type === "effect" ? "effects" : "overlays"
+            setOutput(key, item.id, false, "", true)
             return
         }
 
