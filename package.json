@@ -138,7 +138,7 @@
         "fast-xml-parser": "^5.10.1",
         "genius-lyrics": "^4.4.7",
         "grandiose": "github:ChurchApps/grandiose#d978cc2",
-        "json-bible": "^1.1.9",
+        "json-bible": "github:ChurchApps/json-bible#d3e560b",
         "jzz": "^1.9.5",
         "libltc-wrapper": "github:bitfocus/libltc-wrapper#9637e39",
         "macadam": "github:vassbo/macadam#ea88f2e",
