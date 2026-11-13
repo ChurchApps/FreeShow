@@ -280,6 +280,7 @@
         setTimeout(() => {
             if (key === "deviceId") {
                 let device = blackmagicDevices.find((a) => a.id === value)
+                alphaSupported = isAlphaSupported()
                 if (!device) return
 
                 let displayModes = device.data?.displayModes || []
@@ -339,6 +340,7 @@
                     supportsExternalKeying: a.supportsExternalKeying || false
                 }
             }))
+            alphaSupported = isAlphaSupported()
             // auto-select first available device (not in use)
             if (blackmagicDevices.length && (!currentOutput?.blackmagicData?.deviceId || !currentOutput?.blackmagicData?.displayModes?.length)) {
                 const usedIds = getUsedBlackmagicDeviceIds(currentOutput?.id)
@@ -350,6 +352,7 @@
     receive(BLACKMAGIC, receiveBMD, listenerId)
 
     // Check if alpha keying is supported by the device
+    let alphaSupported = false
     function isAlphaSupported(): boolean {
         const device = blackmagicDevices.find((a) => a.id === currentOutput?.blackmagicData?.deviceId)
         if (!device) return false
@@ -418,7 +421,7 @@
             <MaterialToggleSwitch label="SDR" title="SDR Encoding (Rec. 709)" checked={currentOutput.blackmagicData?.sdr !== false} defaultValue={true} on:change={(e) => updateBlackmagicData(e.detail, "sdr")} />
         {/if}
 
-        {#if isAlphaSupported()}
+        {#if alphaSupported}
             <MaterialToggleSwitch label="settings.alpha_key" checked={currentOutput.blackmagicData?.alphaKey} on:change={(e) => updateBlackmagicData(e.detail, "alphaKey")} />
         {/if}
     {/if}
