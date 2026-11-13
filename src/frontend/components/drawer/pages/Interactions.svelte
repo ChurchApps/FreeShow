@@ -276,7 +276,7 @@
                                         <li style="margin-bottom: 4px;">
                                             <div style="display: flex;gap: 8px;">
                                                 <span style="font-weight: bold;opacity: 0.9;">{answer.name}:</span>
-                                                <span style="flex: 1;">
+                                                <span style="flex: 1;user-select: text;">
                                                     {#each Array.isArray(answer.value) ? answer.value : [answer.value] as value, i}
                                                         {i > 0 ? ", " : ""}
                                                         <span>{value}</span>
