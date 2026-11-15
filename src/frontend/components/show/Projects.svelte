@@ -127,6 +127,14 @@
         listOffset = -1
     }
 
+    // same rule as the project items list (ProjectContentList)
+    $: projectReadOnly = readOnly || profile[currentProject?.parent || ""] === "read" || !!tree.find((a) => a.id === currentProject?.parent)?.readOnly
+
+    function renameProject(name: string) {
+        if (!$activeProject) return
+        history({ id: "UPDATE", newData: { key: "name", data: name }, oldData: { id: $activeProject }, location: { page: "show", id: "project_key" } })
+    }
+
     function back() {
         projectView.set(true)
         showRecentlyUsedProjects.set(false)
@@ -373,7 +381,7 @@
     <span class="tabs">
         {#if projectActive || recentlyUsedList.length}
             {#if !$focusMode}
-                <div class="header {recentlyUsedList.length ? '' : 'context #projectTab'}" class:shadow={listScrollY > 0} class:isScrollbarVisible class:passThrough={isDragging} data-title={translateText("remote.project: ", $dictionary) + `<b>${currentProject?.name || ""}</b>`}>
+                <div class="header {recentlyUsedList.length ? '' : `context #projectTab${projectReadOnly ? '_readonly' : ''}`}" class:shadow={listScrollY > 0} class:isScrollbarVisible class:passThrough={isDragging} data-title={translateText("remote.project: ", $dictionary) + `<b>${currentProject?.name || ""}</b>`}>
                     <div class="left context">
                         <MaterialButton style="width: 42px;height: 100%;padding: 0.3em 0.5em;" icon="back" iconSize={1.1} title="remote.projects" on:click={back} />
                     </div>
@@ -383,13 +391,10 @@
                     {#if recentlyUsedList.length}
                         <p style="margin-left: 42px;font-style: italic;opacity: 0.7;font-size: 1.08em;"><T id="info.recently_used" /></p>
                     {:else}
-                        <p style="max-width: 80%;font-size: 1.08em;">
-                            {#if currentProject?.name}
-                                {currentProject.name}
-                            {:else}
-                                <span style="opacity: 0.5;font-style: italic;"><T id="main.unnamed" /></span>
-                            {/if}
-                        </p>
+                        <!-- right click > Rename (or hold) to edit the project name -->
+                        <div class="projectName">
+                            <HiddenInput value={currentProject?.name || ""} id={"projectTab_" + $activeProject} style="font-size: 1.08em;text-align: center;" on:edit={(e) => renameProject(e.detail.value)} allowEdit={!projectReadOnly} />
+                        </div>
 
                         <div class="right context">
                             <MaterialButton style="width: 32px;height: 100%;padding: 0.3em 0.5em;border-bottom-right-radius: 10px;{showProjectDropdown ? '' : 'opacity: 0.8;'}" title="create_show.more_options" icon="more" on:click={() => (showProjectDropdown = !showProjectDropdown)} white={!showProjectDropdown}>
@@ -660,6 +665,18 @@
     /* allow scroll up to work while dragging */
     .tabs .header.passThrough {
         pointer-events: none;
+    }
+
+    .header .projectName {
+        max-width: 80%;
+        min-width: 0;
+        display: flex;
+        justify-content: center;
+    }
+    .header .projectName :global(p) {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .header .left,

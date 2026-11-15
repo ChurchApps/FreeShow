@@ -336,7 +336,8 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
 
     // PROJECT
     projects: ["newProject", "newFolder", "SEPARATOR", "sort_projects_by"],
-    projectTab: ["close"],
+    projectTab: ["rename", "SEPARATOR", "close"],
+    projectTab_readonly: ["close"],
     project: ["newShowPopup", "section"], // "newShow"(empty) , "newPrivateShow"
     project_button: ["GROUP_rename_only", "duplicate", "delete", "SEPARATOR", "copy_to_template", "SEPARATOR", "archive"], // "open", // "GROUP_rename"
     project_button_readonly: [],

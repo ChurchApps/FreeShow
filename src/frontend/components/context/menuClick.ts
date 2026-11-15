@@ -253,6 +253,13 @@ const clickActions = {
     // main
     custom_text: () => activePopup.set("custom_text"),
     rename: (obj: ObjData) => {
+        // the name of the open project (header above its items), independent of any selection
+        if (obj.contextElem?.classList?.contains("#projectTab")) {
+            const projectId = get(activeProject)
+            if (projectId) activeRename.set("projectTab_" + projectId)
+            return
+        }
+
         const id = obj.sel?.id || obj.contextElem?.id
         if (!id) return
         const data = obj.sel?.data?.[0] || {}
@@ -1102,7 +1109,7 @@ const clickActions = {
         }
 
         // project
-        if (obj.contextElem?.classList.contains("#projectTab")) {
+        if (obj.contextElem?.classList.contains("#projectTab") || obj.contextElem?.classList.contains("#projectTab_readonly")) {
             activeProject.set(null)
             projectView.set(true)
             return
