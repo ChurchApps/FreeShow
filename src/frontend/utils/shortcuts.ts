@@ -133,7 +133,13 @@ const keys = {
             if (lastUsedProject) openProject(lastUsedProject.id)
         }
     },
-    Delete: () => (get(contextActive) ? null : deleteAction(get(selected), "remove")),
+    Delete: () => {
+        if (get(contextActive)) return
+        // selected text boxes in the editor are deleted by the Editbox itself;
+        // the slide selection is kept there on purpose (styling applies to every selected slide), so don't remove those slides too
+        if (get(activePage) === "edit" && get(activeEdit).items?.length && get(selected).id === "slide") return
+        deleteAction(get(selected), "remove")
+    },
     Backspace: () => keys.Delete(),
     // give time so it don't clear slide
     F2: () => (get(focusMode) ? null : setTimeout(() => menuClick("rename", true, null, null, null, get(selected)))),

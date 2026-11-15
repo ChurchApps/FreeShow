@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { activeEdit, activeShow, cachedShowsData, editColumns, showsCache } from "../../stores"
+    import { activeEdit, activeShow, cachedShowsData, editColumns, selected, showsCache } from "../../stores"
     import T from "../helpers/T.svelte"
     import { findMatchingOut } from "../helpers/output"
     import { getShowCacheId } from "../helpers/show"
@@ -95,6 +95,12 @@
         }
     }
 
+    // slides that are not rendered yet have no SelectElem: select them like a loaded slide would be (same data as in Slide.svelte)
+    function skeletonClick(e: MouseEvent, index: number) {
+        if (!e.ctrlKey && !e.metaKey && !e.shiftKey) selected.set({ id: "slide", data: [{ index, showId }] })
+        slideClick(e, index)
+    }
+
     // lazy loader
 
     let lazyLoader = 1
@@ -138,10 +144,10 @@
                         {@const currentSlide = currentShow?.slides?.[slide.id]}
                         {#if hasMounted && (loaded || i < lazyLoader)}
                             {#if currentSlide}
-                                <Slide {showId} slide={currentSlide} show={currentShow} layoutSlide={slide} {layoutSlides} index={i} color={slide.color} active={findMatchingOut(slide.id) !== null} focused={$activeEdit.slide === i} noQuickEdit {altKeyPressed} columns={$editColumns} centerPreview on:click={(e) => slideClick(e, i)} />
+                                <Slide {showId} slide={currentSlide} show={currentShow} layoutSlide={slide} {layoutSlides} index={i} color={slide.color} active={findMatchingOut(slide.id) !== null} focused={$activeEdit.slide === i} noQuickEdit selectOnClick {altKeyPressed} columns={$editColumns} centerPreview on:click={(e) => slideClick(e, i)} />
                             {/if}
                         {:else}
-                            <SkeletonSlide slide={currentSlide} index={i} color={slide.color} columns={$editColumns} active={$activeEdit.slide === i} on:click={(e) => slideClick(e, i)} />
+                            <SkeletonSlide slide={currentSlide} index={i} color={slide.color} columns={$editColumns} active={$activeEdit.slide === i} on:click={(e) => skeletonClick(e, i)} />
                         {/if}
                     {/each}
 

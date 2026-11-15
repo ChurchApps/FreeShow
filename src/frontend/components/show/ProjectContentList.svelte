@@ -123,6 +123,7 @@
     $: if (projectItemsList) splitProjectItemsToSections()
     function splitProjectItemsToSections() {
         splittedProjectsList = []
+        selectDataByIndex = {}
 
         projectItemsList.forEach((a, index) => {
             // Cannot create property 'index' on string 'uid'
@@ -147,12 +148,31 @@
             }
 
             a.index = index
+            selectDataByIndex[index] = itemSelectData(a, index)
             splittedProjectsList.at(-1)!.items.push(a)
 
             function newSection() {
                 splittedProjectsList.push({ color: a.color || "", items: [] })
             }
         })
+    }
+
+    // the data each project item is selected with, made once per list update: a selection must equal it exactly (see arrayHasData),
+    // and the project item objects can be changed in place later (e.g. name/icon added in focus mode) without the list re-rendering
+    let selectDataByIndex: { [index: number]: ProjectShowRef & { name: string; index: number } } = {}
+    function itemSelectData(show: ProjectShowRef, index: number) {
+        return { ...clone(show), name: show.name || removeExtension(getFileName(show.id)), index }
+    }
+
+    // a plain click selects the item, so keep that selection on the active item when it changes with the arrow keys
+    // (otherwise e.g. Delete would remove the previously clicked item, not the one that is now open)
+    $: if (typeof activeIndex === "number") followActiveItem(activeIndex)
+    function followActiveItem(index: number) {
+        if ($selected.id !== "show" || $selected.data?.length !== 1) return
+        if ($selected.data[0]?.index === index) return
+
+        const data = selectDataByIndex[index]
+        if (data) selected.set({ id: "show", data: [data] })
     }
 
     // function createShow() {
@@ -290,7 +310,7 @@
                             {:else if show.type === "DIVIDER"}
                                 <div style="border-top: 1px solid var(--primary-lighter);margin: 5px 0;"></div>
                             {:else}
-                                <SelectElem id="show" dropAbove={isFirst} triggerOnHover data={{ ...show, name: show.name || removeExtension(getFileName(show.id)), index }} {fileOver} borders={show.type === "show_placeholder" ? "all" : "edges"} trigger="column" draggable={!isLocked} selectable={!isLocked}>
+                                <SelectElem id="show" dropAbove={isFirst} triggerOnHover data={selectDataByIndex[index ?? -1]} selectOnClick {fileOver} borders={show.type === "show_placeholder" ? "all" : "edges"} trigger="column" draggable={!isLocked} selectable={!isLocked}>
                                     {#if show.type === "section"}
                                         <MaterialButton
                                             {isActive}

@@ -6,6 +6,7 @@
     import { arrayHasData, clone } from "../helpers/array"
     import { _show } from "../helpers/shows"
     import { getLayoutRef } from "../helpers/show"
+    import { getShiftAnchor, getShiftRangeStart, setShiftAnchor } from "../helpers/select"
 
     export let id: SelectIds
     export let data: any
@@ -13,6 +14,8 @@
     export let draggable = false
     export let shiftRange: any[] = []
     export let onlyRightClickSelect = false
+    // plain left click selects the item (for lists where a click does not play anything)
+    export let selectOnClick = false
     export let selectable = true
     export let trigger: null | "row" | "column" = null
     export let fileOver = false
@@ -123,7 +126,16 @@
 
     // DRAG EVENT
 
+    // plain click on one item of a multi-selection: reduce it to that item on mouse up (not on mouse down, so the selection can still be dragged)
+    let collapseOnMouseUp = false
+    function mouseup() {
+        if (!collapseOnMouseUp) return
+        collapseOnMouseUp = false
+        selected.set({ id, data: [data] })
+    }
+
     function mousedown(e: any, dragged = false) {
+        collapseOnMouseUp = false
         if (!selectable) return
         if (dragged && ($activeRename !== null || $disableDragging)) return e.preventDefault()
 
@@ -149,6 +161,11 @@
         if (onlyRightClickSelect) {
             if (rightClick) selected.set({ id, data: [data] })
             return
+        }
+
+        if (!dragged && !rightClick && e.button === 0) {
+            if (e.shiftKey) useShiftAnchor()
+            else setShiftAnchor(id, clone(data))
         }
 
         // shift select range
@@ -248,7 +265,10 @@
         } else {
             if (alreadySelected) {
                 // if (rightClick) return
-                if (!selectMultiple || rightClick) return
+                if (!selectMultiple || rightClick) {
+                    if (selectOnClick && !rightClick && e.button === 0 && $selected.data.length > 1) collapseOnMouseUp = true
+                    return
+                }
 
                 // remove currently selected
                 newData = $selected.data.filter((a) => JSON.stringify(a) !== JSON.stringify(data))
@@ -257,13 +277,19 @@
                 let selectedData = $selected.data ?? []
                 if (!Array.isArray(selectedData)) selectedData = [$selected.data]
                 newData = [...selectedData, data]
-            } else if (rightClick) {
+            } else if (rightClick || (selectOnClick && e.button === 0)) {
                 newData = [data]
             }
         }
 
         if (!newData?.length) selected.set({ id: null, data: [] })
         else if (newData) selected.set({ id, data: newData })
+    }
+
+    // nothing selected yet: start the Shift range from the last plain-clicked item of this list
+    function useShiftAnchor() {
+        const start = getShiftRangeStart($selected, getShiftAnchor(), id, data, shiftRange)
+        if (start) selected.set({ id, data: [start] })
     }
 
     function deselect(e: any) {
@@ -328,7 +354,7 @@
     }}
 />
 
-<div {id} data-item={JSON.stringify(data)} {draggable} style={$$props.style} class="selectElem {$$props.class || ''}" class:fill class:isSelected={selectable && $selected.id === id && arrayHasData($selected.data, data)} bind:this={elem} on:mouseenter={enter} on:mousedown={mousedown} on:dragstart={(e) => mousedown(e, true)}>
+<div {id} data-item={JSON.stringify(data)} {draggable} style={$$props.style} class="selectElem {$$props.class || ''}" class:fill class:isSelected={selectable && $selected.id === id && arrayHasData($selected.data, data)} bind:this={elem} on:mouseenter={enter} on:mousedown={mousedown} on:mouseup={mouseup} on:dragstart={(e) => mousedown(e, true)}>
     <!-- on:mouseup={mouseup}
     on:contextmenu={contextmenu} -->
     <!-- TODO: validateDrop(id, $selected.id, true) -->

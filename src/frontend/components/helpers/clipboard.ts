@@ -75,7 +75,7 @@ import { history } from "./history"
 import { deleteStore } from "./historyStores"
 import { getFileName, removeExtension } from "./media"
 import { updateActiveSceneOutputs } from "./output"
-import { select } from "./select"
+import { getPasteIndex, select } from "./select"
 import { loadShows } from "./setShow"
 import { checkName, getLayoutRef, removeTemplatesFromShow, updateShowsList } from "./show"
 import { _show } from "./shows"
@@ -94,7 +94,8 @@ export function copy(clip: Clipboard | null = null, getData = true, shouldDuplic
         return
     }
 
-    if (get(selected).id) copyData = get(selected)
+    // clone: the copy actions below replace .data, which must not change the current selection
+    if (get(selected).id) copyData = clone(get(selected))
     else if (get(activeEdit).items?.length) copyData = { id: "item", data: get(activeEdit) }
     else if (get(activePage) === "stage" && get(activeStage).items?.length) {
         copyData = { id: "stage_item", data: get(activeStage) }
@@ -658,13 +659,15 @@ const pasteActions = {
         const projectId = isTemplate ? get(editingProjectTemplate) : get(activeProject)
         if (!projectId || !data?.length) return
 
-        const store = isTemplate ? projectTemplates : projects
-        store.update((a) => {
-            if (!a[projectId]?.shows) return a
-            a[projectId].shows.push(...data)
-            a[projectId].modified = Date.now()
-            return a
-        })
+        const currentProject = isTemplate ? get(projectTemplates)[projectId] : get(projects)[projectId]
+        if (!currentProject?.shows) return
+        const projectShows = clone(currentProject.shows)
+
+        // insert after the selected item (like a file manager), or at the end
+        const insertAt = getPasteIndex(get(selected), "show", projectShows.length)
+        projectShows.splice(insertAt, 0, ...clone(data))
+        // through history so it can be undone
+        history({ id: "UPDATE", newData: { key: "shows", data: projectShows }, oldData: { id: projectId }, location: { page: "show", id: isTemplate ? "project_template" : "project_ref" } })
     },
     stage_item: (data: any) => {
         const stageId = get(activeStage).id
