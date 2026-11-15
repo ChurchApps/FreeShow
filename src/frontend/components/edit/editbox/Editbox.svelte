@@ -4,7 +4,6 @@
     import { startResizing } from "../../../utils/cursor"
     import { translateText } from "../../../utils/language"
     import { getAccess } from "../../../utils/profile"
-    import { isComposing } from "../../../utils/shortcuts"
     import { deleteAction } from "../../helpers/clipboard"
     import { isCroppedItem } from "../../helpers/cropping"
     import { history } from "../../helpers/history"
@@ -136,7 +135,6 @@
     function keydown(e: KeyboardEvent) {
         if (e.key === "Shift") isShiftPressed = true
 
-        if (isComposing(e)) return
         if (cropElem?.handleKeydown(e)) return
 
         if (e.key === "Escape") {

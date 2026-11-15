@@ -161,7 +161,7 @@ export function keydown(e: KeyboardEvent) {
         return
     }
 
-    if (isComposing(e)) return
+    // keys typed while an IME is composing never get here (stopped in main.ts)
     if (get(guideActive)) return
 
     // clicking e.g. "Show" tab button will focus that making number tab change not work
