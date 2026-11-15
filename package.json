@@ -16,7 +16,7 @@
         "tar": "^7.5.20"
     },
     "scripts": {
-        "postinstall": "electron-builder install-app-deps",
+        "postinstall": "electron-builder install-app-deps && node scripts/patchSlideshow.js",
         "rebuild-opus": "electron-rebuild -f -o @discordjs/opus && node scripts/opus.js",
         "---DEVELOPMENT---": "",
         "start": "node scripts/start.js",

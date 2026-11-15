@@ -1624,6 +1624,8 @@
         "try_again": "Try again",
         "restart": "Restart",
         "start": "Start",
+        "presenter_view": "Use Presenter View",
+        "presenter_view_tip": "Open PowerPoint in Presenter View (notes and next slide on one screen). Only available for PowerPoint on Windows.",
         "choose_window": "Please select a window"
     },
     "transition": {

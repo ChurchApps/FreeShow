@@ -47,6 +47,13 @@
         if (!windows.length) windows = a.filter((a) => a.name.includes(removeExtension(fileName)) && a.name.includes(appName))
         if (!windows.length) windows = a.filter((a) => a.name.toLowerCase().includes(appName.toLowerCase()) || a.name.toLowerCase().includes(removeExtension(fileName).toLowerCase()))
 
+        // when using Presenter View there are two windows: prefer the slide show window for the preview
+        // (the window title may be localized, so if nothing else is left the user can still choose manually)
+        if (windows.length > 1) {
+            const withoutPresenterView = windows.filter((a) => !a.name.toLowerCase().includes("presenter"))
+            if (withoutPresenterView.length) windows = withoutPresenterView
+        }
+
         if (windows.length === 1) {
             selectWindow(windows[0])
         } else if (windows.length > 1) {

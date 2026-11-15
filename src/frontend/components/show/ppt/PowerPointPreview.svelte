@@ -11,6 +11,7 @@
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import Dropdown from "../../inputs/Dropdown.svelte"
+    import MaterialCheckbox from "../../inputs/MaterialCheckbox.svelte"
     import { clearBackground, clearSlide } from "../../output/clear"
     import Center from "../../system/Center.svelte"
     import ScreenCapture from "./ScreenCapture.svelte"
@@ -23,6 +24,9 @@
         requestMain(Main.SLIDESHOW_GET_APPS, undefined, (a) => presentationApps.set(a || []))
     })
 
+    // Presenter View is only supported when controlling PowerPoint on Windows
+    $: canUsePresenterView = $os.platform === "win32" && ($special.presentationApp || "PowerPoint") === "PowerPoint"
+
     let opening = false
     let retry = false
     function newPresentation() {
@@ -31,7 +35,7 @@
         reset()
         opening = true
 
-        sendMain(Main.START_SLIDESHOW, { path: show.id, program: $special.presentationApp || "PowerPoint" })
+        sendMain(Main.START_SLIDESHOW, { path: show.id, program: $special.presentationApp || "PowerPoint", presenterView: canUsePresenterView && !!$special.presentationPresenterView })
         clearSlide()
 
         setTimeout(() => (opening ? (retry = true) : ""), 8000)
@@ -126,6 +130,20 @@
                 })
             }}
         />
+
+        {#if canUsePresenterView}
+            <MaterialCheckbox
+                label="presentation_control.presenter_view"
+                title="presentation_control.presenter_view_tip"
+                checked={!!$special.presentationPresenterView}
+                on:change={(e) => {
+                    special.update((a) => {
+                        a.presentationPresenterView = e.detail
+                        return a
+                    })
+                }}
+            />
+        {/if}
 
         <div class="fill">
             <Button on:click={newPresentation} style="font-size: 4em;width: 100%;" center>

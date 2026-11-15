@@ -232,7 +232,7 @@ export interface MainSendPayloads {
     // [Main.MEDIA_BASE64]: { id: string; path: string }[]
     [Main.READ_AUDIO_METADATA]: { filePath: string }
     [Main.CAPTURE_SLIDE]: { output: { [key: string]: Output }; resolution: Resolution }
-    [Main.START_SLIDESHOW]: { path: string; program: string }
+    [Main.START_SLIDESHOW]: { path: string; program: string; presenterView?: boolean }
     [Main.PRESENTATION_CONTROL]: { action: string }
     [Main.START]: { ports: { [key: string]: number }; max: number; disabled: { [key: string]: boolean }; data: { [key: string]: ServerData } }
     [Main.SERVER_DATA]: { [key: string]: any }

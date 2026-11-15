@@ -19,11 +19,11 @@ export function getPresentationApplications() {
 
 let alwaysOnTopDisabled: string[] = []
 let starting = false
-export async function startSlideshow(data: { path: string; program: string }) {
+export async function startSlideshow(data: { path: string; program: string; presenterView?: boolean }) {
     if (closing || starting) return
     starting = true
 
-    await initPresentation(data.path, data.program.toLowerCase().replaceAll(" ", ""))
+    await initPresentation(data.path, data.program.toLowerCase().replaceAll(" ", ""), !!data.presenterView)
 
     if (alwaysOnTopDisabled.length) return
     OutputHelper.getAllOutputs().forEach((output) => {
@@ -76,7 +76,7 @@ function stopSlideshow() {
 
 let currentSlideshow: Slideshow | null = null
 let openedPresentation = ""
-async function initPresentation(path: string, program = "powerpoint") {
+async function initPresentation(path: string, program = "powerpoint", presenterView = false) {
     if (currentSlideshow) {
         try {
             await currentSlideshow.stop()
@@ -149,7 +149,8 @@ async function initPresentation(path: string, program = "powerpoint") {
     openedPresentation = path
 
     try {
-        await currentSlideshow.start()
+        // presenter view is only supported by the PowerPoint connector on Windows (patched by scripts/patchSlideshow.js)
+        await currentSlideshow.start(presenterView)
     } catch (err) {
         console.error("START", err)
         if (err === "still no active presentation") {

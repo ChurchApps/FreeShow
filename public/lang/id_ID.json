@@ -1496,6 +1496,8 @@
         "try_again": "Coba lagi",
         "restart": "Restart",
         "start": "Mulai",
+        "presenter_view": "Gunakan Presenter View",
+        "presenter_view_tip": "Buka PowerPoint dalam Presenter View (catatan dan slide berikutnya di satu layar). Hanya tersedia untuk PowerPoint di Windows.",
         "choose_window": "Silakan pilih jendela"
     },
     "transition": {
