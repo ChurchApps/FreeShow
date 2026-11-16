@@ -14,7 +14,7 @@ import { wait, waitUntilValueIsDefined } from "./common"
 import { getDefaultElements } from "./createData"
 import { setLanguage } from "./language"
 import { storeSubscriber } from "./listeners"
-import { startPcoPlanChangeWatcher } from "./pcoPlanSync"
+import { isPcoPlaceholderMode, startPcoPlanChangeWatcher } from "./pcoPlanSync"
 import { autoOpenLastUsedProfile, openProfileByName } from "./profile"
 import { receiveOUTPUTasOUTPUT, remoteListen, setupMainReceivers } from "./receivers"
 import { renderSignatureHook } from "./renderSignature"
@@ -166,7 +166,7 @@ export async function contentProviderSync(startup = false, remainingOnly = false
     }
 
     const providers = [
-        { providerId: "planningcenter" as ContentProviderId, scope: "services", data: { syncFolderIds: get(contentProviderData).planningcenter?.syncFolderIds || [], songOrigin: get(contentProviderData).planningcenter?.songOrigin || "" }, autoSync: get(contentProviderData).planningcenter?.autoSync !== false },
+        { providerId: "planningcenter" as ContentProviderId, scope: "services", data: { syncFolderIds: get(contentProviderData).planningcenter?.syncFolderIds || [], placeholderMode: isPcoPlaceholderMode() }, autoSync: get(contentProviderData).planningcenter?.autoSync !== false },
         { providerId: "churchApps" as ContentProviderId, scope: "plans", data: { shows: get(shows), categories: get(contentProviderData).churchApps?.syncCategories || [] } },
         { providerId: "amazinglife" as ContentProviderId, scope: "openid profile email" },
         { providerId: "onstage" as ContentProviderId, scope: "presenter", data: get(contentProviderData).onstage || {}, autoSync: get(contentProviderData).onstage?.autoSync !== false }

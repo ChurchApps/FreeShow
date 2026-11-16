@@ -399,9 +399,8 @@ async function getServiceTypesForFolders(rawFolders: PCOFolder[], syncFolderIds:
     return (results.flat() as ServiceType[]).filter((st) => st?.id && !seen.has(st.id) && !!seen.add(st.id))
 }
 
-export async function pcoLoadServices(syncFolderIds?: string[], songOrigin?: string) {
-    // "placeholder": don't fetch full song data, the frontend only needs names to match local shows
-    const placeholderMode = songOrigin === "placeholder"
+// placeholderMode: don't fetch full song data, the frontend only needs names to match local shows
+export async function pcoLoadServices(syncFolderIds?: string[], placeholderMode = false) {
     let serviceTypes: ServiceType[]
 
     if (syncFolderIds?.length) {
