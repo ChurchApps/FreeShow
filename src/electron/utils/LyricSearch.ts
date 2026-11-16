@@ -151,8 +151,7 @@ export class LyricSearch {
     private static getLetras = async (song: LyricSearchResult) => {
         try {
             const url = `https://www.letras.mus.br/${song.key}`
-            const response = await axios.get(url, { timeout: 10000 })
-            const html = await response.data
+            const html = await LyricSearch.ugFetch(url)
             if (typeof html !== "string") return ""
             return this.getLyricFromHtml(html, /<div class=\"lyric-original\">([\s\S]*?)<\/div>/g)
         } catch (err) {
