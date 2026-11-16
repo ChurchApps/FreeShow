@@ -5,6 +5,7 @@
     import { requestMain, sendMain } from "../../../IPC/main"
     import { activePage, activePopup, activeShow, activeTriggerFunction, cloudSyncData, connections, contentProviderData, disabledServers, maxConnections, notFound, obsData, outputs, popupData, ports, projectTemplates, providerConnections, saved, serverData, special } from "../../../stores"
     import { translateText } from "../../../utils/language"
+    import { checkPcoPlanChanges } from "../../../utils/pcoPlanSync"
     import { startRemoteController, stopRemoteController } from "../../../utils/remoteController"
     import { contentProviderSync } from "../../../utils/startup"
     import { keysToID, sortByName } from "../../helpers/array"
@@ -121,7 +122,7 @@
                 }
             }
 
-            const data = providerId === "planningcenter" ? { syncFolderIds: $contentProviderData.planningcenter?.syncFolderIds || [] } : undefined
+            const data = providerId === "planningcenter" ? { syncFolderIds: $contentProviderData.planningcenter?.syncFolderIds || [], songOrigin: $contentProviderData.planningcenter?.songOrigin || "" } : undefined
             sendMain(Main.PROVIDER_LOAD_SERVICES, { providerId, cloudOnly: cloudOnly[providerId] || false, data })
         } else {
             if ($cloudSyncData.enabled && providerId === $cloudSyncData.id) {
@@ -168,6 +169,8 @@
         { value: "local", label: "Always use local instance" },
         { value: "online", label: "Always use online instance" }
     ]
+    // Planning Center only: never import shows, only match local shows by name (see PROVIDER_PROJECTS handler)
+    $: pcoOriginOptions = [...providerOriginOptions, { value: "placeholder", label: "Only match local (create placeholders)" }]
 
     // OnStage
 
@@ -323,6 +326,15 @@
         </MaterialButton>
     </InputRow>
 
+    <InputRow>
+        <MaterialButton icon="add" on:click={() => activePopup.set("pco_picker")} style="flex: 1;">
+            <T id="settings.pco_get_plan" />
+        </MaterialButton>
+        <MaterialButton icon="refresh" on:click={() => checkPcoPlanChanges(true)}>
+            <T id="settings.pco_check_changes" />
+        </MaterialButton>
+    </InputRow>
+
     <MaterialToggleSwitch label="settings.auto_sync_startup" checked={$contentProviderData.planningcenter?.autoSync !== false} on:change={(e) => updateProvider("planningcenter", "autoSync", e.detail)} />
 
     {#if $contentProviderData.planningcenter?.autoSync !== false}
@@ -334,7 +346,7 @@
         </InputRow>
     {/if}
 
-    <MaterialDropdown label="Song origin" options={providerOriginOptions} value={$contentProviderData.planningcenter?.songOrigin || ""} on:change={(e) => updateProvider("planningcenter", "songOrigin", e.detail)} />
+    <MaterialDropdown label="Song origin" options={pcoOriginOptions} value={$contentProviderData.planningcenter?.songOrigin || ""} on:change={(e) => updateProvider("planningcenter", "songOrigin", e.detail)} />
     {#if Object.keys($projectTemplates).length}
         <MaterialDropdown label="actions.project_template" options={projectTemplateOptions} value={$contentProviderData.planningcenter?.projectTemplate || ""} on:change={(e) => updateProvider("planningcenter", "projectTemplate", e.detail)} />
     {/if}

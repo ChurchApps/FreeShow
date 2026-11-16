@@ -1,4 +1,5 @@
 import { get } from "svelte/store"
+import { uid } from "uid"
 import type { ContentProviderId } from "../../electron/contentProviders/base/types"
 import type { ToMainSendPayloads } from "../../types/IPC/ToMain"
 import { ToMain } from "../../types/IPC/ToMain"
@@ -91,6 +92,7 @@ import {
 import { setupCloudSync } from "../utils/cloudSync"
 import { newToast } from "../utils/common"
 import { translateText } from "../utils/language"
+import { checkPcoPlanChanges } from "../utils/pcoPlanSync"
 import { confirmCustom } from "../utils/popup"
 import { getProviderItemLink, setProviderItemLink, syncProviderItemLinks } from "../utils/providerItemLinks"
 import { initializeClosing, saveComplete } from "../utils/save"
@@ -353,17 +355,12 @@ export const mainResponses: MainResponses = {
                 setTimeout(() => setupCloudSync(false), 1000)
             }
         }
+
+        // check if already imported Planning Center plans have changed online
+        if (data.providerId === "planningcenter") setTimeout(() => checkPcoPlanChanges(), 2000)
     },
     [ToMain.PROVIDER_PROJECTS]: async (data) => {
         if (!data.projects) return
-
-        // Planning Center items are seperated into multiple categories based on the type: Songs (default) & Regular items (generic)
-        if (data.providerId === "planningcenter" && data.shows.some((a) => a.category === "planning_center_generic")) {
-            createCategory("Planning Center (Generic)", "presentation")
-        }
-
-        // CREATE CATEGORY
-        createCategory(data.categoryName)
 
         const replaceIds: { [key: string]: string } = {}
         const allShows = keysToID(get(shows))
@@ -372,6 +369,21 @@ export const mainResponses: MainResponses = {
 
         // migrate legacy links & remove links to deleted shows
         await syncProviderItemLinks(data.providerId)
+
+        // "placeholder" origin: Planning Center only — never import provider shows, only match local
+        // shows by name and insert a show_placeholder project item where no local show matches
+        const placeholderMode = data.providerId === "planningcenter" && songOrigin === "placeholder"
+        const providerShowName = new Map<string, string>((data.shows || []).map((s: any) => [s.id, s.name] as [string, string]))
+
+        if (!placeholderMode) {
+            // Planning Center items are seperated into multiple categories based on the type: Songs (default) & Regular items (generic)
+            if (data.providerId === "planningcenter" && data.shows.some((a) => a.category === "planning_center_generic")) {
+                createCategory("Planning Center (Generic)", "presentation")
+            }
+
+            // CREATE CATEGORY
+            createCategory(data.categoryName)
+        }
 
         function updateExistingShow(showId: string) {
             shows.update((a) => {
@@ -394,6 +406,28 @@ export const mainResponses: MainResponses = {
         const tempShows: { id: string; show: Show }[] = []
         for (const show of data.shows) {
             const id = show.id
+
+            if (placeholderMode) {
+                // find a local show linked to this provider id
+                const link = getProviderItemLink(data.providerId, id)
+                const linkedShow = allShows.find(({ id: showId }) => showId === (link?.showId || id))
+                if (linkedShow) {
+                    replaceIds[id] = linkedShow.id
+                    continue
+                }
+
+                // else match a local show by name
+                const showName = show?.name?.toLowerCase() || ""
+                const existingShow = showName && allShows.find(({ id: existingId, name }) => existingId !== id && name?.toLowerCase() === showName)
+                if (existingShow) {
+                    replaceIds[id] = existingShow.id
+                    // link the local show so future syncs stay matched even if it gets renamed
+                    // keep the local show's own origin, so it is never treated as provider managed
+                    setProviderItemLink(data.providerId, id, existingShow.id, "local")
+                }
+                // no match -> left unmapped, becomes a show_placeholder project item below
+                continue
+            }
 
             // if empty content and name is a scripture reference, generate slides from the active scripture
             const isEmptyContent = Object.keys(show.slides || {}).length === 0
@@ -480,7 +514,8 @@ export const mainResponses: MainResponses = {
                 tempShows.push({ id: showId, show: { ...show, origin, name: checkName(show.name, showId) } })
             }
         }
-        setTempShows(tempShows)
+        // in placeholder mode provider shows are never imported (only matched local shows get linked)
+        if (!placeholderMode) setTempShows(tempShows)
 
         function createProviderProject(providerId: ContentProviderId, projectBase: Project) {
             const templateId = get(contentProviderData)[providerId]?.projectTemplate || ""
@@ -541,7 +576,16 @@ export const mainResponses: MainResponses = {
             const project = createProviderProject(data.providerId, projectBase)
 
             // REPLACE IDS
-            project.shows = project.shows.map((a) => ({ ...a, id: replaceIds[a.id] || a.id }))
+            project.shows = project.shows.map((a) => {
+                const mappedId = replaceIds[a.id] || a.id
+
+                // in placeholder mode, unmatched provider shows become a show_placeholder item
+                if (placeholderMode && a.type === "show" && !get(shows)[mappedId]) {
+                    return { type: "show_placeholder", id: uid(5), name: providerShowName.get(a.id) || a.name || "—", scheduleLength: a.scheduleLength }
+                }
+
+                return { ...a, id: mappedId }
+            })
 
             const projectId = currentProject.id
             if (!allProjects[projectId] || allProjects[projectId].deleted) createdProjectIds.push(projectId)

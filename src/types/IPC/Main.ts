@@ -160,6 +160,7 @@ export enum Main {
     PCO_PUSHER_AUTH = "PCO_PUSHER_AUTH",
     PCO_FETCH_SERVICE_TREE = "PCO_FETCH_SERVICE_TREE",
     PCO_LOAD_PLAN = "PCO_LOAD_PLAN",
+    PCO_CHECK_PLANS = "PCO_CHECK_PLANS",
     ONSTAGE_LOAD_SERVICE = "ONSTAGE_LOAD_SERVICE",
     ONSTAGE_GET_TEAMS = "ONSTAGE_GET_TEAMS",
     ONSTAGE_SWITCH_TEAM = "ONSTAGE_SWITCH_TEAM",
@@ -277,6 +278,7 @@ export interface MainSendPayloads {
     [Main.PCO_PUSHER_AUTH]: { socketId: string; channelName: string; serviceTypeId: string }
     [Main.PCO_FETCH_SERVICE_TREE]: undefined
     [Main.PCO_LOAD_PLAN]: { serviceTypeId: string; planId: string }
+    [Main.PCO_CHECK_PLANS]: { plans: { serviceTypeId: string; planId: string }[] }
     [Main.ONSTAGE_LOAD_SERVICE]: { serviceId: string; data?: any }
     [Main.ONSTAGE_GET_TEAMS]: undefined
     [Main.ONSTAGE_SWITCH_TEAM]: { teamId: string }
@@ -390,6 +392,7 @@ export interface MainReturnPayloads {
     [Main.PROVIDER_DISCONNECT]: { success: boolean }
     [Main.PROVIDER_FETCH_FOLDERS]: Promise<PCOFolderTreeNode[]>
     [Main.PCO_FETCH_SERVICE_TREE]: Promise<PCOFolderTreeNode[]>
+    [Main.PCO_CHECK_PLANS]: Promise<{ planId: string; updatedAt: string; itemsCount: number; missing?: boolean }[]>
     [Main.PCO_LIVE_GET]: Promise<{ liveId: string | null; liveChannel: string | null; orgId: string | null; liveStartAt: string | null; liveEndAt: string | null; length: number | null; isPreService: boolean; serviceStartAt: string | null; serviceEndAt: string | null } | null>
     [Main.PCO_PUSHER_AUTH]: Promise<{ auth: string; channel_data?: string } | null>
     [Main.ONSTAGE_GET_TEAMS]: Promise<{ id: string; name: string; current: boolean }[]>

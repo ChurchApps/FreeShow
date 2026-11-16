@@ -185,6 +185,14 @@ export class ContentProviderRegistry {
     }
 
     /**
+     * Lightweight check of PCO plans for remote changes (updated_at / items_count only)
+     */
+    static async checkPcoPlans(plans: { serviceTypeId: string; planId: string }[]): Promise<{ planId: string; updatedAt: string; itemsCount: number; missing?: boolean }[]> {
+        this.ensureInitialized()
+        return this.getProvider<PlanningCenterProvider>("planningcenter")?.checkPlans?.(plans) ?? []
+    }
+
+    /**
      * Get PCO Live countdown data for a specific plan
      */
     static async getPcoLiveData(serviceTypeId: string, planId: string): Promise<PCOLiveData | null> {
