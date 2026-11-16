@@ -325,10 +325,7 @@
     </InputRow>
 
     <InputRow>
-        <MaterialButton icon="add" on:click={() => activePopup.set("pco_picker")} style="flex: 1;">
-            <T id="settings.pco_get_plan" />
-        </MaterialButton>
-        <MaterialButton icon="refresh" on:click={() => checkPcoPlanChanges(true)}>
+        <MaterialButton icon="refresh" on:click={() => checkPcoPlanChanges(true)} style="flex: 1;">
             <T id="settings.pco_check_changes" />
         </MaterialButton>
     </InputRow>
