@@ -92,7 +92,7 @@ import {
 import { setupCloudSync } from "../utils/cloudSync"
 import { newToast } from "../utils/common"
 import { translateText } from "../utils/language"
-import { checkPcoPlanChanges, isPcoPlaceholderMode } from "../utils/pcoPlanSync"
+import { checkPcoPlanChanges } from "../utils/pcoPlanSync"
 import { confirmCustom } from "../utils/popup"
 import { getProviderItemLink, setProviderItemLink, syncProviderItemLinks } from "../utils/providerItemLinks"
 import { initializeClosing, saveComplete } from "../utils/save"
@@ -370,9 +370,9 @@ export const mainResponses: MainResponses = {
         // migrate legacy links & remove links to deleted shows
         await syncProviderItemLinks(data.providerId)
 
-        // "Don't create shows" (Planning Center only, with "Always use local"): never import provider shows,
-        // only match local shows by name and insert a show_placeholder project item where no local show matches
-        const placeholderMode = data.providerId === "planningcenter" && isPcoPlaceholderMode()
+        // "placeholder" origin: Planning Center only — never import provider shows, only match local
+        // shows by name and insert a show_placeholder project item where no local show matches
+        const placeholderMode = data.providerId === "planningcenter" && songOrigin === "placeholder"
         const providerShowName = new Map<string, string>((data.shows || []).map((s: any) => [s.id, s.name] as [string, string]))
 
         if (!placeholderMode) {

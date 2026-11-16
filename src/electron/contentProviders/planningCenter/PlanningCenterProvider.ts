@@ -18,7 +18,7 @@ export interface PCOAuthData {
 }
 
 /** Accepts the legacy raw syncFolderIds array or the current options object */
-function normalizePcoLoadOptions(data?: { syncFolderIds?: string[]; placeholderMode?: boolean } | string[]): { syncFolderIds?: string[]; placeholderMode?: boolean } {
+function normalizePcoLoadOptions(data?: { syncFolderIds?: string[]; songOrigin?: string } | string[]): { syncFolderIds?: string[]; songOrigin?: string } {
     if (Array.isArray(data)) return { syncFolderIds: data }
     return data || {}
 }
@@ -61,9 +61,9 @@ export class PlanningCenterProvider extends ContentProvider<PCOScopes, PCOAuthDa
         return pcoRequest(data)
     }
 
-    async loadServices(data?: { syncFolderIds?: string[]; placeholderMode?: boolean } | string[]): Promise<void> {
+    async loadServices(data?: { syncFolderIds?: string[]; songOrigin?: string } | string[]): Promise<void> {
         const opts = normalizePcoLoadOptions(data)
-        return pcoLoadServices(opts.syncFolderIds, opts.placeholderMode)
+        return pcoLoadServices(opts.syncFolderIds, opts.songOrigin)
     }
 
     async fetchFolderTree(): Promise<PCOFolderTreeNode[]> {
@@ -90,10 +90,10 @@ export class PlanningCenterProvider extends ContentProvider<PCOScopes, PCOAuthDa
         return pcoGetPusherAuth(socketId, channelName, serviceTypeId)
     }
 
-    async startupLoad(scope: PCOScopes, data?: { syncFolderIds?: string[]; placeholderMode?: boolean } | string[]): Promise<void> {
+    async startupLoad(scope: PCOScopes, data?: { syncFolderIds?: string[]; songOrigin?: string } | string[]): Promise<void> {
         pcoInitialize()
         const opts = normalizePcoLoadOptions(data)
-        return pcoStartupLoad(scope, opts.syncFolderIds, opts.placeholderMode)
+        return pcoStartupLoad(scope, opts.syncFolderIds, opts.songOrigin)
     }
 
     protected handleAuthCallback(_req: any, _res: any): void {

@@ -14,13 +14,6 @@ export interface PcoAvailablePlan {
     remoteItemsCount?: number
 }
 
-// "Don't create shows" only applies together with "Always use local instance":
-// provider shows are never imported, local shows are matched by name and unmatched items become placeholders
-export function isPcoPlaceholderMode(): boolean {
-    const pco = get(contentProviderData).planningcenter
-    return pco?.songOrigin === "local" && !!pco?.noNewShows
-}
-
 const PCO_CHECK_INTERVAL_MS = 5 * 60 * 1000
 
 let checkInterval: ReturnType<typeof setInterval> | null = null

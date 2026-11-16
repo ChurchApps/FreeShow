@@ -5,7 +5,7 @@
     import { requestMain, sendMain } from "../../../IPC/main"
     import { activePage, activePopup, activeShow, activeTriggerFunction, cloudSyncData, connections, contentProviderData, disabledServers, maxConnections, notFound, obsData, outputs, popupData, ports, projectTemplates, providerConnections, saved, serverData, special } from "../../../stores"
     import { translateText } from "../../../utils/language"
-    import { checkPcoPlanChanges, isPcoPlaceholderMode } from "../../../utils/pcoPlanSync"
+    import { checkPcoPlanChanges } from "../../../utils/pcoPlanSync"
     import { startRemoteController, stopRemoteController } from "../../../utils/remoteController"
     import { contentProviderSync } from "../../../utils/startup"
     import { keysToID, sortByName } from "../../helpers/array"
@@ -122,7 +122,7 @@
                 }
             }
 
-            const data = providerId === "planningcenter" ? { syncFolderIds: $contentProviderData.planningcenter?.syncFolderIds || [], placeholderMode: isPcoPlaceholderMode() } : undefined
+            const data = providerId === "planningcenter" ? { syncFolderIds: $contentProviderData.planningcenter?.syncFolderIds || [], songOrigin: $contentProviderData.planningcenter?.songOrigin || "" } : undefined
             sendMain(Main.PROVIDER_LOAD_SERVICES, { providerId, cloudOnly: cloudOnly[providerId] || false, data })
         } else {
             if ($cloudSyncData.enabled && providerId === $cloudSyncData.id) {
@@ -169,6 +169,8 @@
         { value: "local", label: "Always use local instance" },
         { value: "online", label: "Always use online instance" }
     ]
+    // Planning Center only: never import shows, only match local shows by name (see PROVIDER_PROJECTS handler)
+    $: pcoOriginOptions = [...providerOriginOptions, { value: "placeholder", label: "Only match local (create placeholders)" }]
 
     // OnStage
 
@@ -341,11 +343,7 @@
         </InputRow>
     {/if}
 
-    <MaterialDropdown label="Song origin" options={providerOriginOptions} value={$contentProviderData.planningcenter?.songOrigin || ""} on:change={(e) => updateProvider("planningcenter", "songOrigin", e.detail)} />
-    {#if $contentProviderData.planningcenter?.songOrigin === "local"}
-        <!-- never import songs from Planning Center: match local shows by name, insert placeholders where nothing matches -->
-        <MaterialToggleSwitch label="Don't create shows (use placeholders when there is no local match)" checked={!!$contentProviderData.planningcenter?.noNewShows} on:change={(e) => updateProvider("planningcenter", "noNewShows", e.detail)} />
-    {/if}
+    <MaterialDropdown label="Song origin" options={pcoOriginOptions} value={$contentProviderData.planningcenter?.songOrigin || ""} on:change={(e) => updateProvider("planningcenter", "songOrigin", e.detail)} />
     {#if Object.keys($projectTemplates).length}
         <MaterialDropdown label="actions.project_template" options={projectTemplateOptions} value={$contentProviderData.planningcenter?.projectTemplate || ""} on:change={(e) => updateProvider("planningcenter", "projectTemplate", e.detail)} />
     {/if}
