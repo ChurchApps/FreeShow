@@ -19,6 +19,7 @@ import { receiveOUTPUTasOUTPUT, remoteListen, setupMainReceivers } from "./recei
 import { renderSignatureHook } from "./renderSignature"
 import { destroy, receive, send, setBeforeOutputSend } from "./request"
 import { save, unsavedUpdater } from "./save"
+import { initImeGuards } from "./shortcuts"
 
 let initialized = false
 let startupProfile = ""
@@ -62,6 +63,7 @@ export async function startup() {
 async function startupMain() {
     setLanguage("", true)
     setupMainReceivers()
+    initImeGuards()
     getMainData()
 
     await wait(50)
