@@ -5,7 +5,7 @@
     import { copySlideLayoutProperties, splitCustomDynamicValues } from "../../../show/slides"
     import { activeEdit, activeShow, activeStage, isOptimizedMode, overlays, redoHistory, refreshListBoxes, showsCache, stageShows, templates } from "../../../stores"
     import { newToast } from "../../../utils/common"
-    import { getNormalizedKey, isComposing, isFormattingKey } from "../../../utils/shortcuts"
+    import { getNormalizedKey, isFormattingKey } from "../../../utils/shortcuts"
     import T from "../../helpers/T.svelte"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -140,8 +140,6 @@
     }
 
     function keydown(e: KeyboardEvent) {
-        if (isComposing(e)) return
-
         if (e.key === "Enter" && e.shiftKey) {
             // by default the browser contenteditable will add a <br> instead of our custom <span class="break"> when pressing SHIFT
             // so just prevent shift break!
@@ -666,7 +664,7 @@
     }
 
     function textElemKeydown(e: KeyboardEvent) {
-        if ((e.key === "Enter" || e.key === "Backspace" || e.key === "Delete") && !isComposing(e)) {
+        if (e.key === "Enter" || e.key === "Backspace" || e.key === "Delete") {
             recentKeyboardLineMutationAt = Date.now()
         }
 
