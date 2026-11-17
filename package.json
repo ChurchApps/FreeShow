@@ -96,7 +96,7 @@
         "eslint-plugin-svelte3": "^4.0.0",
         "firebase": "^12.15.0",
         "npm-run-all2": "^9.0.1",
-        "pdfjs-dist": "^5.4.296",
+        "pdfjs-dist": "^6.5.438",
         "playwright": "^1.56.1",
         "prettier": "^3.6.2",
         "prettier-plugin-svelte": "^3.4.0",

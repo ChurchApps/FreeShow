@@ -130,7 +130,7 @@
         currentPath = loadPath
 
         try {
-            loadingTask = getDocument(loadPath)
+            loadingTask = getDocument({ url: loadPath })
             const pdfDoc = await loadingTask.promise
             if (currentPath !== loadPath) return
 

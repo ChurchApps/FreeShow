@@ -247,7 +247,7 @@ export async function playPdf(data: OutSlide | null, next: boolean, loop = false
     const targetId = located?.path || data.id
 
     GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
-    const loadingTask = getDocument(encodeFilePath(targetId))
+    const loadingTask = getDocument({ url: encodeFilePath(targetId) })
     const pdfDoc = await loadingTask.promise
     const pages = pdfDoc.numPages
 

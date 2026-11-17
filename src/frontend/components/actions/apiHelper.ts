@@ -182,7 +182,7 @@ export async function startProjectItemByName(name: string) {
     } else if (item.type === "pdf") {
         // get PDF data
         GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
-        const loadingTask = getDocument(encodeFilePath(item.id))
+        const loadingTask = getDocument({ url: encodeFilePath(item.id) })
         const pdfDoc = await loadingTask.promise
         const pages = pdfDoc.numPages
 
@@ -1097,7 +1097,7 @@ export async function getPDFThumbnails({ path, data }: API_media) {
     const totalPercent = 100
 
     GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
-    const loadingTask = getDocument(encodeFilePath(path))
+    const loadingTask = getDocument({ url: encodeFilePath(path) })
     const pdfDoc = await loadingTask.promise
     const pageCount = pdfDoc.numPages
 
