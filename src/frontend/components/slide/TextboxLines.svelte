@@ -1,7 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher, onDestroy, onMount } from "svelte"
     import type { Styles } from "../../../types/Settings"
-    import type { Item, TemplateStyleOverride } from "../../../types/Show"
+    import type { Item, Line, TemplateStyleOverride } from "../../../types/Show"
     import { createVirtualBreaks } from "../../show/slides"
     import { outputs, slidesOptions, styles, variables } from "../../stores"
     import { getItemText } from "../edit/scripts/textStyle"
@@ -11,6 +11,7 @@
     import { getStyles } from "../helpers/style"
     import { calculateShapeVerticalOffset, getShapeFloatSide } from "../edit/scripts/shapeOutside"
     import { applyStyleOverrides } from "./wordOverride"
+    import { hasVisibleLineText } from "./lineBackground"
 
     export let item: Item
     export let slideIndex = 0
@@ -319,6 +320,10 @@
         return newValue
     }
 
+    function hasLineText(line: Line, lineIndex: number, updater: number): boolean {
+        return !!line.text?.some((text, textIndex) => hasVisibleLineText(getTextValue(text.value || "", lineIndex, textIndex, updater)))
+    }
+
     // UPDATE DYNAMIC VALUES e.g. {time_} EVERY SECOND
     // & update instantly when variables or item change
     $: slideText = getItemText(item)
@@ -399,7 +404,7 @@
                                         class:normalWrap={normalWrap || (isStage ? typeof stageItem?.style === "string" && (stageItem?.style.includes("justify") || stageItem?.style.includes("nowrap")) : line.align?.includes("justify") || line.align?.includes("left") || JSON.stringify(line).includes("nowrap"))}
                                         class:reveal={(centerPreview || isStage) && item?.lineReveal && revealed < i}
                                         class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")}
-                                        style="position: relative;{style ? lineStyle : ''}{style ? line.align : ''}{height ? `height: ${height}px;` : ''}{item?.list?.enabled && line.text?.reduce((value, t) => (value += t.value || ''), '')?.length ? listStyle : ''}{item?.list?.enabled ? `color: ${getStyles(line.text?.[0]?.style).color || ''};` : ''}{lineHidden && outputStyle?.showAsFaded ? `opacity: ${(outputStyle.lineOpacity ?? 50) / 100};` : ''}"
+                                        style="position: relative;{style && hasLineText(line, i, updateDynamic) ? lineStyle : ''}{style ? line.align : ''}{height ? `height: ${height}px;` : ''}{item?.list?.enabled && line.text?.reduce((value, t) => (value += t.value || ''), '')?.length ? listStyle : ''}{item?.list?.enabled ? `color: ${getStyles(line.text?.[0]?.style).color || ''};` : ''}{lineHidden && outputStyle?.showAsFaded ? `opacity: ${(outputStyle.lineOpacity ?? 50) / 100};` : ''}"
                                     >
                                         <!-- style Lines selection in center preview -->
                                         {#each highlighedLines || [] as box}
@@ -455,7 +460,7 @@
                             class:normalWrap={normalWrap || (isStage ? typeof stageItem?.style === "string" && (stageItem?.style.includes("justify") || stageItem?.style.includes("nowrap")) : line.align?.includes("justify") || line.align?.includes("left") || JSON.stringify(line).includes("nowrap"))}
                             class:reveal={(centerPreview || isStage) && item?.lineReveal && revealed < i}
                             class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")}
-                            style="position: relative;{style ? lineStyle : ''}{style ? line.align : ''}{height ? `height: ${height}px;` : ''}{item?.list?.enabled && line.text?.reduce((value, t) => (value += t.value || ''), '')?.length ? listStyle : ''}{item?.list?.enabled ? `color: ${getStyles(line.text?.[0]?.style).color || ''};` : ''}{lineHidden && outputStyle?.showAsFaded ? `opacity: ${(outputStyle.lineOpacity ?? 50) / 100};` : ''}"
+                            style="position: relative;{style && hasLineText(line, i, updateDynamic) ? lineStyle : ''}{style ? line.align : ''}{height ? `height: ${height}px;` : ''}{item?.list?.enabled && line.text?.reduce((value, t) => (value += t.value || ''), '')?.length ? listStyle : ''}{item?.list?.enabled ? `color: ${getStyles(line.text?.[0]?.style).color || ''};` : ''}{lineHidden && outputStyle?.showAsFaded ? `opacity: ${(outputStyle.lineOpacity ?? 50) / 100};` : ''}"
                         >
                             <!-- style Lines selection in center preview -->
                             {#each highlighedLines || [] as box}
