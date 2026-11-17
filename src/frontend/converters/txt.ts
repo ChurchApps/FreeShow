@@ -288,7 +288,7 @@ export function isHeaderLine(line: string, isFirstLineOfGroup: boolean = true): 
     // Bracket headers like [Verse] or [Intro]
     if (/^\[[^\]]+\]$/.test(trimmed)) {
         const inner = trimmed.slice(1, -1).trim()
-        if (inner === "|" || inner === "/" || inner.includes("|") || CHORD_EXACT_REGEX.test(inner)) return false
+        if (inner === "|" || inner === "/" || inner.includes("|") || CHORD_EXACT_REGEX.test(inner) || /^#\d+/.test(inner)) return false
         return true
     }
 
