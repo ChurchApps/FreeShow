@@ -377,6 +377,8 @@ export const mainResponses: MainResponses = {
 
         // placeholder mode does not download any shows, uses only local shows or creates placeholders
         const placeholderMode = songOrigin === "placeholder"
+        // names of the provider shows: the project items of a single plan load (e.g. re-sync) carry no name, only the shows do
+        const providerShowName = new Map<string, string>((data.shows || []).map((show) => [show.id, show.name]))
         if (!placeholderMode) {
             // Planning Center items are seperated into multiple categories based on the type: Songs (default) & Regular items (generic)
             if (data.providerId === "planningcenter" && data.shows.some((a) => a.category === "planning_center_generic")) {
@@ -572,7 +574,7 @@ export const mainResponses: MainResponses = {
 
                 // in placeholder mode, unmatched provider shows become a show_placeholder item
                 if (placeholderMode && a.type === "show" && !get(shows)[mappedId]) {
-                    return { type: "show_placeholder", id: uid(5), name: a.name || "—", scheduleLength: a.scheduleLength }
+                    return { type: "show_placeholder", id: uid(5), name: providerShowName.get(a.id) || a.name || "—", scheduleLength: a.scheduleLength }
                 }
 
                 return { ...a, id: mappedId }
