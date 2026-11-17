@@ -180,7 +180,12 @@ export const mainResponses: MainResponses = {
     // GPU health degradation notice (electron utils/gpu.ts, ~20s after start): verbose alert with what
     // happened, the implications, and concrete remediation. Composed here so every string is i18n'd.
     [ToMain.GPU_HEALTH]: (a) => {
+        if (get(activePopup) === "initialize") return
+
+        // don't inform about this "common" issue
         const compositing = a.issue === "compositing"
+        if (compositing) return
+
         let html = `<h3>${translateText(compositing ? "gpu.no_acceleration" : "gpu.no_video_decode")}</h3><p>${translateText(compositing ? "gpu.no_acceleration_info" : "gpu.no_video_decode_info")}</p>`
         if (a.permissionDenied) {
             html += `<p>User lacks permission to access graphics hardware. Run this, log out and back in:</p><pre style="user-select: text;">sudo usermod -a -G video,render $USER</pre>`
@@ -190,6 +195,7 @@ export const mainResponses: MainResponses = {
         } else {
             html += `<p>${translateText("gpu.update_drivers")}${a.vendorName ? ` (${a.vendorName})` : ""}</p>`
         }
+
         alertMessage.set(html)
         activePopup.set("alert")
     },
