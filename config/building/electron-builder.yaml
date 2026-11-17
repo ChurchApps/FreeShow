@@ -34,6 +34,8 @@ win:
         - "**/node_modules/libspotifyctl/**/*"
         - "**/node_modules/openmediatransport/**"
         - "**/node_modules/sherpa-onnx-*/**"
+        - "**/node_modules/node-hid/**/*.node"
+        - "**/assets/bin/hid-input-helper.exe"
     azureSignOptions:
         publisherName: Live Church Solutions
         endpoint: https://wus2.codesigning.azure.net/
@@ -52,6 +54,7 @@ linux:
         - "**/node_modules/macadam/**/*.node"
         - "**/node_modules/libltc-wrapper/**/*"
         - "**/node_modules/sherpa-onnx-*/**"
+        - "**/node_modules/node-hid/**/*.node"
     category: AudioVideo
     target:
         - AppImage
@@ -78,6 +81,7 @@ mac:
         - "**/node_modules/macadam/**/*.node"
         - "**/node_modules/openmediatransport/**"
         - "**/node_modules/sherpa-onnx-*/**"
+        - "**/node_modules/node-hid/**/*.node"
     target:
         - target: dmg
           arch:

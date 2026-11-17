@@ -4,9 +4,14 @@
     import { ToMain } from "../../../types/IPC/ToMain"
     import type { HidValues } from "../../../types/Show"
     import { destroyMain, receiveToMain, requestMain, sendMain } from "../../IPC/main"
+    import { special } from "../../stores"
+    import T from "../helpers/T.svelte"
+    import InputRow from "../input/InputRow.svelte"
+    import MaterialButton from "../inputs/MaterialButton.svelte"
     import MaterialDropdown from "../inputs/MaterialDropdown.svelte"
     import MaterialTextInput from "../inputs/MaterialTextInput.svelte"
     import MaterialToggleSwitch from "../inputs/MaterialToggleSwitch.svelte"
+    import { toggleHidInput } from "./apiHelper"
     import { activeHidPaths } from "./hid"
 
     export let value: HidValues = {}
@@ -47,10 +52,11 @@
         requestMain(Main.GET_HID_DEVICES, undefined, (data) => {
             if (!data?.length) return
             devices = data
-            if (!hid.device && data[0]?.path) {
-                setHid("device", data[0].path)
-                setHid("deviceName", formatDeviceLabel(data[0], data))
-                sendMain(Main.RECEIVE_HID, { path: data[0].path })
+            const firstDevice = data.find((d) => !d.permission) || data[0]
+            if (!hid.device && firstDevice?.path) {
+                setHid("device", firstDevice.path)
+                setHid("deviceName", formatDeviceLabel(firstDevice, data))
+                sendMain(Main.RECEIVE_HID, { path: firstDevice.path })
             }
         })
     }
@@ -128,14 +134,45 @@
     }
 
     $: dataString = Array.isArray(hid.data) ? hid.data.join(", ") : ""
+
+    $: selectedDevice = devices.find((d) => d.path === hid.device)
+    $: udevRule = selectedDevice ? `SUBSYSTEM=="hidraw", ATTRS{idVendor}=="${hex(selectedDevice.vendorId)}", ATTRS{idProduct}=="${hex(selectedDevice.productId)}", MODE="0660", TAG+="uaccess"` : ""
+    function hex(value: number) {
+        return (value || 0).toString(16).padStart(4, "0")
+    }
+
+    function openInputMonitoringSettings() {
+        sendMain(Main.URL, "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent")
+    }
 </script>
 
 <MaterialDropdown label="settings.device" value={hid.device || ""} options={devices.map((d) => ({ value: d.path, label: formatDeviceLabel(d) }))} on:change={onDeviceChange} />
+
+{#if selectedDevice?.permission === "input_monitoring"}
+    <InputRow>
+        <p style="font-size: 0.7em;opacity: 0.8;"><T id="hid.tip_input_monitoring" /></p>
+        <MaterialButton variant="outlined" style="white-space: nowrap;" on:click={openInputMonitoringSettings}>
+            <T id="hid.open_settings" />
+        </MaterialButton>
+    </InputRow>
+{:else if selectedDevice?.permission === "udev"}
+    <InputRow>
+        <p style="font-size: 0.7em;opacity: 0.8;"><T id="hid.tip_udev" replace={["/etc/udev/rules.d/70-freeshow-hid.rules"]} /></p>
+    </InputRow>
+    <InputRow>
+        <code style="font-size: 0.7em;user-select: text;word-break: break-all;">{udevRule}</code>
+    </InputRow>
+{/if}
 
 {#if !simple}
     <br />
 {/if}
 
+<MaterialToggleSwitch label="hid.listen" checked={!$special.hidInputDisabled} defaultValue={true} on:change={(e) => toggleHidInput({ value: e.detail })} />
 <MaterialToggleSwitch label="hid.auto_values" checked={autoValues} on:change={toggleAutoValues} />
 
 <MaterialTextInput label="hid.data_bytes" value={dataString} on:change={onDataInput} />
+
+<InputRow>
+    <p style="font-size: 0.7em;opacity: 0.8;"><T id="hid.tip_passthrough" /></p>
+</InputRow>

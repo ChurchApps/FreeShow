@@ -338,6 +338,9 @@ export function storeSubscriber() {
 
     special.subscribe((data) => {
         send(OUTPUT, ["SPECIAL"], data)
+
+        // HID input can be turned off
+        hidInListen()
     })
 
     slideTimelineSpeedMultiplier.subscribe((data) => {

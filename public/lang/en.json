@@ -1308,7 +1308,12 @@
     },
     "hid": {
         "data_bytes": "Data bytes",
-        "auto_values": "Update values on HID input"
+        "auto_values": "Update values on HID input",
+        "listen": "Listen for HID input",
+        "open_settings": "Open settings",
+        "tip_passthrough": "If this device works as a keyboard, its key presses also reach the app you are using. Turn off listening to use it in another app.",
+        "tip_input_monitoring": "macOS only lets FreeShow read keyboard type devices, like most clickers, with the Input Monitoring permission. Allow FreeShow in System Settings, then restart FreeShow.",
+        "tip_udev": "Linux only lets FreeShow read this device after a udev rule gives access. Add this line to $1, then reconnect the device:"
     },
     "emitters": {
         "emitter": "Emitter",

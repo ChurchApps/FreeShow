@@ -163,7 +163,7 @@ export const mainResponses: MainResponses = {
     [Main.RECEIVE_MIDI]: (data) => receiveMidi(data),
     [Main.CLOSE_MIDI]: (data) => closeMidiInPorts(data.id),
     // HID
-    [Main.GET_HID_DEVICES]: () => getHidDevices(),
+    [Main.GET_HID_DEVICES]: () => getHidDevices(true),
     [Main.RECEIVE_HID]: (data) => hidAwaitInput(data),
     [Main.CLOSE_HID]: (data) => hidClose(data),
     // LYRICS

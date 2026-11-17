@@ -81,6 +81,7 @@ import {
     timerSeekAdd,
     timerSeekTo,
     toggleAudioRecording,
+    toggleHidInput,
     toggleIcecast,
     toggleLock,
     toggleLogSongUsage,
@@ -382,6 +383,7 @@ export const API_ACTIONS = {
     // OTHER
     close: () => save(true),
     toggle_log_song_usage: (data: API_toggle_specific) => toggleLogSongUsage(data),
+    toggle_hid_input: (data: API_toggle_specific) => toggleHidInput(data),
 
     // ACTION
     name_run_action: (data: API_strval) => runActionByName(data.value, "api"), // BC

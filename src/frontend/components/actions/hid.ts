@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { Main } from "../../../types/IPC/Main"
 import type { Action } from "../../../types/Show"
 import { sendMain } from "../../IPC/main"
-import { actions } from "../../stores"
+import { actions, special } from "../../stores"
 import { runAction } from "./actions"
 
 export const activeHidPaths = new Set<string>()
@@ -10,14 +10,17 @@ export const activeHidPaths = new Set<string>()
 export function hidInListen() {
     const requiredPaths = new Set<string>()
 
-    Object.entries(get(actions)).forEach(([_id, action]: [string, Action]) => {
-        if (action.customActivation !== "hid_input") return
-        if (action.enabled === false) return
-        if (!action.hid?.device) return
-        if (!action.hid?.data?.length) return
+    // all HID input can be turned off, so a clicker can be used in other apps without also changing slides
+    if (!get(special).hidInputDisabled) {
+        Object.entries(get(actions)).forEach(([_id, action]: [string, Action]) => {
+            if (action.customActivation !== "hid_input") return
+            if (action.enabled === false) return
+            if (!action.hid?.device) return
+            if (!action.hid?.data?.length) return
 
-        requiredPaths.add(action.hid.device)
-    })
+            requiredPaths.add(action.hid.device)
+        })
+    }
 
     // Close paths that are no longer needed
     for (const path of activeHidPaths) {
@@ -42,6 +45,7 @@ export function receivedHid(msg: { path?: string; data: number[] } | number[]) {
     const path = (msg as any)?.path
     const data: number[] = Array.isArray(msg) ? msg : (msg as any)?.data || []
     if (!data.length) return
+    if (get(special).hidInputDisabled) return
 
     const now = Date.now()
 
