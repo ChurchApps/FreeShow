@@ -14,7 +14,6 @@ import { wait, waitUntilValueIsDefined } from "./common"
 import { getDefaultElements } from "./createData"
 import { setLanguage } from "./language"
 import { storeSubscriber } from "./listeners"
-import { startPcoPlanChangeWatcher } from "./pcoPlanSync"
 import { autoOpenLastUsedProfile, openProfileByName } from "./profile"
 import { receiveOUTPUTasOUTPUT, remoteListen, setupMainReceivers } from "./receivers"
 import { renderSignatureHook } from "./renderSignature"
@@ -83,7 +82,6 @@ async function startupMain() {
 
     startTracking()
     contentProviderSync(true)
-    startPcoPlanChangeWatcher()
 
     // custom alert
     // if (Math.random() < 0.01) {

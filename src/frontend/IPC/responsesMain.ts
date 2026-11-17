@@ -92,7 +92,7 @@ import {
 import { setupCloudSync } from "../utils/cloudSync"
 import { newToast } from "../utils/common"
 import { translateText } from "../utils/language"
-import { checkPcoPlanChanges } from "../utils/pcoPlanSync"
+import { startPcoPlanChangeWatcher } from "../utils/pcoPlanSync"
 import { confirmCustom } from "../utils/popup"
 import { getProviderItemLink, setProviderItemLink, syncProviderItemLinks } from "../utils/providerItemLinks"
 import { initializeClosing, saveComplete } from "../utils/save"
@@ -355,9 +355,6 @@ export const mainResponses: MainResponses = {
                 setTimeout(() => setupCloudSync(false), 1000)
             }
         }
-
-        // check if already imported Planning Center plans have changed online
-        if (data.providerId === "planningcenter") setTimeout(() => checkPcoPlanChanges(), 2000)
     },
     [ToMain.PROVIDER_PROJECTS]: async (data) => {
         if (!data.projects) return
@@ -373,7 +370,6 @@ export const mainResponses: MainResponses = {
         // "placeholder" origin: Planning Center only — never import provider shows, only match local
         // shows by name and insert a show_placeholder project item where no local show matches
         const placeholderMode = data.providerId === "planningcenter" && songOrigin === "placeholder"
-        const providerShowName = new Map<string, string>((data.shows || []).map((s: any) => [s.id, s.name] as [string, string]))
 
         if (!placeholderMode) {
             // Planning Center items are seperated into multiple categories based on the type: Songs (default) & Regular items (generic)
@@ -408,24 +404,13 @@ export const mainResponses: MainResponses = {
             const id = show.id
 
             if (placeholderMode) {
-                // find a local show linked to this provider id
                 const link = getProviderItemLink(data.providerId, id)
-                const linkedShow = allShows.find(({ id: showId }) => showId === (link?.showId || id))
-                if (linkedShow) {
-                    replaceIds[id] = linkedShow.id
-                    continue
-                }
-
-                // else match a local show by name
                 const showName = show?.name?.toLowerCase() || ""
-                const existingShow = showName && allShows.find(({ id: existingId, name }) => existingId !== id && name?.toLowerCase() === showName)
-                if (existingShow) {
-                    replaceIds[id] = existingShow.id
-                    // link the local show so future syncs stay matched even if it gets renamed
-                    // keep the local show's own origin, so it is never treated as provider managed
-                    setProviderItemLink(data.providerId, id, existingShow.id, "local")
+                const matched = allShows.find(({ id: sid }) => sid === (link?.showId || id)) || (showName ? allShows.find(({ id: sid, name }) => sid !== id && name?.toLowerCase() === showName) : null)
+                if (matched) {
+                    replaceIds[id] = matched.id
+                    if (!link) setProviderItemLink(data.providerId, id, matched.id, "local")
                 }
-                // no match -> left unmapped, becomes a show_placeholder project item below
                 continue
             }
 
@@ -514,7 +499,7 @@ export const mainResponses: MainResponses = {
                 tempShows.push({ id: showId, show: { ...show, origin, name: checkName(show.name, showId) } })
             }
         }
-        // in placeholder mode provider shows are never imported (only matched local shows get linked)
+        // in placeholder mode provider shows are never imported
         if (!placeholderMode) setTempShows(tempShows)
 
         function createProviderProject(providerId: ContentProviderId, projectBase: Project) {
@@ -581,7 +566,7 @@ export const mainResponses: MainResponses = {
 
                 // in placeholder mode, unmatched provider shows become a show_placeholder item
                 if (placeholderMode && a.type === "show" && !get(shows)[mappedId]) {
-                    return { type: "show_placeholder", id: uid(5), name: providerShowName.get(a.id) || a.name || "—", scheduleLength: a.scheduleLength }
+                    return { type: "show_placeholder", id: uid(5), name: a.name || "—", scheduleLength: a.scheduleLength }
                 }
 
                 return { ...a, id: mappedId }
@@ -599,14 +584,15 @@ export const mainResponses: MainResponses = {
             projectView.set(false)
         }
 
-        // store available PCO plans for Live timer setup
         if (data.providerId === "planningcenter" && data.pcoPlans?.length) {
+            // store available PCO plans for Live timer setup
             contentProviderData.update((a) => {
                 if (!a.planningcenter) a.planningcenter = {}
                 const existing = a.planningcenter.availablePlans || []
                 a.planningcenter.availablePlans = [...existing.filter((e) => !data.pcoPlans!.some((i) => i.planId === e.planId)), ...data.pcoPlans!]
                 return a
             })
+            startPcoPlanChangeWatcher()
         }
     },
     [ToMain.OPEN_FOLDER2]: (a) => {

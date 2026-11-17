@@ -5,7 +5,6 @@
     import { requestMain, sendMain } from "../../../IPC/main"
     import { activePage, activePopup, activeShow, activeTriggerFunction, cloudSyncData, connections, contentProviderData, disabledServers, maxConnections, notFound, obsData, outputs, popupData, ports, projectTemplates, providerConnections, saved, serverData, special } from "../../../stores"
     import { translateText } from "../../../utils/language"
-    import { checkPcoPlanChanges } from "../../../utils/pcoPlanSync"
     import { startRemoteController, stopRemoteController } from "../../../utils/remoteController"
     import { contentProviderSync } from "../../../utils/startup"
     import { keysToID, sortByName } from "../../helpers/array"
@@ -20,6 +19,7 @@
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
     import Tip from "../../main/Tip.svelte"
+    import { stopPcoPlanChangeWatcher } from "../../../utils/pcoPlanSync"
 
     let ip = "localhost"
 
@@ -140,6 +140,7 @@
                     c[providerId] = false
                     return c
                 })
+                stopPcoPlanChangeWatcher()
             })
         }
     }
@@ -165,12 +166,12 @@
     $: projectTemplateOptions = [{ value: "", label: translateText("main.none") }, ...sortByName(keysToID($projectTemplates)).map(({ id, name }) => ({ value: id, label: name }))]
 
     $: providerOriginOptions = [
-        { value: "", label: "Ask when existing show is found" },
-        { value: "local", label: "Always use local instance" },
-        { value: "online", label: "Always use online instance" }
+        { value: "", label: "Ask when existing show is found", data: "Ask to use online or local, if existing both places, first time" },
+        { value: "local", label: "Prioritize local instance", data: "Use local if existing, download if not" },
+        // currently for Planning Center only
+        ...($providerConnections.planningcenter ? [{ value: "placeholder", label: "Always use local instance", data: "Creates placeholders for unmatched shows" }] : []),
+        { value: "online", label: "Always use online instance", data: "Online instance will always be used" }
     ]
-    // Planning Center only: never import shows, only match local shows by name (see PROVIDER_PROJECTS handler)
-    $: pcoOriginOptions = [...providerOriginOptions, { value: "placeholder", label: "Only match local (create placeholders)" }]
 
     // OnStage
 
@@ -326,12 +327,6 @@
         </MaterialButton>
     </InputRow>
 
-    <InputRow>
-        <MaterialButton icon="refresh" on:click={() => checkPcoPlanChanges(true)} style="flex: 1;">
-            <T id="settings.pco_check_changes" />
-        </MaterialButton>
-    </InputRow>
-
     <MaterialToggleSwitch label="settings.auto_sync_startup" checked={$contentProviderData.planningcenter?.autoSync !== false} on:change={(e) => updateProvider("planningcenter", "autoSync", e.detail)} />
 
     {#if $contentProviderData.planningcenter?.autoSync !== false}
@@ -343,7 +338,7 @@
         </InputRow>
     {/if}
 
-    <MaterialDropdown label="Song origin" options={pcoOriginOptions} value={$contentProviderData.planningcenter?.songOrigin || ""} on:change={(e) => updateProvider("planningcenter", "songOrigin", e.detail)} />
+    <MaterialDropdown label="Song origin" options={providerOriginOptions} value={$contentProviderData.planningcenter?.songOrigin || ""} on:change={(e) => updateProvider("planningcenter", "songOrigin", e.detail)} />
     {#if Object.keys($projectTemplates).length}
         <MaterialDropdown label="actions.project_template" options={projectTemplateOptions} value={$contentProviderData.planningcenter?.projectTemplate || ""} on:change={(e) => updateProvider("planningcenter", "projectTemplate", e.detail)} />
     {/if}

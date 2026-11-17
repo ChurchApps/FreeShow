@@ -185,7 +185,7 @@ export class ContentProviderRegistry {
     }
 
     /**
-     * Lightweight check of PCO plans for remote changes (updated_at / items_count only)
+     * Check plans for remote changes
      */
     static async checkPcoPlans(plans: { serviceTypeId: string; planId: string }[]): Promise<{ planId: string; updatedAt: string; itemsCount: number; missing?: boolean }[]> {
         this.ensureInitialized()

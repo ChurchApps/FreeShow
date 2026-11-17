@@ -17,12 +17,6 @@ export interface PCOAuthData {
     scope: PCOScopes
 }
 
-/** Accepts the legacy raw syncFolderIds array or the current options object */
-function normalizePcoLoadOptions(data?: { syncFolderIds?: string[]; songOrigin?: string } | string[]): { syncFolderIds?: string[]; songOrigin?: string } {
-    if (Array.isArray(data)) return { syncFolderIds: data }
-    return data || {}
-}
-
 /**
  * Planning Center provider that acts as the sole interface to Planning Center functionality.
  *
@@ -61,9 +55,8 @@ export class PlanningCenterProvider extends ContentProvider<PCOScopes, PCOAuthDa
         return pcoRequest(data)
     }
 
-    async loadServices(data?: { syncFolderIds?: string[]; songOrigin?: string } | string[]): Promise<void> {
-        const opts = normalizePcoLoadOptions(data)
-        return pcoLoadServices(opts.syncFolderIds, opts.songOrigin)
+    async loadServices(data?: { syncFolderIds?: string[]; songOrigin?: string }): Promise<void> {
+        return pcoLoadServices(data?.syncFolderIds, data?.songOrigin)
     }
 
     async fetchFolderTree(): Promise<PCOFolderTreeNode[]> {
@@ -90,10 +83,9 @@ export class PlanningCenterProvider extends ContentProvider<PCOScopes, PCOAuthDa
         return pcoGetPusherAuth(socketId, channelName, serviceTypeId)
     }
 
-    async startupLoad(scope: PCOScopes, data?: { syncFolderIds?: string[]; songOrigin?: string } | string[]): Promise<void> {
+    async startupLoad(scope: PCOScopes, data?: { syncFolderIds?: string[]; songOrigin?: string }): Promise<void> {
         pcoInitialize()
-        const opts = normalizePcoLoadOptions(data)
-        return pcoStartupLoad(scope, opts.syncFolderIds, opts.songOrigin)
+        return pcoStartupLoad(scope, data?.syncFolderIds, data?.songOrigin)
     }
 
     protected handleAuthCallback(_req: any, _res: any): void {

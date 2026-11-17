@@ -2,7 +2,6 @@
     import { onMount } from "svelte"
     import type { Tree } from "../../../types/Projects"
     import { activeProfile, activeProject, contentProviderData, folders, labelsDisabled, openedFolders, projects } from "../../stores"
-    import { planHasRemoteChanges } from "../../utils/pcoPlanSync"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -176,12 +175,6 @@
                                         <MaterialButton style="width: 100%;padding: 0.08rem 0.65rem;font-weight: normal;" title="actions.id_select_project: <b>{project.name}</b>" on:click={(e) => open(e, project.id)} class="context #project_button{isReadOnly ? '_readonly' : ''}" isActive={$activeProject === project.id} tab>
                                             <Icon id={isProjectLinked($projects[project.id], project.id, $contentProviderData) ? "cloud" : "project"} white={$projects[project.id]?.archived} />
                                             <HiddenInput value={project.name} id={"project_" + project.id} on:edit={(e) => rename(project.id, e.detail.value)} bind:edit={editActive} allowEdit={!isReadOnly} />
-
-                                            {#if $contentProviderData && planHasRemoteChanges(project.id)}
-                                                <span class="pcoChanges" title="Online changes available in Planning Center">
-                                                    <Icon id="refresh" size={0.7} />
-                                                </span>
-                                            {/if}
                                         </MaterialButton>
                                     {/if}
                                 </SelectElem>
@@ -265,13 +258,6 @@
         min-width: 28px;
         text-align: end;
         font-weight: normal;
-    }
-
-    .pcoChanges {
-        display: flex;
-        align-items: center;
-        margin-inline-start: 4px;
-        color: var(--connected, #7cc576);
     }
 
     .indented {

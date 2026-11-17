@@ -1475,7 +1475,6 @@
         "connect_to": "Verbinde mit $1",
         "disconnect_from": "Trenne von $1",
         "auto_sync_startup": "Automatisch bei Startup syncronisieren",
-        "pco_check_changes": "Nach Änderungen suchen",
         "sync_categories_tip": "Auswählen, welche Kategorien als Song hochgeladen werden",
         "reset_all": "Alles zurücksetzen",
         "reset_theme": "Design zurücksetzen",

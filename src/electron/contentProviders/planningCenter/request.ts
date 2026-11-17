@@ -400,8 +400,6 @@ async function getServiceTypesForFolders(rawFolders: PCOFolder[], syncFolderIds:
 }
 
 export async function pcoLoadServices(syncFolderIds?: string[], songOrigin?: string) {
-    // "placeholder": don't fetch full song data, the frontend only needs names to match local shows
-    const placeholderMode = songOrigin === "placeholder"
     let serviceTypes: ServiceType[]
 
     if (syncFolderIds?.length) {
@@ -427,6 +425,7 @@ export async function pcoLoadServices(syncFolderIds?: string[], songOrigin?: str
 
     sendToMain(ToMain.TOAST, "Getting schedules from Planning Center")
 
+    const placeholderMode = songOrigin === "placeholder"
     const results = await processAllServiceTypes(serviceTypes, placeholderMode)
 
     if (results.downloadableMedia.length > 0) {
@@ -577,7 +576,7 @@ async function processSongItem(item: ProjectItem, itemsEndpoint: string, placeho
     const songData = (await pcoRequest({ scope: "services", endpoint: songDataEndpoint }))[0]
     if (!songData?.id) return null
 
-    // placeholder mode: skip arrangement/sections/chord-chart requests, the frontend only needs the name
+    // placeholder mode: don't fetch full song data, the frontend only needs names to match local shows
     if (placeholderMode) {
         const showId = `pcosong_${songData.id}`
         const emptyShow = getShow(songData, {}, [])
