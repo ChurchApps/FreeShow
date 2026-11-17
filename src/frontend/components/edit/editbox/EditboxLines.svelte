@@ -19,6 +19,7 @@
     import EditboxChords from "./EditboxChords.svelte"
     import { EditboxHelper } from "./EditboxHelper"
     import { EditboxPaste } from "./EditboxPaste"
+    import { editableWrappedLines } from "./editableWrappedLines"
 
     export let item: Item
     export let ref: {
@@ -95,6 +96,7 @@
     }
 
     $: lineGap = item?.specialStyle?.lineGap
+    $: separateWrappedLines = !!item?.specialStyle?.separateWrappedLines
     $: lineRadius = item?.specialStyle?.lineRadius || 0
     $: lineBg = item?.specialStyle?.lineBg
     $: lineStyleBox = lineGap ? `gap: ${lineGap}px;` : ""
@@ -384,7 +386,7 @@
     $: itemStyle = item?.style
     // html updates on every keystroke (bind:innerHTML), so this covers typing, pasting and style rebuilds,
     // itemStyle covers resizing the textbox and lineGap the line spacing
-    $: if (html || itemStyle || isAuto || itemFontSize || lineGap) scheduleAutoSize()
+    $: if (html || itemStyle || isAuto || itemFontSize || lineGap || separateWrappedLines) scheduleAutoSize()
 
     let autoSize = 0
     let alignElem: HTMLElement | undefined
@@ -444,14 +446,14 @@
         const type = item?.textFit || "shrinkToFit"
 
         // skip repeated triggers that can't change the result (e.g. a new item object with identical content)
-        const signature = `${alignElem.clientWidth}x${alignElem.clientHeight}|${itemFontSize}|${type}|${lineGap || 0}|${html}`
+        const signature = `${alignElem.clientWidth}x${alignElem.clientHeight}|${itemFontSize}|${type}|${lineGap || 0}|${separateWrappedLines}|${html}`
         if (signature === lastSignature) return
         lastSignature = signature
 
         const { defaultFontSize, maxFontSize } = getAutoSizeOptions(type, itemFontSize)
 
         const measureStart = performance.now()
-        autoSize = autosize(alignElem, { type, textQuery: ".edit .break span", defaultFontSize, maxFontSize })
+        autoSize = autosize(alignElem, { type, textQuery: ".edit .break span", defaultFontSize, maxFontSize, wrappedLineOptions: { enabled: separateWrappedLines, gap: lineGap, background: lineBg, radius: lineRadius } })
         lastMeasureDuration = performance.now() - measureStart
     }
 
@@ -752,13 +754,14 @@
             </span>
         {/if}
         {#if isLocked}
-            <div class="edit" class:hasShapeOutside={!!shapeOutside} style="{shapeOutside ? `--shape-outside: ${shapeOutside};--shape-float: ${shapeFloatSide};--shape-offset-top: ${shapeOffsetTop}px;` : ''}{plain ? '' : typeof item.align === 'string' ? item.align.replace('align-items', 'justify-content') : ''}">{@html html}</div>
+            <div class="edit" use:editableWrappedLines={{ enabled: separateWrappedLines && !plain && !chordsMode, gap: lineGap, background: lineBg, radius: lineRadius }} class:hasShapeOutside={!!shapeOutside} style="{shapeOutside ? `--shape-outside: ${shapeOutside};--shape-float: ${shapeFloatSide};--shape-offset-top: ${shapeOffsetTop}px;` : ''}{plain ? '' : typeof item.align === 'string' ? item.align.replace('align-items', 'justify-content') : ''}">{@html html}</div>
         {:else}
             {#if chordsMode && textElem}
                 <EditboxChords {item} {autoSize} {index} {ref} {chordsMode} {chordsAction} />
             {/if}
             <div
                 bind:this={textElem}
+                use:editableWrappedLines={{ enabled: separateWrappedLines && !plain && !chordsMode, gap: lineGap, background: lineBg, radius: lineRadius }}
                 on:mouseup={() => storeCurrentCaretPos()}
                 class="edit context {plain ? '#editbox_text' : ref?.type === 'stage' ? '#stage_text_item__editbox_text' : '#edit_box__editbox_text'}"
                 class:hidden={chordsMode}

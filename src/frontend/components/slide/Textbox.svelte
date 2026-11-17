@@ -335,7 +335,7 @@
         }
     }
     let prevAutosizeSignature = ""
-    $: autosizeSignature = `${isStage ? stageItem?.style || "" : item?.style || ""}_${resolvedTemplateId}_${chordLines ? 1 : 0}_${stageAutoSize ? 1 : 0}_${item?.textFit || ""}_${stageItem?.textFit || ""}_${linesStart ?? ""}_${linesEnd ?? ""}_${JSON.stringify(item?.lines || stageItem?.lines || "")}_${JSON.stringify(item?.tracker || "")}_${ratio}`
+    $: autosizeSignature = `${isStage ? stageItem?.style || "" : item?.style || ""}_${resolvedTemplateId}_${chordLines ? 1 : 0}_${stageAutoSize ? 1 : 0}_${item?.textFit || ""}_${stageItem?.textFit || ""}_${linesStart ?? ""}_${linesEnd ?? ""}_${JSON.stringify(item?.lines || stageItem?.lines || "")}_${JSON.stringify(item?.specialStyle || "")}_${JSON.stringify(item?.tracker || "")}_${ratio}`
 
     const AUTOSIZE_THROTTLE_MS = 100
     let debounceTimer: NodeJS.Timeout | null = null
@@ -517,7 +517,6 @@
             const verseItemText = allText.filter((a) => a.customType?.includes("disableTemplate")) || []
             const verseItemSize = Number(getStyles(verseItemText[0]?.style, true)?.["font-size"] || "") || 0
             customTypeRatio = verseItemSize / 100 || 1
-
             ;({ defaultFontSize, maxFontSize } = getAutoSizeOptions(textFit, itemFontSize, isTextboxItem))
         }
 
@@ -626,6 +625,7 @@
             boxDimensions, // Add explicit dimensions for better cache invalidation
             textFit: item?.textFit || "none",
             list: item?.list || null,
+            specialStyle: item?.specialStyle || null,
             chords: !!(customChords !== undefined ? customChords : chords),
             stageAutoSize: !!stageAutoSize,
             stageItem: stageItem || null,

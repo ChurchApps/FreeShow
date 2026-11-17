@@ -1490,6 +1490,11 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         extraStyles.forEach((key) => {
             // output style template: keep slide item bindings unless the template item has any set
             if (isOutputStyle && key === "bindings" && !templateItem[key]?.length) return
+            // Older output templates have no setting for this opt-in behavior.
+            if (isOutputStyle && key === "specialStyle" && templateItem.specialStyle?.separateWrappedLines === undefined && typeof item.specialStyle?.separateWrappedLines === "boolean") {
+                item.specialStyle = { ...templateItem.specialStyle, separateWrappedLines: item.specialStyle.separateWrappedLines }
+                return
+            }
 
             delete item[key]
             if (templateItem[key]) item[key] = templateItem[key]

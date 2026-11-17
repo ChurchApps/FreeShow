@@ -11,6 +11,7 @@
     import { getStyles } from "../helpers/style"
     import { calculateShapeVerticalOffset, getShapeFloatSide } from "../edit/scripts/shapeOutside"
     import { applyStyleOverrides } from "./wordOverride"
+    import { wrappedLines } from "./wrappedLines"
 
     export let item: Item
     export let slideIndex = 0
@@ -396,6 +397,7 @@
                                 {#if !chordOnly}
                                     <div
                                         class="break"
+                                        use:wrappedLines={{ enabled: style && !!item?.specialStyle?.separateWrappedLines, gap: lineGap, background: lineBg, radius: lineRadius }}
                                         class:normalWrap={normalWrap || (isStage ? typeof stageItem?.style === "string" && (stageItem?.style.includes("justify") || stageItem?.style.includes("nowrap")) : line.align?.includes("justify") || line.align?.includes("left") || JSON.stringify(line).includes("nowrap"))}
                                         class:reveal={(centerPreview || isStage) && item?.lineReveal && revealed < i}
                                         class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")}
@@ -452,6 +454,7 @@
                     {#if !chordOnly}
                         <div
                             class="break"
+                            use:wrappedLines={{ enabled: style && !!item?.specialStyle?.separateWrappedLines, gap: lineGap, background: lineBg, radius: lineRadius }}
                             class:normalWrap={normalWrap || (isStage ? typeof stageItem?.style === "string" && (stageItem?.style.includes("justify") || stageItem?.style.includes("nowrap")) : line.align?.includes("justify") || line.align?.includes("left") || JSON.stringify(line).includes("nowrap"))}
                             class:reveal={(centerPreview || isStage) && item?.lineReveal && revealed < i}
                             class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")}
@@ -538,6 +541,16 @@
     /* normal wrap if "Text on one line (nowrap)" or Justify aligned */
     .break.normalWrap {
         text-wrap: unset;
+    }
+
+    :global(.break[data-wrap-enabled]) {
+        background: none !important;
+        border-radius: 0 !important;
+    }
+
+    :global(.break[data-wrap-enabled] > .textContainer),
+    :global(.break[data-wrap-enabled] > [data-freeshow-text]) {
+        display: none;
     }
 
     .lines .break.reveal {

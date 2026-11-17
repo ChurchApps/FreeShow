@@ -1008,6 +1008,7 @@
         "auto_size": "Ukuran otomatis",
         "no_wrap": "Teks dalam satu baris",
         "line_spacing": "Jarak antar baris",
+        "separate_wrapped_lines": "Pisahkan latar baris otomatis",
         "line_radius": "Kelengkungan baris",
         "line_height": "Tinggi baris",
         "letter_spacing": "Jarak antar huruf",

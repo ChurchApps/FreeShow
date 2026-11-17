@@ -1,3 +1,6 @@
+import { refreshWrappedLines } from "../../slide/wrappedLines"
+import type { WrapOptions } from "../../slide/wrappedLines"
+
 const DEF_FONT_SIZE = 100
 export const MAX_FONT_SIZE = 800
 const MIN_FONT_SIZE = 10
@@ -14,6 +17,7 @@ type Options = {
     maxFontSize?: number // 800
     minFontSize?: number // 10
     isList?: boolean // whether this is a list item (affects measurement)
+    wrappedLineOptions?: WrapOptions
 }
 
 export function getAutoSizeOptions(type: AutosizeTypes | undefined, itemFontSize: number | string | undefined, isTextboxItem = true) {
@@ -26,7 +30,7 @@ export function getAutoSizeOptions(type: AutosizeTypes | undefined, itemFontSize
     return { defaultFontSize, maxFontSize }
 }
 
-export default function autosize(elem: HTMLElement, { type, textQuery, defaultFontSize, maxFontSize, minFontSize, isList }: Options = {}) {
+export default function autosize(elem: HTMLElement, { type, textQuery, defaultFontSize, maxFontSize, minFontSize, isList, wrappedLineOptions }: Options = {}) {
     // set default values
     if (!minFontSize) minFontSize = MIN_FONT_SIZE
     if (!maxFontSize) maxFontSize = MAX_FONT_SIZE
@@ -58,12 +62,14 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
             if (ratio) chordNodes.push({ elem: el, ratio })
         })
 
-        const textNodes = rawTextChildren.map((el) => {
-            const style = el.getAttribute("style") || ""
-            const ratio = Number(el.dataset.autosizeRatio) || 1
-            const hasBaseFontSize = style.includes("var(--base-font-size)")
-            return { el, style, ratio, hasBaseFontSize }
-        })
+        const textNodes = rawTextChildren
+            .filter((el) => !el.closest("[data-wrap-rows]"))
+            .map((el) => {
+                const style = el.getAttribute("style") || ""
+                const ratio = Number(el.dataset.autosizeRatio) || 1
+                const hasBaseFontSize = style.includes("var(--base-font-size)")
+                return { el, style, ratio, hasBaseFontSize }
+            })
 
         let fontSize = defaultFontSize
         addStyleToElemText(fontSize)
@@ -116,6 +122,7 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
                     node.el.setAttribute("style", `${node.style};overflow:visible;font-size: ${size}px !important;`)
                 }
             }
+            refreshWrappedLines(boxElem!, wrappedLineOptions)
         }
     } finally {
         boxElem.remove()
@@ -124,6 +131,11 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
     function virtualElem() {
         const cloned = elem.cloneNode(true) as HTMLElement
         if (!cloned) return null
+
+        // Measure source typography, not canvas-only backgrounds or derived line heights.
+        cloned.querySelectorAll("[data-edit-wrap-layer], [data-edit-wrap-style]").forEach((element) => element.remove())
+        cloned.removeAttribute("data-edit-wrap")
+        cloned.querySelectorAll("[data-edit-wrap]").forEach((element) => element.removeAttribute("data-edit-wrap"))
 
         cloned.style.pointerEvents = "none"
         cloned.style.position = "absolute"
