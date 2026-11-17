@@ -133,18 +133,32 @@
 
         // apply settings
         if (!skipPopup) {
-            if (localType !== "window") {
-                updateOutput("invisible", true, outputId)
-                if (!localType && (networkType === "ndi" || networkType === "omt")) updateOutput("transparent", true, outputId)
+            outputs.update((a: any) => {
+                const out = a[outputId]
+                if (!out) return a
+
+                if (localType !== "window") {
+                    out.invisible = true
+                    if (!localType && (networkType === "ndi" || networkType === "omt")) out.transparent = true
+                }
+
+                if (localType === "blackmagic") out.blackmagic = true
+                if (networkType === "ndi") out.ndi = true
+                else if (networkType === "omt") out.omt = true
+                else if (networkType === "webrtc") out.webrtc = true
+                else if (networkType === "rtmp") out.rtmp = true
+
+                out.enabled = true
+                send(OUTPUT, ["CREATE"], { ...out, id: outputId })
+                AudioAnalyser.recorderActivate()
+
+                return a
+            })
+
+            const captureTypeKeys = ["blackmagic", "ndi", "omt", "webrtc", "rtmp"]
+            if (captureTypeKeys.includes(networkType) || captureTypeKeys.includes(localType)) {
+                newToast("toast.output_capture_enabled")
             }
-
-            if (localType === "blackmagic") updateOutput("blackmagic", true, outputId)
-            if (networkType === "ndi") updateOutput("ndi", true, outputId)
-            else if (networkType === "omt") updateOutput("omt", true, outputId)
-            else if (networkType === "webrtc") updateOutput("webrtc", true, outputId)
-            else if (networkType === "rtmp") updateOutput("rtmp", true, outputId)
-
-            updateOutput("enabled", true, outputId)
 
             if (networkType) createOutputAudioChannel(outputId)
             else checkPrimaryOutputRouting()
