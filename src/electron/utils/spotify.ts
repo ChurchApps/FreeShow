@@ -181,37 +181,63 @@ export function initSpotify() {
     }
 }
 
-const macScript = (c?: string) => `if application "Spotify" is running then
-    tell application "Spotify"
-        ${
-            c ||
-            `set isP to player state is playing
-        set t to name of current track
-        set a to artist of current track
-        set d to (duration of current track) / 1000
-        set p to player position
-        set art to ""
-        try
-            set art to artwork url of current track
-        end try
-        set v to sound volume
-        return (isP as text) & "|SEC|" & t & "|SEC|" & a & "|SEC|" & p & "|SEC|" & d & "|SEC|" & art & "|SEC|" & v`
-        }
+let macFailCount = 0
+let lastMacFailTime = 0
+let macBackoffMs = 5000
+const MAX_MAC_BACKOFF_MS = 60000
+
+const macScript = (c?: string) => `try
+    tell application "System Events"
+        set isRunning to (exists process "Spotify")
     end tell
-else
+    if isRunning then
+        tell application "Spotify"
+            ${
+                c ||
+                `set isP to player state is playing
+            set t to name of current track
+            set a to artist of current track
+            set d to (duration of current track) / 1000
+            set p to player position
+            set art to ""
+            try
+                set art to artwork url of current track
+            end try
+            set v to sound volume
+            return (isP as text) & "|SEC|" & t & "|SEC|" & a & "|SEC|" & p & "|SEC|" & d & "|SEC|" & art & "|SEC|" & v`
+            }
+        end tell
+    else
+        return "NOT_RUNNING"
+    end if
+on error
     return "NOT_RUNNING"
-end if`
+end try`
 
 export async function getSpotifyState(): Promise<SpotifyState | null> {
     try {
-        if (isMac)
+        if (isMac) {
+            if (macFailCount > 0 && Date.now() - lastMacFailTime < macBackoffMs) {
+                return null
+            }
+
             return new Promise((res) =>
                 exec(`osascript -e '${macScript().replace(/'/g, "'\\''")}'`, (e, out) => {
-                    if (e && !out?.includes("NOT_RUNNING") && !e.message?.includes("syntax error") && !e.message?.includes("2741")) console.error("[Spotify] Mac error:", e)
+                    if (e || out?.includes("NOT_RUNNING")) {
+                        macFailCount++
+                        lastMacFailTime = Date.now()
+                        macBackoffMs = Math.min(macBackoffMs * 2, MAX_MAC_BACKOFF_MS)
+                        return res(null)
+                    }
+
+                    macFailCount = 0
+                    macBackoffMs = 5000
+
                     const p = out?.trim().split("|SEC|")
-                    res(e || out?.includes("NOT_RUNNING") || !p || p.length < 5 ? null : { isPlaying: p[0] === "true", title: p[1], artist: p[2], positionSec: parseFloat(p[3]) || 0, durationSec: parseFloat(p[4]) || 0, albumArt: p[5] || undefined, volume: (parseInt(p[6]) || 0) / 100, platform: "darwin" })
+                    res(!p || p.length < 5 ? null : { isPlaying: p[0] === "true", title: p[1], artist: p[2], positionSec: parseFloat(p[3]) || 0, durationSec: parseFloat(p[4]) || 0, albumArt: p[5] || undefined, volume: (parseInt(p[6]) || 0) / 100, platform: "darwin" })
                 })
             )
+        }
         if (isWin) {
             if (!initialized) initSpotify()
             if (!bridge?.connected) return null
