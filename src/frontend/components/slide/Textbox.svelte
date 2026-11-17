@@ -434,8 +434,8 @@
         const cachedResult = cacheKey ? readAutoSizeCache(cacheKey) : undefined
 
         // trust "autoFontSize" if it exists and there are no template or output style overrides
-        const hasOutputTemplateOverride = (outputStyle?.template && outputStyle.template !== currentShowTemplateId) || (isScriptureContext && !!styleScriptureTemplateId)
-        const hasOutputOverride = Number(outputStyle?.lines || 0) || hasOutputTemplateOverride || styleTemplateUsed
+        const hasTemplateOverride = (outputStyle?.template && outputStyle.template !== currentShowTemplateId) || (isScriptureContext && !!styleScriptureTemplateId) || !!slideData?.settings?.template || (resolvedTemplateId && resolvedTemplateId !== currentShowTemplateId)
+        const hasOutputOverride = Number(outputStyle?.lines || 0) || hasTemplateOverride || styleTemplateUsed
         if ((item.type || "text") === "text" && !isDynamic && !chords && !hasOutputOverride && item?.autoFontSize && !isStage) {
             fontSize = item.autoFontSize
             markAutoSizeReady()
@@ -595,12 +595,18 @@
         // Extract key dimensional properties from style to ensure cache invalidation
         const activeStyle = (isStage && stageItem?.style ? stageItem.style : item?.style) || ""
         const styles = activeStyle ? getStyles(activeStyle) : {}
+        const lineGap = (item?.specialStyle?.lineGap ?? stageItem?.specialStyle?.lineGap) || 0
         const boxDimensions: any = {
             width: styles.width,
             height: styles.height,
             left: styles.left,
             top: styles.top,
-            fontSize: styles["font-size"]
+            fontSize: styles["font-size"],
+            lineHeight: styles["line-height"],
+            lineGap,
+            textTransform: styles["text-transform"],
+            letterSpacing: styles["letter-spacing"],
+            wordSpacing: styles["word-spacing"]
         }
 
         // Fix for thumbnails getting stuck with wrong cache when dimensions change via CSS classes
@@ -620,7 +626,10 @@
             }
         }
 
+        const text = getItemText(isStage ? stageItem : item).replace(/\s+/g, " ").trim()
+
         return JSON.stringify({
+            text,
             lines: item?.lines || null,
             style: activeStyle,
             boxDimensions, // Add explicit dimensions for better cache invalidation
@@ -669,8 +678,8 @@
     }
 
     function setItemAutoFontSize(fontSize) {
-        const hasOutputTemplateOverride = (outputStyle?.template && outputStyle.template !== currentShowTemplateId) || (isScriptureContext && !!styleScriptureTemplateId)
-        if (isStage || itemIndex < 0 || $currentWindow || ref.showId === "temp" || styleTemplateUsed || hasOutputTemplateOverride) return
+        const hasTemplateOverride = (outputStyle?.template && outputStyle.template !== currentShowTemplateId) || (isScriptureContext && !!styleScriptureTemplateId) || !!slideData?.settings?.template || (resolvedTemplateId && resolvedTemplateId !== currentShowTemplateId)
+        if (isStage || itemIndex < 0 || $currentWindow || ref.showId === "temp" || styleTemplateUsed || hasTemplateOverride) return
 
         const canPersistToItem = (storeItem: any) => {
             const storeTextFit = getItemTextFit(storeItem)
