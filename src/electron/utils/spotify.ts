@@ -114,20 +114,30 @@ const isLinux = os.platform() === "linux"
 let bridge: ChildProcess | null = null
 let initialized = false
 let pending: ((s: SpotifyState | null) => void) | null = null
-let crashCount = 0
-let lastCrashTime = 0
-let currentBackoffMs = 60000 // Start with 1 minute backoff
-const MAX_BACKOFF_MS = 600000 // Max backoff capped at 10 minutes
-let hasLoggedCrash = false
 let isDisabled = false
 
-export function initSpotify() {
-    if (initialized || !isWin || isDisabled) return
+// retry backoff
+let failCount = 0
+let lastFailTime = 0
+let backoffMs = isWin ? 60000 : 5000
+const MAX_BACKOFF_MS = isWin ? 600000 : 60000
+let hasLoggedCrash = false
+function shouldSkipPoll(): boolean {
+    return failCount > 0 && Date.now() - lastFailTime < backoffMs
+}
+function recordPollFailure() {
+    failCount++
+    lastFailTime = Date.now()
+    backoffMs = Math.min(backoffMs * 2, MAX_BACKOFF_MS)
+}
+function resetPollFailure() {
+    failCount = 0
+    backoffMs = isWin ? 60000 : 5000
+    hasLoggedCrash = false
+}
 
-    if (crashCount > 0) {
-        const elapsed = Date.now() - lastCrashTime
-        if (elapsed < currentBackoffMs) return
-    }
+export function initSpotify() {
+    if (initialized || !isWin || isDisabled || shouldSkipPoll()) return
 
     initialized = true
     try {
@@ -135,9 +145,7 @@ export function initSpotify() {
         bridge
             .on("message", (msg: any) => {
                 if (msg.type === "ready") {
-                    crashCount = 0
-                    currentBackoffMs = 60000
-                    hasLoggedCrash = false
+                    resetPollFailure()
                 } else if (msg.type === "state" && pending) {
                     const r = msg.state
                     pending(r?.title ? { isPlaying: r.statusName === "PLAYING", title: r.title, artist: r.artist, albumArt: r.albumArtBase64, positionSec: (r.positionMs || 0) / 1000, durationSec: (r.durationMs || 0) / 1000, volume: r.appVolume ?? 1, platform: "win32" } : null)
@@ -164,14 +172,11 @@ export function initSpotify() {
                 }
 
                 if (code !== 0 || signal) {
-                    crashCount++
-                    lastCrashTime = Date.now()
+                    recordPollFailure()
                     if (!hasLoggedCrash) {
                         hasLoggedCrash = true
-                        console.warn(`[Spotify] Bridge failed (code: ${code}, signal: ${signal}). Waiting ${Math.round(currentBackoffMs / 1000)}s before retry.`)
+                        console.warn(`[Spotify] Bridge failed (code: ${code}, signal: ${signal}). Waiting ${Math.round(backoffMs / 1000)}s before retry.`)
                     }
-                    // Exponential backoff for subsequent attempts (up to 10 minutes)
-                    currentBackoffMs = Math.min(currentBackoffMs * 2, MAX_BACKOFF_MS)
                 }
             })
             .send({ type: "init" })
@@ -180,11 +185,6 @@ export function initSpotify() {
         console.error("[Spotify] Failed to start bridge:", e)
     }
 }
-
-let macFailCount = 0
-let lastMacFailTime = 0
-let macBackoffMs = 5000
-const MAX_MAC_BACKOFF_MS = 60000
 
 const macScript = (c?: string) => `try
     tell application "System Events"
@@ -217,21 +217,16 @@ end try`
 export async function getSpotifyState(): Promise<SpotifyState | null> {
     try {
         if (isMac) {
-            if (macFailCount > 0 && Date.now() - lastMacFailTime < macBackoffMs) {
-                return null
-            }
+            if (shouldSkipPoll()) return null
 
             return new Promise((res) =>
                 exec(`osascript -e '${macScript().replace(/'/g, "'\\''")}'`, (e, out) => {
                     if (e || out?.includes("NOT_RUNNING")) {
-                        macFailCount++
-                        lastMacFailTime = Date.now()
-                        macBackoffMs = Math.min(macBackoffMs * 2, MAX_MAC_BACKOFF_MS)
+                        recordPollFailure()
                         return res(null)
                     }
 
-                    macFailCount = 0
-                    macBackoffMs = 5000
+                    resetPollFailure()
 
                     const p = out?.trim().split("|SEC|")
                     res(!p || p.length < 5 ? null : { isPlaying: p[0] === "true", title: p[1], artist: p[2], positionSec: parseFloat(p[3]) || 0, durationSec: parseFloat(p[4]) || 0, albumArt: p[5] || undefined, volume: (parseInt(p[6]) || 0) / 100, platform: "darwin" })
@@ -249,14 +244,21 @@ export async function getSpotifyState(): Promise<SpotifyState | null> {
             })
         }
         if (isLinux) {
+            if (shouldSkipPoll()) return null
+
             return new Promise((res) => {
                 const dbus = "dbus-send --print-reply --dest=org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2 org.freedesktop.DBus.Properties.Get string:'org.mpris.MediaPlayer2.Player'"
                 exec(`${dbus} string:'Metadata' && ${dbus} string:'PlaybackStatus' && ${dbus} string:'Position' && ${dbus} string:'Volume'`, (e, out) => {
                     if (e) {
+                        recordPollFailure()
+
                         const isServiceUnknown = e.message?.includes("org.freedesktop.DBus.Error.ServiceUnknown") || e.message?.includes("ServiceUnknown")
                         if (!isServiceUnknown) console.error("[Spotify] Linux error:", e)
                         return res(null)
                     }
+
+                    resetPollFailure()
+
                     const title = out.match(/string\s+"xesam:title"\s+variant\s+string\s+"([^"]+)"/)?.[1]
                     const artist = out.match(/string\s+"xesam:artist"\s+variant\s+array\s+\[\s+string\s+"([^"]+)"/)?.[1]
                     const len = parseInt(out.match(/string\s+"mpris:length"\s+variant\s+uint64\s+(\d+)/)?.[1] || "0")
