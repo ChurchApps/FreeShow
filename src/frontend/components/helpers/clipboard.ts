@@ -989,6 +989,24 @@ const deleteActions = {
             if (get(activeShow)!.type === "section") {
                 activeShow.set(null)
             }
+
+            // if "collapsed mode" is enabled in the project, then select the section the removed show was in so it does not collapse
+            if (get(projects)[projectId || ""].sectionsCollapsed) {
+                const removedShowIndex = indexes[0]
+                let sectionIndex = -1
+                for (let i = removedShowIndex - 1; i >= 0; i--) {
+                    const show = projectItems[i]
+                    if (show?.type === "section") {
+                        sectionIndex = i
+                        break
+                    }
+                }
+
+                if (sectionIndex >= 0) {
+                    const sectionShow = projectItems[sectionIndex]
+                    activeShow.set({ ...sectionShow, index: sectionIndex })
+                }
+            }
         }
 
         history({ id: "UPDATE", newData: { key: "shows", data: projectItems.filter((_a, i) => !indexes.includes(i)) }, oldData: { id: projectId }, location: { page: "show", id: isTemplate ? "project_template" : "project_key" } })
