@@ -72,7 +72,7 @@ export async function processAudio(buffer: Buffer, sampleRate = 48000, targetId?
 
             // Fast-path: Skip accumulator if perfectly sized
             if (icecastPcmAccumulator.length === 0 && pcm48k.length === frameByteSize) {
-                const opusFrame = activeOpusEncoder!.encode(pcm48k)
+                const opusFrame = activeOpusEncoder.encode(pcm48k)
                 IcecastSender.sendAudio(opusFrame, normalizedIcecast)
             } else {
                 icecastPcmAccumulator = Buffer.concat([icecastPcmAccumulator, pcm48k])
@@ -81,7 +81,7 @@ export async function processAudio(buffer: Buffer, sampleRate = 48000, targetId?
                     const chunk = icecastPcmAccumulator.subarray(0, frameByteSize)
                     icecastPcmAccumulator = Buffer.from(icecastPcmAccumulator.subarray(frameByteSize))
 
-                    const opusFrame = activeOpusEncoder!.encode(chunk)
+                    const opusFrame = activeOpusEncoder.encode(chunk)
                     IcecastSender.sendAudio(opusFrame, normalizedIcecast)
                 }
             }
