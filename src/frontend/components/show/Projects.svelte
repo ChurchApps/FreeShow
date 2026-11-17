@@ -4,7 +4,7 @@
     import { Main } from "../../../types/IPC/Main"
     import type { Project, Tree } from "../../../types/Projects"
     import { sendMain } from "../../IPC/main"
-    import { activePopup, activeProject, activeRename, contentProviderData, dictionary, drawer, editingProjectTemplate, focusMode, folders, openedFolders, projects, projectTemplates, projectView, providerConnections, showRecentlyUsedProjects, sorted, special } from "../../stores"
+    import { activePopup, activeProject, activeRename, contentProviderData, dictionary, drawer, editingProjectTemplate, focusMode, folders, openedFolders, pcoPlansWithUpdates, projects, projectTemplates, projectView, providerConnections, showRecentlyUsedProjects, sorted, special } from "../../stores"
     import { translateText } from "../../utils/language"
     import { getAccess } from "../../utils/profile"
     import { exportProject } from "../export/project"
@@ -383,7 +383,12 @@
                     {#if recentlyUsedList.length}
                         <p style="margin-left: 42px;font-style: italic;opacity: 0.7;font-size: 1.08em;"><T id="info.recently_used" /></p>
                     {:else}
-                        <p style="max-width: 80%;font-size: 1.08em;">
+                        <p style="max-width: 80%;font-size: 1.08em;display: flex;align-items: center;gap: 8px;">
+                            {#if currentProjectPcoFolderId}
+                                {@const hasUpdates = $pcoPlansWithUpdates.includes($activeProject || "")}
+                                <Icon id={hasUpdates ? "cloud_download" : "cloud"} title={hasUpdates ? "Changes available" : "Planning Center"} size={0.9} white />
+                            {/if}
+
                             {#if currentProject?.name}
                                 {currentProject.name}
                             {:else}

@@ -176,6 +176,7 @@ interface Plan {
         title: string
         sort_date: string
         created_at: string
+        updated_at: string
         items_count: number
     }
 }
@@ -358,8 +359,21 @@ export async function pcoLoadSinglePlan(serviceTypeId: string, planId: string): 
         categoryName: "Planning Center",
         shows: result.shows,
         projects: [result.project],
-        pcoPlans: [{ planId: plan.id, serviceTypeId, name: result.project.name, date: plan.attributes.sort_date }]
+        pcoPlans: [{ planId: plan.id, serviceTypeId, name: result.project.name, date: plan.attributes.sort_date, updatedAt: plan.attributes.updated_at, itemsCount: plan.attributes.items_count }]
     })
+}
+
+export async function pcoCheckPlans(plans: { serviceTypeId: string; planId: string }[]): Promise<{ planId: string; updatedAt: string; itemsCount: number; missing?: boolean }[]> {
+    if (!plans?.length) return []
+
+    return Promise.all(
+        plans.map(async ({ serviceTypeId, planId }) => {
+            const planList = await pcoRequest({ scope: "services", endpoint: `service_types/${serviceTypeId}/plans/${planId}` })
+            const plan = planList?.[0]
+            if (!plan?.id) return { planId, updatedAt: "", itemsCount: 0, missing: true }
+            return { planId, updatedAt: plan.attributes.updated_at || "", itemsCount: plan.attributes.items_count ?? 0 }
+        })
+    )
 }
 
 function expandFolderIds(allFolders: PCOFolder[], syncFolderIds: string[]): string[] {
@@ -385,7 +399,7 @@ async function getServiceTypesForFolders(rawFolders: PCOFolder[], syncFolderIds:
     return (results.flat() as ServiceType[]).filter((st) => st?.id && !seen.has(st.id) && !!seen.add(st.id))
 }
 
-export async function pcoLoadServices(syncFolderIds?: string[]) {
+export async function pcoLoadServices(syncFolderIds?: string[], songOrigin?: string) {
     let serviceTypes: ServiceType[]
 
     if (syncFolderIds?.length) {
@@ -411,7 +425,8 @@ export async function pcoLoadServices(syncFolderIds?: string[]) {
 
     sendToMain(ToMain.TOAST, "Getting schedules from Planning Center")
 
-    const results = await processAllServiceTypes(serviceTypes)
+    const placeholderMode = songOrigin === "placeholder"
+    const results = await processAllServiceTypes(serviceTypes, placeholderMode)
 
     if (results.downloadableMedia.length > 0) {
         downloadLessonsMedia(results.downloadableMedia)
@@ -436,11 +451,11 @@ async function fetchServiceTypes() {
     return serviceTypes
 }
 
-async function processAllServiceTypes(serviceTypes: ServiceType[]): Promise<any> {
+async function processAllServiceTypes(serviceTypes: ServiceType[], placeholderMode = false): Promise<any> {
     const projects: Project[] = []
     const shows: Show[] = []
     const downloadableMedia: LessonsData[] = []
-    const pcoPlans: { planId: string; serviceTypeId: string; name: string; date: string }[] = []
+    const pcoPlans: { planId: string; serviceTypeId: string; name: string; date: string; updatedAt?: string; itemsCount?: number }[] = []
 
     await Promise.all(
         serviceTypes.map(async (serviceType) => {
@@ -452,11 +467,13 @@ async function processAllServiceTypes(serviceTypes: ServiceType[]): Promise<any>
                     planId: plan.id,
                     serviceTypeId: serviceType.id,
                     name: plan.attributes.title || getDateTitle(plan.attributes.sort_date),
-                    date: plan.attributes.sort_date
+                    date: plan.attributes.sort_date,
+                    updatedAt: plan.attributes.updated_at,
+                    itemsCount: plan.attributes.items_count
                 })
             })
 
-            const results = await processServicePlans(servicePlans, serviceType)
+            const results = await processServicePlans(servicePlans, serviceType, placeholderMode)
 
             projects.push(...results.projects)
             shows.push(...results.shows)
@@ -495,14 +512,14 @@ async function fetchServicePlans(serviceType: ServiceType) {
     return filteredPlans
 }
 
-async function processServicePlans(plans: Plan[], serviceType: ServiceType) {
+async function processServicePlans(plans: Plan[], serviceType: ServiceType, placeholderMode = false) {
     const projects: Project[] = []
     const shows: Show[] = []
     const downloadableMedia: LessonsData[] = []
 
     await Promise.all(
         plans.map(async (plan: Plan) => {
-            const results = await processPlan(plan, serviceType)
+            const results = await processPlan(plan, serviceType, placeholderMode)
             if (results) {
                 if (results.project) projects.push(results.project)
                 if (results.shows.length) shows.push(...results.shows)
@@ -514,7 +531,7 @@ async function processServicePlans(plans: Plan[], serviceType: ServiceType) {
     return { projects, shows, downloadableMedia }
 }
 
-async function processPlan(plan: Plan, serviceType: ServiceType): Promise<any> {
+async function processPlan(plan: Plan, serviceType: ServiceType, placeholderMode = false): Promise<any> {
     const typesEndpoint = "service_types"
     const plansEndpoint = `${typesEndpoint}/${serviceType.id}/plans`
     const itemsEndpoint = `${plansEndpoint}/${plan.id}/items`
@@ -531,7 +548,7 @@ async function processPlan(plan: Plan, serviceType: ServiceType): Promise<any> {
         let result: any
 
         if (type === "song") {
-            result = await processSongItem(item, itemsEndpoint)
+            result = await processSongItem(item, itemsEndpoint, placeholderMode)
         } else if (type === "item") {
             result = processRegularItem(item)
         } else if (type === "media") {
@@ -554,10 +571,20 @@ async function processPlan(plan: Plan, serviceType: ServiceType): Promise<any> {
     return { project, shows, downloadableMedia }
 }
 
-async function processSongItem(item: ProjectItem, itemsEndpoint: string) {
+async function processSongItem(item: ProjectItem, itemsEndpoint: string, placeholderMode = false) {
     const songDataEndpoint = `${itemsEndpoint}/${item.id}/song`
     const songData = (await pcoRequest({ scope: "services", endpoint: songDataEndpoint }))[0]
     if (!songData?.id) return null
+
+    // placeholder mode: don't fetch full song data, the frontend only needs names to match local shows
+    if (placeholderMode) {
+        const showId = `pcosong_${songData.id}`
+        const emptyShow = getShow(songData, {}, [])
+        return {
+            show: { id: showId, ...emptyShow },
+            projectItem: { type: "show", id: showId, name: emptyShow.name, scheduleLength: item.attributes.length }
+        }
+    }
 
     const arrangementEndpoint = `/songs/${songData.id}/arrangements/${item.relationships.arrangement.data?.id}`
     const songArrangement = (await pcoRequest({ scope: "services", endpoint: arrangementEndpoint }))[0]
