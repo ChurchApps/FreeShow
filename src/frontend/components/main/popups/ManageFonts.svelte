@@ -3,7 +3,7 @@
     import type { CustomFont } from "../../../../types/Show"
     import { customFonts, special } from "../../../stores"
     import { newToast } from "../../../utils/common"
-    import { defaultFonts, getSystemFontsList, loadCustomFont } from "../../helpers/fonts"
+    import { defaultFonts, getSystemFontsList, loadCustomFont, removeCustomFont } from "../../helpers/fonts"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import HRule from "../../input/HRule.svelte"
@@ -79,6 +79,7 @@
     }
 
     function removeFont(index: number) {
+        removeCustomFont($customFonts[index])
         customFonts.set($customFonts.filter((_, i) => i !== index))
     }
 
