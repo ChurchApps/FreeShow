@@ -180,7 +180,9 @@ export const mainResponses: MainResponses = {
     [ToMain.GPU_HEALTH]: (a) => {
         const compositing = a.issue === "compositing"
         let html = `<h3>${translateText(compositing ? "gpu.no_acceleration" : "gpu.no_video_decode")}</h3><p>${translateText(compositing ? "gpu.no_acceleration_info" : "gpu.no_video_decode_info")}</p>`
-        if (a.vaDriverMissing && a.packages?.length) {
+        if (a.permissionDenied) {
+            html += `<p>User lacks permission to access graphics hardware. Run this, log out and back in:</p><pre style="user-select: text;">sudo usermod -a -G video,render $USER</pre>`
+        } else if (a.vaDriverMissing && a.packages?.length) {
             // Linux with no VA-API driver installed at all: name the exact package(s) for the GPU vendor
             html += `<p>${translateText("gpu.va_driver_missing")}</p><pre style="user-select: text;">sudo apt install ${a.packages.join(" ")}</pre>`
         } else {
