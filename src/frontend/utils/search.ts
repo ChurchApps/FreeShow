@@ -4,7 +4,7 @@ import { sortObjectNumbers } from "../components/helpers/array"
 import { similarity } from "../converters/txt"
 import { categories, drawerTabsData, textCache } from "../stores"
 
-const specialChars = /[.,\/#!?$%\^&\*;:{}=\-_'"´`~()]/g
+const specialChars = /[.,\/#!?$%\^&\*;:{}=\-_'"´`~()\[\]]/g
 export function formatSearch(value: string, removeSpaces = false) {
     if (typeof value !== "string") return ""
     let newValue = value
@@ -271,10 +271,20 @@ function strictScore(q: ParsedQuery, titleMatchedCount: number, titleText: strin
 }
 
 // does any word in text start with `word`? (indexOf walk — no allocations)
+// Also matches boundaries between letters and digits (e.g. "12345" in "test12345", or "test" in "12345test")
 function hasWordPrefix(text: string, word: string): boolean {
     let i = text.indexOf(word)
     while (i !== -1) {
         if (i === 0 || text.charCodeAt(i - 1) <= 32) return true
+
+        const prevChar = text.charCodeAt(i - 1)
+        const currChar = text.charCodeAt(i)
+        const isPrevDigit = prevChar >= 48 && prevChar <= 57
+        const isCurrDigit = currChar >= 48 && currChar <= 57
+
+        // Boundary between digit and letter (e.g., "123test" or "test123")
+        if (isPrevDigit !== isCurrDigit) return true
+
         i = text.indexOf(word, i + 1)
     }
     return false
