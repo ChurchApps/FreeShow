@@ -5,7 +5,7 @@ import { redoHistory } from "./../../stores"
 import { areObjectsEqual, clone } from "./array"
 import { historyActions } from "./historyActions"
 import { createStore, createStoreHistory, deleteStore, deleteStoreHistory, updateStore, updateStoreHistory } from "./historyStores"
-import { deselect } from "./select"
+import { clearShiftAnchor, deselect } from "./select"
 import { loadShows } from "./setShow"
 import { removeTemplatesFromShow } from "./show"
 import { _show } from "./shows"
@@ -43,6 +43,7 @@ export function history(obj: History, shouldUndo: null | boolean = null) {
     if (!obj.newData) obj.newData = null
 
     if (shouldUndo === null) obj.time = new Date().getTime()
+    clearShiftAnchor()
 
     let showID: string | undefined
     if (obj.location?.show?.id) showID = obj.location.show.id
