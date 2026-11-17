@@ -1196,7 +1196,7 @@ export function addToProject(data: API_add_to_project) {
     activeProject.set(data.projectId)
 
     projects.update((a) => {
-        if (!a[data.projectId]?.shows || a[data.projectId].shows.find((item) => item.id === data.id)) return a
+        if (!a[data.projectId]?.shows) return a
         a[data.projectId].shows.push({ ...(data.data || {}), id: data.id })
         a[data.projectId].modified = Date.now()
         return a
