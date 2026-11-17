@@ -6,7 +6,7 @@
     import { arrayHasData, clone } from "../helpers/array"
     import { _show } from "../helpers/shows"
     import { getLayoutRef } from "../helpers/show"
-    import { getShiftAnchor, getShiftRangeStart, setShiftAnchor } from "../helpers/select"
+    import { setShiftAnchor, shiftAnchor } from "../helpers/select"
 
     export let id: SelectIds
     export let data: any
@@ -152,9 +152,9 @@
             return
         }
 
-        if (!dragged && !rightClick && e.button === 0) {
-            if (e.shiftKey) useShiftAnchor()
-            else setShiftAnchor(id, clone(data))
+        if (!dragged && !rightClick && e.button === 0 && !e.shiftKey) setShiftAnchor(id, clone(data))
+        if (e.shiftKey && shiftAnchor?.id === id && ($selected.id !== id || !$selected.data?.length)) {
+            selected.set({ id, data: [shiftAnchor.data] })
         }
 
         // shift select range
@@ -270,12 +270,6 @@
 
         if (!newData?.length) selected.set({ id: null, data: [] })
         else if (newData) selected.set({ id, data: newData })
-    }
-
-    // nothing selected yet: start the Shift range from the last plain-clicked item of this list
-    function useShiftAnchor() {
-        const start = getShiftRangeStart($selected, getShiftAnchor(), id, data, shiftRange)
-        if (start) selected.set({ id, data: [start] })
     }
 
     function deselect(e: any) {
