@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import type { Shows } from "../../../types/Show"
-import { actions, activePlaylist, audioPlaylists, outputs, playingAudio, playingVideos, playingVideoState, projects, shows, showsCache, variables } from "../../stores"
+import { actions, activePlaylist, audioPlaylists, categories, outputs, playingAudio, playingVideos, playingVideoState, projects, shows, showsCache, variables } from "../../stores"
 import { getTextLines } from "../edit/scripts/textStyle"
 import { keysToID, sortByName } from "../helpers/array"
 import { getFirstActiveOutput } from "../helpers/output"
@@ -25,6 +25,9 @@ export async function getShowLayout({ id }: { id: string }) {
 
 export function getProjects() {
     return get(projects)
+}
+export function getCategories() {
+    return get(categories)
 }
 
 export function getProject({ id }: { id: string }) {
