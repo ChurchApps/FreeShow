@@ -6,6 +6,7 @@
     import { arrayHasData, clone } from "../helpers/array"
     import { _show } from "../helpers/shows"
     import { getLayoutRef } from "../helpers/show"
+    import { setShiftAnchor, shiftAnchor } from "../helpers/select"
 
     export let id: SelectIds
     export let data: any
@@ -149,6 +150,11 @@
         if (onlyRightClickSelect) {
             if (rightClick) selected.set({ id, data: [data] })
             return
+        }
+
+        if (!dragged && !rightClick && e.button === 0 && !e.shiftKey) setShiftAnchor(id, clone(data))
+        if (e.shiftKey && shiftAnchor?.id === id && ($selected.id !== id || !$selected.data?.length)) {
+            selected.set({ id, data: [shiftAnchor.data] })
         }
 
         // shift select range
