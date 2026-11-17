@@ -128,7 +128,7 @@ export class ChurchAppsShowBuilder {
             layouts: {
                 [layoutId]: {
                     name: "Default",
-                    notes: song.notes || "",
+                    notes: songDetails.description || song.description || song.notes || "",
                     slides: layoutSlides
                 }
             },
