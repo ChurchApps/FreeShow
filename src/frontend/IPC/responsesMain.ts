@@ -367,10 +367,8 @@ export const mainResponses: MainResponses = {
         // migrate legacy links & remove links to deleted shows
         await syncProviderItemLinks(data.providerId)
 
-        // "placeholder" origin: Planning Center only — never import provider shows, only match local
-        // shows by name and insert a show_placeholder project item where no local show matches
-        const placeholderMode = data.providerId === "planningcenter" && songOrigin === "placeholder"
-
+        // placeholder mode does not download any shows, uses only local shows or creates placeholders
+        const placeholderMode = songOrigin === "placeholder"
         if (!placeholderMode) {
             // Planning Center items are seperated into multiple categories based on the type: Songs (default) & Regular items (generic)
             if (data.providerId === "planningcenter" && data.shows.some((a) => a.category === "planning_center_generic")) {
