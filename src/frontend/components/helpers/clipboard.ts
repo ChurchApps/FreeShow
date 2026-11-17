@@ -993,18 +993,12 @@ const deleteActions = {
             // if "collapsed mode" is enabled in the project, then select the section the removed show was in so it does not collapse
             if (get(projects)[projectId || ""].sectionsCollapsed) {
                 const removedShowIndex = indexes[0]
-                let sectionIndex = -1
                 for (let i = removedShowIndex - 1; i >= 0; i--) {
                     const show = projectItems[i]
                     if (show?.type === "section") {
-                        sectionIndex = i
+                        activeShow.set({ ...show, index: i })
                         break
                     }
-                }
-
-                if (sectionIndex >= 0) {
-                    const sectionShow = projectItems[sectionIndex]
-                    activeShow.set({ ...sectionShow, index: sectionIndex })
                 }
             }
         }
