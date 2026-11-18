@@ -119,9 +119,7 @@
             })
     }
 
-    // the same data each item is selected with, so a Shift+click range can select the items in between
-    $: projectSelectData = projectItemsList.map((show, index) => (typeof show === "object" ? getSelectData(show, index) : null))
-    const getSelectData = (show: ProjectShowRef, index: number) => ({ ...show, name: show.name || removeExtension(getFileName(show.id)), index })
+    $: projectSelectData = projectItemsList.map((show, index) => (typeof show === "object" ? { ...show, name: show.name || removeExtension(getFileName(show.id)), index } : null))
 
     let splittedProjectsList: { color: string; items: ProjectShowRef[] }[] = []
     $: if (projectItemsList) splitProjectItemsToSections()
@@ -279,7 +277,7 @@
 
                     <div class="listSection" style="{splittedItemsList.color ? `--border-color: ${splittedItemsList.color};` : ''}{isCollapsed && splittedItemsList.items.length > 1 ? 'border-bottom: 3px solid var(--primary-lighter);' : ''}">
                         {#each splittedItemsList.items as show, i}
-                            {@const index = show.index}
+                            {@const index = show.index ?? 0}
                             {@const triggerAction = show.data?.settings?.triggerAction || $special.sectionTriggerAction}
                             {@const providerLink = isProviderProject && isProjectItemLinked(currentProject, show, $providerItemLinks)}
                             {@const isFirst = i === 0}
@@ -294,7 +292,7 @@
                             {:else if show.type === "DIVIDER"}
                                 <div style="border-top: 1px solid var(--primary-lighter);margin: 5px 0;"></div>
                             {:else}
-                                <SelectElem id="show" dropAbove={isFirst} triggerOnHover data={getSelectData(show, index)} shiftRange={projectSelectData} {fileOver} borders={show.type === "show_placeholder" ? "all" : "edges"} trigger="column" draggable={!isLocked} selectable={!isLocked}>
+                                <SelectElem id="show" dropAbove={isFirst} triggerOnHover data={projectSelectData[index]} shiftRange={projectSelectData} {fileOver} borders={show.type === "show_placeholder" ? "all" : "edges"} trigger="column" draggable={!isLocked} selectable={!isLocked}>
                                     {#if show.type === "section"}
                                         <MaterialButton
                                             {isActive}

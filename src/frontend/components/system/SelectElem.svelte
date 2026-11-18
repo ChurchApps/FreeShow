@@ -159,7 +159,6 @@
 
         // shift select range
         if (e.shiftKey && ((shiftRange.length && $selected.data[0]) || $selected.data[0]?.index !== undefined)) {
-            // index first: the same show can be in a project more than once
             const searchKeys = ["index", "id", "path"]
             let lastSelected = $selected.data[$selected.data.length - 1]
             if (!lastSelected) return
@@ -182,16 +181,13 @@
             let dataBetween = selectedBetween.map((index) => (shiftRange.length ? shiftRange[index] : { index }))
             let allNewData = [...$selected.data, ...dataBetween, data]
 
-            // the range already holds the exact data each item is selected with (e.g. project items, where items can have different keys): keep it as is
-            const exactRange = JSON.stringify(shiftRange[newIndex]) === JSON.stringify(data)
-
             let keys = Object.keys(data)
             // add all previous keys to new data
-            if (shiftRange) {
+            const isSameData = JSON.stringify(shiftRange[newIndex]) === JSON.stringify(data)
+            if (shiftRange && !isSameData) {
                 allNewData = allNewData
                     .map((data) => {
                         if (!data) return null
-                        if (exactRange) return data
 
                         let newData: any = {}
                         keys.forEach((key) => {
