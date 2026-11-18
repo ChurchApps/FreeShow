@@ -572,7 +572,8 @@ export const mainResponses: MainResponses = {
 
                 // in placeholder mode, unmatched provider shows become a show_placeholder item
                 if (placeholderMode && a.type === "show" && !get(shows)[mappedId]) {
-                    return { type: "show_placeholder", id: uid(5), name: a.name || "—", scheduleLength: a.scheduleLength }
+                    const showName = a.name || data.shows?.find((s) => s.id === a.id)?.name || "—"
+                    return { type: "show_placeholder", id: uid(5), name: showName, scheduleLength: a.scheduleLength }
                 }
 
                 return { ...a, id: mappedId }
