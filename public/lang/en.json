@@ -1309,8 +1309,6 @@
     "hid": {
         "data_bytes": "Data bytes",
         "auto_values": "Update values on HID input",
-        "listen": "Listen for HID input",
-        "open_settings": "Open settings",
         "tip_input_monitoring": "macOS requires the Input Monitoring permission to read clickers and keyboards. Enable in the System Settings.",
         "tip_udev": "Add this udev rule to $1 and reconnect the device to grant access:"
     },

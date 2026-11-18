@@ -138,7 +138,6 @@ export const actionData = {
 
     // OTHER
     toggle_log_song_usage: { SECTION: "settings.other", name: "settings.log_song_usage", icon: "history", input: "toggle" },
-    toggle_hid_input: { name: "hid.listen", icon: "keyboard", input: "toggle" },
 
     // ACTION
     run_action: { SECTION: "popup.action", canAddMultiple: true, name: "actions.run_action", icon: "actions", input: "id" },

@@ -966,17 +966,6 @@ export function toggleLogSongUsage(data: API_toggle_specific) {
     })
 }
 
-export function toggleHidInput(data: API_toggle_specific) {
-    if ((data.value as any) === "false") data.value = false // from Companion
-
-    const enabled = data.value !== undefined ? !!data.value : !!get(special).hidInputDisabled
-    special.update((a) => {
-        if (enabled) delete a.hidInputDisabled
-        else a.hidInputDisabled = true
-        return a
-    })
-}
-
 // SPECIAL
 
 function normalize(str: string) {

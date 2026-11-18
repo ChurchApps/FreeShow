@@ -4,14 +4,12 @@
     import { ToMain } from "../../../types/IPC/ToMain"
     import type { HidValues } from "../../../types/Show"
     import { destroyMain, receiveToMain, requestMain, sendMain } from "../../IPC/main"
-    import { special } from "../../stores"
     import T from "../helpers/T.svelte"
     import InputRow from "../input/InputRow.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import MaterialDropdown from "../inputs/MaterialDropdown.svelte"
     import MaterialTextInput from "../inputs/MaterialTextInput.svelte"
     import MaterialToggleSwitch from "../inputs/MaterialToggleSwitch.svelte"
-    import { toggleHidInput } from "./apiHelper"
     import { activeHidPaths } from "./hid"
 
     export let value: HidValues = {}
@@ -151,9 +149,7 @@
 {#if selectedDevice?.permission === "input_monitoring"}
     <InputRow>
         <p style="font-size: 0.7em;opacity: 0.8;"><T id="hid.tip_input_monitoring" /></p>
-        <MaterialButton variant="outlined" style="white-space: nowrap;" on:click={openInputMonitoringSettings}>
-            <T id="hid.open_settings" />
-        </MaterialButton>
+        <MaterialButton variant="outlined" style="white-space: nowrap;" on:click={openInputMonitoringSettings}>Open System Settings</MaterialButton>
     </InputRow>
 {:else if selectedDevice?.permission === "udev"}
     <InputRow>
@@ -168,7 +164,6 @@
     <br />
 {/if}
 
-<MaterialToggleSwitch label="hid.listen" checked={!$special.hidInputDisabled} defaultValue={true} on:change={(e) => toggleHidInput({ value: e.detail })} />
 <MaterialToggleSwitch label="hid.auto_values" checked={autoValues} on:change={toggleAutoValues} />
 
 <MaterialTextInput label="hid.data_bytes" value={dataString} on:change={onDataInput} />
