@@ -82,6 +82,7 @@ export const mainResponses: MainResponses = {
     [Main.FULLSCREEN]: () => getMainWindow()?.setFullScreen(!getMainWindow()?.isFullScreen()),
     [Main.SPELLCHECK]: (a) => correctSpelling(a),
     /// //////////////////////
+    [Main.GET_CONFIG_DATA]: (data) => config.get(data.key),
     [Main.SAVE]: (a) => save(a),
     [Main.BACKUPS]: () => getBackups(),
     [Main.DELETE_BACKUP]: (data) => deleteBackup(data),

@@ -56,6 +56,7 @@ export enum Main {
     MINIMIZE = "MINIMIZE",
     FULLSCREEN = "FULLSCREEN",
     /////
+    GET_CONFIG_DATA = "GET_CONFIG_DATA",
     IMPORT = "IMPORT",
     IMPORT_FILES = "IMPORT_FILES",
     BIBLE = "BIBLE",
@@ -200,6 +201,7 @@ export interface MainSendPayloads {
     // DEV
     [Main.LOG]: any
     /////
+    [Main.GET_CONFIG_DATA]: { key: string }
     [Main.IMPORT]: { channel: string; format: { name: string; extensions: string[] } }
     [Main.IMPORT_FILES]: { id: string; paths: string[] }
     [Main.BIBLE]: { id: string; name: string }
@@ -342,6 +344,7 @@ export interface MainReturnPayloads {
     [Main.CLOSE]: boolean | void
     [Main.MAXIMIZED]: boolean
     /////////////////////
+    [Main.GET_CONFIG_DATA]: string
     [Main.BIBLE]: { id: string; error?: string; content?: [string, Bible] }
     [Main.SHOW]: { id: string; error?: string; content?: [string, Show] }
     ///
