@@ -16,8 +16,6 @@ export class SpeechToText {
     private static stream: MediaStream | null = null
     private static sourceNode: MediaStreamAudioSourceNode | null = null
     private static captureNode: AudioWorkletNode | null = null
-    private static analyserNode: AnalyserNode | null = null
-    private static animFrameId: number | null = null
     private static listeners = new Set<AudioLevelCallback>()
 
     private static sessionToken = 0
@@ -163,14 +161,7 @@ export class SpeechToText {
             this.ac = ac
 
             const sourceNode = ac.createMediaStreamSource(stream)
-            const analyserNode = ac.createAnalyser()
-            analyserNode.fftSize = 256
-            sourceNode.connect(analyserNode)
-
             this.sourceNode = sourceNode
-            this.analyserNode = analyserNode
-
-            this.startLevelMonitoring(ac, analyserNode)
 
             await ac.audioWorklet.addModule("./assets/stt-processor.js")
 
@@ -184,7 +175,13 @@ export class SpeechToText {
             this.captureNode = captureNode
 
             captureNode.port.onmessage = (e) => {
-                sendMain(Main.AI_AUDIO_DATA, { buffer: e.data })
+                const { buffer, level } = e.data || {}
+                if (buffer) {
+                    sendMain(Main.AI_AUDIO_DATA, { buffer })
+                }
+                if (typeof level === "number") {
+                    this.emitAudioLevel(level)
+                }
             }
 
             sourceNode.connect(captureNode)
@@ -196,29 +193,6 @@ export class SpeechToText {
             this.stopCapture()
             return null
         }
-    }
-
-    private static startLevelMonitoring(ac: AudioContext, analyser: AnalyserNode) {
-        const dataArray = new Uint8Array(analyser.frequencyBinCount)
-
-        const updateLevel = () => {
-            if (!this.analyserNode || !this.ac || this.ac !== ac || ac.state === "closed") return
-
-            analyser.getByteTimeDomainData(dataArray)
-            let sum = 0
-
-            for (const byte of dataArray) {
-                const sample = (byte - 128) / 128
-                sum += sample * sample
-            }
-
-            const rms = Math.sqrt(sum / dataArray.length)
-            this.emitAudioLevel(Math.min(1.0, Math.round(rms * 4.5 * 100) / 100))
-
-            this.animFrameId = requestAnimationFrame(updateLevel)
-        }
-
-        updateLevel()
     }
 
     static onAudioLevel(callback: AudioLevelCallback): () => void {
@@ -233,17 +207,12 @@ export class SpeechToText {
     }
 
     static stopCapture() {
-        if (this.animFrameId !== null) {
-            cancelAnimationFrame(this.animFrameId)
-            this.animFrameId = null
-        }
-
-        ;[this.sourceNode, this.captureNode, this.analyserNode].forEach((node) => {
+        ;[this.sourceNode, this.captureNode].forEach((node) => {
             try {
                 node?.disconnect()
             } catch (_) {}
         })
-        this.sourceNode = this.captureNode = this.analyserNode = null
+        this.sourceNode = this.captureNode = null
 
         if (this.stream) {
             this.stream.getTracks().forEach((track) => {
