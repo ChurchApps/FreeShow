@@ -708,7 +708,6 @@ const faq = [
     { id: "https://freeshow.app/docs/outputs#how-to-create-lower-third-display-for-a-live-stream", name: "Lower Third Display", icon: "help", aliases: ["-Lower thirds", "-Livestream"] },
     { id: "https://freeshow.app/docs/features#system-requirements", name: "System Requirements", icon: "help", aliases: ["-Specs"] },
     { id: "https://freeshow.app/docs/faq#how-to-import-a-powerpoint-presentation", name: "How to import a PowerPoint presentation", icon: "help", aliases: ["-PowerPoint", "-Keynote", "-slides", "-presentation"] },
-    { id: "https://freeshow.app/docs/importing#powerpoint", name: "How to import PowerPoint as text", icon: "help", aliases: ["-PowerPoint", "-slides", "-presentation"] },
     { id: "https://freeshow.app/docs/importing#pdf", name: "How to import a PDF file", icon: "help", aliases: ["-PDF"] },
     { id: "https://freeshow.app/docs/faq#videos-are-muted", name: "Videos are muted", icon: "help", aliases: ["-No audio"] },
     { id: "https://freeshow.app/docs/faq#ccli-integration", name: "CCLI Integration", icon: "help", aliases: ["-SongSelect"] },

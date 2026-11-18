@@ -147,7 +147,6 @@ export const dropActions = {
         let data = drag.data
         if (drag.id === "media" || drag.id === "files") {
             const extraFiles: string[] = []
-            const pptFiles: string[] = []
             const projectFiles: string[] = []
 
             data = data
@@ -178,10 +177,7 @@ export const dropActions = {
 
                     const type: string = getMediaType(extension)
 
-                    if (type === "ppt") {
-                        pptFiles.push(path)
-                        return null
-                    }
+                    // PowerPoint/Keynote files are added as "ppt" items, controlled through the PowerPoint/Keynote app
 
                     const name: string = a.name || getFileName(path)
                     return { name: removeExtension(name), id: path, type }
@@ -190,8 +186,6 @@ export const dropActions = {
 
             // add folders
             if (extraFiles.length) projectDropFolders(extraFiles, drop.index)
-            // auto convert PPT to slides
-            if (pptFiles.length) sendMain(Main.IMPORT_FILES, { id: "powerpoint", paths: pptFiles })
             // iport projects
             if (projectFiles.length) sendMain(Main.IMPORT_FILES, { id: "freeshow_project", paths: projectFiles })
         } else if (drag.id === "urls") {

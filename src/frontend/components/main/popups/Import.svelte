@@ -2,14 +2,13 @@
     import { Main } from "../../../../types/IPC/Main"
     import { importFromClipboard } from "../../../converters/importHelpers"
     import { sendMain } from "../../../IPC/main"
-    import { activePopup, alertMessage, os, popupData } from "../../../stores"
+    import { activePopup, alertMessage, popupData } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { presentationExtensions } from "../../../values/extensions"
     import Icon from "../../helpers/Icon.svelte"
     import HRule from "../../input/HRule.svelte"
     import InputRow from "../../input/InputRow.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
-    import Tip from "../Tip.svelte"
 
     let mode = $popupData.mode
     popupData.set({})
@@ -58,30 +57,13 @@
     const media_formats = [
         { name: "Lessons.church", title: "ChurchApps\nhttps://lessons.church", extensions: ["json", "olp", "olf"], id: "lessons" },
         { name: "PDF", title: "Added to your project", extensions: ["pdf"], id: "pdf" },
-        { name: "PowerPoint", extensions: [], id: "powerpoint" }
+        { name: "PowerPoint", title: "Opens the presentation in PowerPoint/Keynote\n(requires the app to be installed)", extensions: [], id: "powerpoint" }
     ]
 
-    const powerpoint_options = [
-        { name: "info.slides", description: "Imperfect formatting.", icon: "txt", click: pptText },
-        { name: "PDF", description: `Requires LibreOffice${$os.platform === "linux" ? "" : " or PowerPoint"} installed.`, icon: "pdf", click: convertToPdf },
-        { name: "PDF (Online)", description: "Requires network connection, and manual steps.", icon: "pdf", click: onlineConvert },
-        { name: "Controller (Deprecated)", description: "Requires PowerPoint/Keynote installed. Useful for live streams, but buggy.", icon: "powerkey", click: pptController }
-    ]
-
-    function pptText() {
-        sendMain(Main.IMPORT, { channel: "powerpoint", format: { name: "PowerPoint", extensions: ["ppt", "pptx"] } })
-        activePopup.set(null)
-    }
-    function convertToPdf() {
-        sendMain(Main.PPT_TO_PDF)
-    }
-    function onlineConvert() {
-        sendMain(Main.URL, "https://www.ilovepdf.com/powerpoint_to_pdf")
-        // https://cloudconvert.com/ppt-to-jpg
-        activePopup.set(null)
-    }
+    // PowerPoint/Keynote is only imported as a controller (the presentation is opened in the actual app)
     function pptController() {
         sendMain(Main.IMPORT, { channel: "powerkey", format: { name: "PowerPoint/Keynote", extensions: presentationExtensions } })
+        activePopup.set(null)
     }
 
     function displayTutorial(format: any) {
@@ -113,24 +95,7 @@
     let openedPage = ""
 </script>
 
-{#if openedPage === "powerpoint"}
-    <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => (openedPage = "")} />
-
-    <div style="display: flex;flex-direction: column;gap: 5px;">
-        {#each powerpoint_options as option}
-            <MaterialButton variant="outlined" style="justify-content: start;flex: 1;min-height: 50px;font-weight: normal;" on:click={() => option.click()}>
-                <img style="height: 60px;width: 70px;" src="./import-logos/{option.icon}.webp" alt="{option.name}-logo" draggable={false} />
-
-                <div style="display: flex;flex-direction: column;align-items: start;gap: 5px;">
-                    <p style="font-size: 1.1em;">{translateText(option.name)}</p>
-                    <span style="opacity: 0.5;">{translateText(option.description)}</span>
-                </div>
-            </MaterialButton>
-        {/each}
-    </div>
-
-    <Tip value="The best option would generally be to get a hold of the presentation as PDF format in the first place." top={20} />
-{:else if openedPage === "freeshow_more"}
+{#if openedPage === "freeshow_more"}
     <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => (openedPage = "")} />
 
     <div style="display: flex;gap: 5px;">
@@ -173,7 +138,7 @@
                     style="justify-content: start;flex: 1;min-height: 50px;font-weight: normal;"
                     on:click={() => {
                         if (format.id === "powerpoint") {
-                            pptText()
+                            pptController()
                             return
                         }
 
@@ -270,8 +235,7 @@
                     style="justify-content: start;flex: 1;min-height: 50px;font-weight: normal;"
                     on:click={() => {
                         if (format.id === "powerpoint") {
-                            // openedPage = "powerpoint"
-                            pptText()
+                            pptController()
                             return
                         }
 
@@ -282,19 +246,6 @@
                     <img style="height: 60px;width: 70px;" src="./import-logos/{format.id}.webp" alt="{format.id}-logo" draggable={false} />
                     <p>{format.name}</p>
                 </MaterialButton>
-
-                {#if format.id === "powerpoint"}
-                    <MaterialButton
-                        variant="outlined"
-                        style="padding: 6px;"
-                        on:click={() => {
-                            openedPage = "powerpoint"
-                        }}
-                        title="create_show.more_options"
-                    >
-                        <Icon id="next" style="opacity: 0.6;" size={1.8} white />
-                    </MaterialButton>
-                {/if}
             </InputRow>
         {/each}
     </div>
