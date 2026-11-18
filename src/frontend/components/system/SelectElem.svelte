@@ -159,7 +159,7 @@
 
         // shift select range
         if (e.shiftKey && ((shiftRange.length && $selected.data[0]) || $selected.data[0]?.index !== undefined)) {
-            const searchKeys = ["id", "index", "path"]
+            const searchKeys = ["index", "id", "path"]
             let lastSelected = $selected.data[$selected.data.length - 1]
             if (!lastSelected) return
 
@@ -183,7 +183,8 @@
 
             let keys = Object.keys(data)
             // add all previous keys to new data
-            if (shiftRange) {
+            const isSameData = JSON.stringify(shiftRange[newIndex]) === JSON.stringify(data)
+            if (shiftRange && !isSameData) {
                 allNewData = allNewData
                     .map((data) => {
                         if (!data) return null
