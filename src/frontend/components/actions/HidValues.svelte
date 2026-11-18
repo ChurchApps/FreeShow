@@ -59,7 +59,9 @@
         })
     }
 
+    let autoValues = true
     onMount(() => {
+        autoValues = !hid.data?.length
         requestDevices()
         if (autoValues && hid.device) {
             sendMain(Main.RECEIVE_HID, { path: hid.device })
@@ -85,7 +87,6 @@
         return activeHidPaths.has(path)
     }
 
-    let autoValues = true
     function toggleAutoValues(e: any) {
         autoValues = e.detail ?? e
         if (autoValues) {
@@ -103,12 +104,6 @@
         const receivedData = msg.data || (Array.isArray(msg) ? msg : [])
         if (!receivedData?.length) return
 
-        if (!hid.device && receivedPath) {
-            setHid("device", receivedPath)
-            const found = devices.find((d) => d.path?.toLowerCase() === receivedPath.toLowerCase())
-            if (found) setHid("deviceName", formatDeviceLabel(found))
-        }
-
         const isMatch = !hid.device || !receivedPath || hid.device.toLowerCase() === receivedPath.toLowerCase()
         if (isMatch) {
             setHid("data", receivedData)
@@ -117,9 +112,12 @@
 
     onDestroy(() => {
         destroyMain(listenerId)
-        if (hid.device && !isDeviceUsedElsewhere(hid.device)) {
-            sendMain(Main.CLOSE_HID, { path: hid.device })
-        }
+        // Let hidInListen reconcile device listeners once saved
+        setTimeout(() => {
+            if (hid.device && !isDeviceUsedElsewhere(hid.device)) {
+                sendMain(Main.CLOSE_HID, { path: hid.device })
+            }
+        }, 150)
     })
 
     function onDataInput(e: CustomEvent<string>) {
