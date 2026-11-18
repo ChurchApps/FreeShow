@@ -19,13 +19,9 @@ export function isRawInputDevice(device: DeviceInfo): boolean {
 // both have the same device instance id before the interface class "#{...}"
 // (the helper uses the same conversion)
 export function getRawInputDeviceId(devicePath: string): string {
-    let id = devicePath.toLowerCase()
-
+    const id = devicePath.toLowerCase().replace(/^(?:\\\\\?\\|\\\?\?\\)/, "")
     const classIndex = id.lastIndexOf("#{")
-    if (classIndex > -1) id = id.slice(0, classIndex)
-
-    if (id.startsWith("\\\\?\\") || id.startsWith("\\??\\")) id = id.slice(4)
-    return id
+    return classIndex > -1 ? id.slice(0, classIndex) : id
 }
 
 const watchedDevices: Record<string, string> = {} // id: path
@@ -74,18 +70,15 @@ function startHelper() {
     child.stderr?.on("data", (chunk: Buffer) => console.warn("HID RAW INPUT:", chunk.toString().trim()))
     child.stdin?.on("error", (err) => console.error("HID RAW INPUT ERROR:", err))
 
-    // "error" is emitted without "exit" if the helper could not be started
-    child.on("error", (err) => stopped(err))
-    child.on("exit", (code) => stopped(code))
-
-    function stopped(reason: Error | number | null) {
+    const stopped = (reason: Error | number | null) => {
         if (helper !== child) return
         helper = null
-
-        // remove listeners, so they can be started again
         console.info("HID RAW INPUT HELPER STOPPED:", reason)
-        Object.keys(watchedDevices).forEach((id) => delete watchedDevices[id])
+        for (const id in watchedDevices) delete watchedDevices[id]
     }
+
+    child.on("error", stopped)
+    child.on("exit", stopped)
 
     Object.keys(watchedDevices).forEach((id) => sendCommand(child, `+${id}`))
 }

@@ -35,18 +35,8 @@ function openDevice(path: string): HID {
     return new nodeHid.HID(path, { nonExclusive: true })
 }
 
-type HidEntry = {
-    device: HID
-    closed: boolean
-}
-
-type HidGroup = {
-    entries: Record<string, HidEntry>
-    closed: boolean
-}
-
 let supportedDevicesCache: HidDevice[] = []
-const devices: Record<string, HidGroup> = {}
+const devices: Record<string, HID> = {}
 
 function safeClose(device: HID) {
     try {
@@ -78,36 +68,25 @@ function emitHidData(path: string, data: Buffer | number[]) {
 }
 
 function isRelevantDevice(device: Device): boolean {
-    // some clickers only report a product or a manufacturer name
     if (!device.path || (!device.product && !device.manufacturer)) return false
 
     const productLower = (device.product || "").toLowerCase()
     const pathLower = device.path.toLowerCase()
 
-    // Filter out internal virtual and VHF drivers
+    // Filter out internal virtual, VHF, CFU and system bus controllers
     if (pathLower.includes("hid_device_system_vhf") || productLower.includes("vhf driver")) return false
-
-    // Filter out firmware update devices
     if (productLower.includes("cfu device") || productLower.includes("firmware update")) return false
-
-    // Filter out internal system bus controllers
     if (productLower === "hidi2c device" || productLower === "hid i2c device") return false
 
-    // Windows locks keyboard endpoints (most clickers), these are read through Raw Input instead
+    // Windows keyboard devices (clickers) are read through Raw Input; other locked endpoints are filtered
     if (isRawInputDevice(device)) return true
-
-    // Filter out OS-exclusive keyboard/mouse endpoints that Windows locks
     if (pathLower.endsWith("\\kbd") || pathLower.includes("&mi_00#")) return false
 
     return true
 }
 
 function isAlreadyOpen(path: string): boolean {
-    if (devices[path]) return true
-    for (const group of Object.values(devices)) {
-        if (group.entries[path]) return true
-    }
-    return false
+    return !!devices[path]
 }
 
 function isReadable(d: Device): boolean | "permission" {
@@ -119,7 +98,7 @@ function isReadable(d: Device): boolean | "permission" {
         try {
             // Probe if Input Reports (ReadFile) are supported on this endpoint
             testDev.readTimeout(1)
-        } catch (err: any) {
+        } catch {
             safeClose(testDev)
             return false
         }
@@ -202,8 +181,7 @@ export async function getHidDevices(forceRefresh = false): Promise<HidDevice[]> 
 
 export async function hidAwaitInput(data: { path: string }) {
     const deviceId = data.path
-    if (!deviceId) return
-    if (devices[deviceId]) return
+    if (!deviceId || devices[deviceId]) return
 
     const cachedDevice = supportedDevicesCache.find((a) => a.path === deviceId)
     if (isRawInputDevice(cachedDevice || { path: deviceId })) {
@@ -219,16 +197,10 @@ export async function hidAwaitInput(data: { path: string }) {
         return
     }
 
-    const group: HidGroup = { entries: {}, closed: false }
-    devices[deviceId] = group
-
+    devices[deviceId] = device
     console.info("HID LISTENING:", deviceId)
 
-    const entry = { device, closed: false }
-    group.entries[deviceId] = entry
-
     device.on("data", (data: Buffer | number[]) => {
-        if (entry.closed || group.closed) return
         // skip key release / idle reports, so only presses are received
         if (Array.from(data).every((value) => !value)) return
         emitHidData(deviceId, data)
@@ -236,7 +208,6 @@ export async function hidAwaitInput(data: { path: string }) {
 
     device.on("error", (err) => {
         console.error("HID ERROR:", deviceId, err)
-        entry.closed = true
         safeClose(device)
         delete devices[deviceId]
     })
@@ -246,14 +217,10 @@ export function hidClose(data: { path: string }) {
     const deviceId = data.path
     closeRawInputDevice(deviceId)
 
-    const group = devices[deviceId]
-    if (!group) return
+    const device = devices[deviceId]
+    if (!device) return
 
-    group.closed = true
-    for (const entry of Object.values(group.entries)) {
-        entry.closed = true
-        safeClose(entry.device)
-    }
+    safeClose(device)
     delete devices[deviceId]
     delete lastDeviceEmitTime[deviceId]
     console.info("HID CLOSED LISTENER:", deviceId)
