@@ -172,7 +172,3 @@
 <MaterialToggleSwitch label="hid.auto_values" checked={autoValues} on:change={toggleAutoValues} />
 
 <MaterialTextInput label="hid.data_bytes" value={dataString} on:change={onDataInput} />
-
-<InputRow>
-    <p style="font-size: 0.7em;opacity: 0.8;"><T id="hid.tip_passthrough" /></p>
-</InputRow>
