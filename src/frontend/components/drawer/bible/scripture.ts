@@ -27,18 +27,18 @@ import { checkName } from "../../helpers/show"
 const SCRIPTURE_API_URL = "https://api.churchapps.org/content/bibles"
 
 let hasChecked = false
-let customBibleApiKey: string = ""
-async function getCustomBibleApiKey() {
-    if (hasChecked) return customBibleApiKey
+let customApiBibleKey: string = ""
+async function getCustomApiBibleKey() {
+    if (hasChecked) return customApiBibleKey
 
-    const customKey = await requestMain(Main.GET_CONFIG_DATA, { key: "customBibleApiKey" })
+    const customKey = await requestMain(Main.GET_CONFIG_DATA, { key: "customApiBibleKey" })
     hasChecked = true
-    customBibleApiKey = customKey || ""
-    return customBibleApiKey
+    customApiBibleKey = customKey || ""
+    return customApiBibleKey
 }
 
 export async function getApiBiblesList() {
-    const customKey = await getCustomBibleApiKey()
+    const customKey = await getCustomApiBibleKey()
     const key = "*" // not needed here
     try {
         return await ApiBiblesList(customKey || key, customKey ? "" : SCRIPTURE_API_URL)
@@ -60,7 +60,7 @@ export async function loadJsonBible(id: string): Promise<BibleInstance | null> {
     const isApi = !!scriptureData?.api
 
     if (isApi) {
-        const customKey = await getCustomBibleApiKey()
+        const customKey = await getCustomApiBibleKey()
         const key = getKey("bibleapi")
         const apiId = scriptureData?.id || id
         try {
