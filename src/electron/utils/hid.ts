@@ -54,7 +54,6 @@ function safeClose(device: HID) {
     } catch {}
 }
 
-const lastDeviceEmitTime: Record<string, number> = {}
 const lastSignatureEmitTime: Record<string, number> = {}
 
 function emitHidData(path: string, data: Buffer | number[]) {
@@ -62,16 +61,11 @@ function emitHidData(path: string, data: Buffer | number[]) {
     const arr = Array.from(data)
     const now = Date.now()
 
-    // Minimum 200ms cooldown between events on the same device to eliminate chatter bursts
-    const lastDev = lastDeviceEmitTime[path] || 0
-    if (now - lastDev < 200) return
-
-    // Minimum 500ms cooldown for the exact command signature (first 4 bytes)
+    // Minimum 200ms cooldown for the exact command signature (first 4 bytes)
     const signature = `${path}:${arr.slice(0, Math.min(arr.length, 4)).join(",")}`
     const lastSig = lastSignatureEmitTime[signature] || 0
-    if (now - lastSig < 500) return
+    if (now - lastSig < 200) return
 
-    lastDeviceEmitTime[path] = now
     lastSignatureEmitTime[signature] = now
 
     sendToMain(ToMain.HID_DATA, { path, data: arr })
@@ -255,6 +249,5 @@ export function hidClose(data: { path: string }) {
         safeClose(entry.device)
     }
     delete devices[deviceId]
-    delete lastDeviceEmitTime[deviceId]
     console.info("HID CLOSED LISTENER:", deviceId)
 }

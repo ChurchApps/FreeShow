@@ -60,7 +60,7 @@ namespace HidInputHelper {
 
         static readonly object watchedLock = new object();
         static readonly HashSet<string> watched = new HashSet<string>();
-        static readonly HashSet<string> pressed = new HashSet<string>();
+        static readonly Dictionary<string, long> pressedTicks = new Dictionary<string, long>();
 
         [STAThread]
         static void Main(string[] args) {
@@ -138,14 +138,20 @@ namespace HidInputHelper {
 
                 int flags = keyboard.Flags & (RI_KEY_E0 | RI_KEY_E1);
                 string key = id + "|" + keyboard.VKey + "|" + keyboard.MakeCode + "|" + flags;
+                long now = Environment.TickCount;
 
                 if ((keyboard.Flags & RI_KEY_BREAK) != 0) {
-                    pressed.Remove(key);
+                    pressedTicks.Remove(key);
                     return;
                 }
 
-                // holding a key down repeats the press
-                if (!pressed.Add(key)) return;
+                // holding a key down repeats the press; ignore repeats within 250ms
+                long lastPress;
+                if (pressedTicks.TryGetValue(key, out lastPress)) {
+                    // Environment.TickCount wraps every ~24.9 days, handled by uint difference
+                    if ((uint)(now - lastPress) < 250) return;
+                }
+                pressedTicks[key] = now;
 
                 Console.Out.WriteLine(name + "\t" + keyboard.VKey + "\t" + keyboard.MakeCode + "\t" + flags);
                 Console.Out.Flush();

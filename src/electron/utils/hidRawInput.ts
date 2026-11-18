@@ -34,14 +34,16 @@ let inputCallback: InputCallback | null = null
 
 export function listenRawInputDevice(devicePath: string, callback: InputCallback) {
     const id = getRawInputDeviceId(devicePath)
-    if (watchedDevices[id]) return
-
-    watchedDevices[id] = devicePath
     inputCallback = callback
-    console.info("HID LISTENING (Raw Input):", devicePath)
 
-    if (!helper) startHelper()
-    else sendCommand(helper, `+${id}`)
+    if (!watchedDevices[id]) {
+        watchedDevices[id] = devicePath
+        console.info("HID LISTENING (Raw Input):", devicePath)
+        if (!helper) startHelper()
+        else sendCommand(helper, `+${id}`)
+    } else if (!helper) {
+        startHelper()
+    }
 }
 
 export function closeRawInputDevice(devicePath: string) {

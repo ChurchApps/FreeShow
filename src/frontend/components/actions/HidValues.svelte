@@ -1,16 +1,17 @@
 <script lang="ts">
     import { createEventDispatcher, onDestroy, onMount } from "svelte"
+    import { get } from "svelte/store"
     import { Main } from "../../../types/IPC/Main"
     import { ToMain } from "../../../types/IPC/ToMain"
     import type { HidValues } from "../../../types/Show"
     import { destroyMain, receiveToMain, requestMain, sendMain } from "../../IPC/main"
+    import { actions } from "../../stores"
     import T from "../helpers/T.svelte"
     import InputRow from "../input/InputRow.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import MaterialDropdown from "../inputs/MaterialDropdown.svelte"
     import MaterialTextInput from "../inputs/MaterialTextInput.svelte"
     import MaterialToggleSwitch from "../inputs/MaterialToggleSwitch.svelte"
-    import { activeHidPaths } from "./hid"
 
     export let value: HidValues = {}
     export let simple = false
@@ -84,17 +85,14 @@
 
     function isDeviceUsedElsewhere(path: string): boolean {
         if (!path) return false
-        return activeHidPaths.has(path)
+        const p = path.toLowerCase()
+        return Object.values(get(actions)).some((a) => a.customActivation === "hid_input" && a.enabled !== false && a.hid?.device?.toLowerCase() === p && a.hid?.data?.length)
     }
 
     function toggleAutoValues(e: any) {
         autoValues = e.detail ?? e
-        if (autoValues) {
-            if (hid.device) sendMain(Main.RECEIVE_HID, { path: hid.device })
-        } else {
-            if (hid.device && !isDeviceUsedElsewhere(hid.device)) {
-                sendMain(Main.CLOSE_HID, { path: hid.device })
-            }
+        if (autoValues && hid.device) {
+            sendMain(Main.RECEIVE_HID, { path: hid.device })
         }
     }
 

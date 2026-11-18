@@ -67,8 +67,15 @@
         loaded = true
     }
 
-    // saveSlide(true)
-    onDestroy(removeEmptyAction)
+    onDestroy(() => {
+        if (saveTimeout) {
+            clearTimeout(saveTimeout)
+            saveTimeout = null
+            stopUpdate = false
+            saveAction()
+        }
+        removeEmptyAction()
+    })
     function removeEmptyAction(actionId = "") {
         let ref = getLayoutRef()
         let indexes = $popupData.index !== undefined ? [$popupData.index] : $popupData.indexes
@@ -516,7 +523,7 @@
                     {:else if customActivation === "midi_signal_received"}
                         <MidiValues value={clone(action.midi || actionMidi)} firstActionId={action.triggers?.[0]} on:change={(e) => updateValue("midi", e)} simple />
                     {:else if customActivation === "hid_input"}
-                        <HidValues value={clone(action.hid || {})} on:change={(e) => updateValue("hid", e.detail)} simple />
+                        <HidValues value={clone(action.hid || {})} on:change={(e) => updateValue("hid", e)} simple />
                     {/if}
                 </div>
             </InputRow>

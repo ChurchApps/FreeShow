@@ -62,6 +62,6 @@ export function receivedHid(msg: { path?: string; data: number[] } | number[]) {
         if (now - lastTime < 400) return
         lastActionTriggerTime[actionId] = now
 
-        runAction(action, { source: "hid" })
+        runAction({ ...action, id: actionId }, { source: "hid" })
     })
 }
