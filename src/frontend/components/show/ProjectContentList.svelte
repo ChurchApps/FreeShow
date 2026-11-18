@@ -119,6 +119,10 @@
             })
     }
 
+    // the same data each item is selected with, so a Shift+click range can select the items in between
+    $: projectSelectData = projectItemsList.map((show, index) => (typeof show === "object" ? getSelectData(show, index) : null))
+    const getSelectData = (show: ProjectShowRef, index: number) => ({ ...show, name: show.name || removeExtension(getFileName(show.id)), index })
+
     let splittedProjectsList: { color: string; items: ProjectShowRef[] }[] = []
     $: if (projectItemsList) splitProjectItemsToSections()
     function splitProjectItemsToSections() {
@@ -290,7 +294,7 @@
                             {:else if show.type === "DIVIDER"}
                                 <div style="border-top: 1px solid var(--primary-lighter);margin: 5px 0;"></div>
                             {:else}
-                                <SelectElem id="show" dropAbove={isFirst} triggerOnHover data={{ ...show, name: show.name || removeExtension(getFileName(show.id)), index }} {fileOver} borders={show.type === "show_placeholder" ? "all" : "edges"} trigger="column" draggable={!isLocked} selectable={!isLocked}>
+                                <SelectElem id="show" dropAbove={isFirst} triggerOnHover data={getSelectData(show, index)} shiftRange={projectSelectData} {fileOver} borders={show.type === "show_placeholder" ? "all" : "edges"} trigger="column" draggable={!isLocked} selectable={!isLocked}>
                                     {#if show.type === "section"}
                                         <MaterialButton
                                             {isActive}
