@@ -123,12 +123,12 @@
 
 {#if selectedDevice?.permission === "input_monitoring"}
     <InputRow>
-        <p style="font-size: 0.7em;opacity: 0.8;"><T id="hid.tip_input_monitoring" /></p>
+        <p style="font-size: 0.7em;opacity: 0.8;">macOS requires the Input Monitoring permission to read clickers and keyboards. Enable in the System Settings.</p>
         <MaterialButton variant="outlined" style="white-space: nowrap;" on:click={openInputMonitoringSettings}>Open System Settings</MaterialButton>
     </InputRow>
 {:else if selectedDevice?.permission === "udev"}
     <InputRow>
-        <p style="font-size: 0.7em;opacity: 0.8;"><T id="hid.tip_udev" replace={["/etc/udev/rules.d/70-freeshow-hid.rules"]} /></p>
+        <p style="font-size: 0.7em;opacity: 0.8;">Add this udev rule to /etc/udev/rules.d/70-freeshow-hid.rules and reconnect the device to grant access:</p>
     </InputRow>
     <InputRow>
         <code style="font-size: 0.7em;user-select: text;word-break: break-all;">{udevRule}</code>

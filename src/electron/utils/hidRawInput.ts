@@ -14,16 +14,11 @@ export function isRawInputDevice(device: DeviceInfo): boolean {
     return device.path.toLowerCase().endsWith("\\kbd") || (device.usagePage === 1 && device.usage === 6)
 }
 
-// node-hid:  \\?\HID#VID_0483&PID_2080&MI_00#7&2a5f5b2&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}\KBD
-// Raw Input: \\?\HID#VID_0483&PID_2080&MI_00#7&2a5f5b2&0&0000#{884b96c3-56ef-11d1-bc8c-00a0c91405dd}
-// both have the same device instance id before the interface class "#{...}"
-// (the helper uses the same conversion)
+// Extract device instance ID (everything before the interface class "#{...}")
 export function getRawInputDeviceId(devicePath: string): string {
     let id = devicePath.toLowerCase()
-
     const classIndex = id.lastIndexOf("#{")
     if (classIndex > -1) id = id.slice(0, classIndex)
-
     if (id.startsWith("\\\\?\\") || id.startsWith("\\??\\")) id = id.slice(4)
     return id
 }
@@ -40,7 +35,7 @@ export function listenRawInputDevice(devicePath: string, callback: InputCallback
         watchedDevices[id] = devicePath
         console.info("HID LISTENING (Raw Input):", devicePath)
         if (!helper) startHelper()
-        else sendCommand(helper, `+${id}`)
+        else sendCommand(`+${id}`)
     } else if (!helper) {
         startHelper()
     }
@@ -54,14 +49,12 @@ export function closeRawInputDevice(devicePath: string) {
     console.info("HID CLOSED LISTENER (Raw Input):", devicePath)
 
     if (!helper) return
-    if (Object.keys(watchedDevices).length) sendCommand(helper, `-${id}`)
+    if (Object.keys(watchedDevices).length) sendCommand(`-${id}`)
     else stopHelper()
 }
 
 function startHelper() {
-    // spawn can not run files from inside the asar archive
     const helperPath = path.join(app.getAppPath(), "public", "assets", "bin", "hid-input-helper.exe").replace(`app.asar${path.sep}`, `app.asar.unpacked${path.sep}`)
-
     const child = spawn(helperPath, [], { windowsHide: true, stdio: ["pipe", "pipe", "pipe"] })
     helper = child
 
@@ -74,48 +67,34 @@ function startHelper() {
     })
 
     child.stderr?.on("data", (chunk: Buffer) => console.warn("HID RAW INPUT:", chunk.toString().trim()))
-    child.stdin?.on("error", (err) => console.error("HID RAW INPUT ERROR:", err))
+    child.on("error", () => stopped())
+    child.on("exit", () => stopped())
 
-    // "error" is emitted without "exit" if the helper could not be started
-    child.on("error", (err) => stopped(err))
-    child.on("exit", (code) => stopped(code))
-
-    function stopped(reason: Error | number | null) {
+    function stopped() {
         if (helper !== child) return
         helper = null
-
-        // remove listeners, so they can be started again
-        console.info("HID RAW INPUT HELPER STOPPED:", reason)
-        const previousDevices = { ...watchedDevices }
+        const prev = { ...watchedDevices }
         Object.keys(watchedDevices).forEach((id) => delete watchedDevices[id])
-
-        // If the helper stopped unexpectedly while devices were being watched, restart it
-        if (Object.keys(previousDevices).length > 0) {
-            console.info("HID RAW INPUT HELPER: Restarting watched devices...")
-            Object.entries(previousDevices).forEach(([_, path]) => {
-                if (inputCallback) listenRawInputDevice(path, inputCallback)
-            })
+        if (Object.keys(prev).length && inputCallback) {
+            Object.values(prev).forEach((p) => listenRawInputDevice(p, inputCallback!))
         }
     }
 
-    Object.keys(watchedDevices).forEach((id) => sendCommand(child, `+${id}`))
+    Object.keys(watchedDevices).forEach((id) => sendCommand(`+${id}`))
 }
 
 function stopHelper() {
     if (!helper) return
     const child = helper
     helper = null
-
-    // the helper exits when its input is closed
     child.stdin?.end()
     setTimeout(() => {
         if (child.exitCode === null) child.kill()
     }, 1000)
 }
 
-function sendCommand(child: ChildProcess, command: string) {
-    if (!child.stdin?.writable) return
-    child.stdin.write(command + "\n")
+function sendCommand(command: string) {
+    if (helper?.stdin?.writable) helper.stdin.write(command + "\n")
 }
 
 // "<device name>\t<virtual key>\t<scan code>\t<flags>"
@@ -124,6 +103,6 @@ function receivedLine(line: string) {
     const devicePath = watchedDevices[getRawInputDeviceId(deviceName || "")]
     if (!devicePath) return
 
-    const data = values.map((value) => parseInt(value, 10)).filter((value) => !isNaN(value))
+    const data = values.map((val) => parseInt(val, 10)).filter((val) => !isNaN(val))
     if (data.length) inputCallback?.(devicePath, data)
 }
