@@ -239,8 +239,8 @@ export const API_ACTIONS = {
     transpose_show_down: (data: API_id) => formatText(transposeText(getPlainEditorText(data.id), -1), data.id),
 
     // PRESENTATION
-    next_slide: () => OutputHelper.advanceOutputs("next"), // BC
-    previous_slide: () => OutputHelper.advanceOutputs("previous"), // BC
+    next_slide: (_data?: any, { source }: { source?: string } = {}) => OutputHelper.advanceOutputs("next", source), // BC
+    previous_slide: (_data?: any, { source }: { source?: string } = {}) => OutputHelper.advanceOutputs("previous", source), // BC
     random_slide: () => randomSlide(),
     index_select_slide: (data: API_slide_index) => selectSlideByIndex(data), // BC
     name_select_slide: (data: API_strval) => selectSlideByName(data.value), // BC

@@ -16,8 +16,17 @@ import { runActionId } from "../actions/actions"
 
 type Options = { isSpace: boolean; slideLayers: boolean; playNext: boolean }
 
+let lastAdvanceTime = 0
+let lastAdvanceSource = ""
+const ADVANCE_DEBOUNCE_DIFF_SOURCE_MS = 80
+
 export class OutputHelper {
-    static advanceOutputs(e: KeyboardEvent | "next" | "previous" = "next") {
+    static advanceOutputs(e: KeyboardEvent | "next" | "previous" = "next", source = typeof e === "string" ? "action" : "key") {
+        const now = Date.now()
+        if (lastAdvanceSource && lastAdvanceSource !== source && now - lastAdvanceTime < ADVANCE_DEBOUNCE_DIFF_SOURCE_MS) return
+        lastAdvanceTime = now
+        lastAdvanceSource = source
+
         getAllActiveOutputIds().forEach((id) => {
             if (typeof e === "string") this.advanceOutput(id, e === "next" ? "ArrowRight" : "ArrowLeft")
             else this.advanceOutput(id, e.key, { slideLayers: !e.altKey })

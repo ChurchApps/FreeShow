@@ -132,7 +132,7 @@ export async function runAction(action, { midiIndex = -1, slideIndex = -1, sourc
             await wait(10)
         }
 
-        API_ACTIONS[actionId](triggerData)
+        API_ACTIONS[actionId](triggerData, { source })
 
         // add to history
         actionHistory.update((a) => {
