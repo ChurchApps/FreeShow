@@ -64,24 +64,28 @@ namespace HidInputHelper {
 
         [STAThread]
         static void Main(string[] args) {
-            InputWindow window = new InputWindow();
+            try {
+                InputWindow window = new InputWindow();
 
-            RAWINPUTDEVICE[] devices = new RAWINPUTDEVICE[1];
-            devices[0].usUsagePage = 0x01; // generic desktop
-            devices[0].usUsage = 0x06; // keyboard
-            devices[0].dwFlags = RIDEV_INPUTSINK; // also receive input when not in the foreground
-            devices[0].hwndTarget = window.Handle;
+                RAWINPUTDEVICE[] devices = new RAWINPUTDEVICE[1];
+                devices[0].usUsagePage = 0x01; // generic desktop
+                devices[0].usUsage = 0x06; // keyboard
+                devices[0].dwFlags = RIDEV_INPUTSINK; // also receive input when not in the foreground
+                devices[0].hwndTarget = window.Handle;
 
-            if (!RegisterRawInputDevices(devices, 1, (uint)Marshal.SizeOf(typeof(RAWINPUTDEVICE)))) {
-                Console.Error.WriteLine("Could not register for Raw Input, error " + Marshal.GetLastWin32Error());
-                Environment.Exit(1);
+                if (!RegisterRawInputDevices(devices, 1, (uint)Marshal.SizeOf(typeof(RAWINPUTDEVICE)))) {
+                    Console.Error.WriteLine("Could not register for Raw Input, error " + Marshal.GetLastWin32Error());
+                    Environment.Exit(1);
+                }
+
+                Thread commands = new Thread(ReadCommands);
+                commands.IsBackground = true;
+                commands.Start();
+
+                Application.Run();
+            } catch (Exception ex) {
+                Console.Error.WriteLine("Helper Main exception: " + ex);
             }
-
-            Thread commands = new Thread(ReadCommands);
-            commands.IsBackground = true;
-            commands.Start();
-
-            Application.Run();
         }
 
         // hidden window that receives the WM_INPUT messages
@@ -91,22 +95,30 @@ namespace HidInputHelper {
             }
 
             protected override void WndProc(ref Message m) {
-                if (m.Msg == WM_INPUT) ReadInput(m.LParam);
+                try {
+                    if (m.Msg == WM_INPUT) ReadInput(m.LParam);
+                } catch (Exception ex) {
+                    Console.Error.WriteLine("WndProc exception: " + ex);
+                }
                 base.WndProc(ref m);
             }
         }
 
         static void ReadCommands() {
-            string line;
-            while ((line = Console.In.ReadLine()) != null) {
-                line = line.Trim();
-                if (line.Length < 2) continue;
+            try {
+                string line;
+                while ((line = Console.In.ReadLine()) != null) {
+                    line = line.Trim();
+                    if (line.Length < 2) continue;
 
-                string id = line.Substring(1);
-                lock (watchedLock) {
-                    if (line[0] == '+') watched.Add(id);
-                    else if (line[0] == '-') watched.Remove(id);
+                    string id = line.Substring(1);
+                    lock (watchedLock) {
+                        if (line[0] == '+') watched.Add(id);
+                        else if (line[0] == '-') watched.Remove(id);
+                    }
                 }
+            } catch (Exception ex) {
+                Console.Error.WriteLine("ReadCommands exception: " + ex);
             }
 
             Environment.Exit(0);
@@ -129,7 +141,7 @@ namespace HidInputHelper {
 
                 // input from SendInput has no device
                 string name = GetDeviceName(header.hDevice);
-                if (name.Length == 0) return;
+                if (string.IsNullOrEmpty(name)) return;
 
                 string id = GetDeviceId(name);
                 lock (watchedLock) {
@@ -141,17 +153,27 @@ namespace HidInputHelper {
                 long now = Environment.TickCount;
 
                 if ((keyboard.Flags & RI_KEY_BREAK) != 0) {
-                    pressedTicks.Remove(key);
+                    lock (pressedTicks) {
+                        pressedTicks.Remove(key);
+                    }
                     return;
                 }
 
-                // holding a key down repeats the press; ignore repeats within 250ms
-                long lastPress;
-                if (pressedTicks.TryGetValue(key, out lastPress)) {
-                    // Environment.TickCount wraps every ~24.9 days, handled by uint difference
-                    if ((uint)(now - lastPress) < 250) return;
+                lock (pressedTicks) {
+                    long lastPress;
+                    if (pressedTicks.TryGetValue(key, out lastPress)) {
+                        // Environment.TickCount wraps every ~24.9 days, handled by uint difference.
+                        // While the button is held down, auto-repeat events arrive rapidly (typically every 30-50ms).
+                        // If less than 1500ms since the last repeat pulse, update timestamp and suppress re-trigger.
+                        // If more than 1500ms passed without ANY event, the user has released and clicked again,
+                        // even on clickers that drop the RI_KEY_BREAK event.
+                        if ((uint)(now - lastPress) < 1500) {
+                            pressedTicks[key] = now;
+                            return;
+                        }
+                    }
+                    pressedTicks[key] = now;
                 }
-                pressedTicks[key] = now;
 
                 Console.Out.WriteLine(name + "\t" + keyboard.VKey + "\t" + keyboard.MakeCode + "\t" + flags);
                 Console.Out.Flush();

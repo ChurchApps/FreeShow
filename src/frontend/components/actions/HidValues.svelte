@@ -1,11 +1,9 @@
 <script lang="ts">
     import { createEventDispatcher, onDestroy, onMount } from "svelte"
-    import { get } from "svelte/store"
     import { Main } from "../../../types/IPC/Main"
     import { ToMain } from "../../../types/IPC/ToMain"
     import type { HidValues } from "../../../types/Show"
     import { destroyMain, receiveToMain, requestMain, sendMain } from "../../IPC/main"
-    import { actions } from "../../stores"
     import T from "../helpers/T.svelte"
     import InputRow from "../input/InputRow.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
@@ -25,6 +23,7 @@
 
     function setHid(key: keyof HidValues, val: any) {
         hid[key] = val
+        hid = hid
         change()
     }
 
@@ -64,29 +63,15 @@
     onMount(() => {
         autoValues = !hid.data?.length
         requestDevices()
-        if (autoValues && hid.device) {
-            sendMain(Main.RECEIVE_HID, { path: hid.device })
-        }
+        if (hid.device) sendMain(Main.RECEIVE_HID, { path: hid.device })
     })
 
     function onDeviceChange(e: CustomEvent<string>) {
-        const prevPath = hid.device
         const path = e.detail
         setHid("device", path)
         const found = devices.find((d) => d.path === path)
-        if (found) {
-            setHid("deviceName", formatDeviceLabel(found))
-        }
-        if (prevPath && prevPath !== path && !isDeviceUsedElsewhere(prevPath)) {
-            sendMain(Main.CLOSE_HID, { path: prevPath })
-        }
-        if (autoValues) sendMain(Main.RECEIVE_HID, { path })
-    }
-
-    function isDeviceUsedElsewhere(path: string): boolean {
-        if (!path) return false
-        const p = path.toLowerCase()
-        return Object.values(get(actions)).some((a) => a.customActivation === "hid_input" && a.enabled !== false && a.hid?.device?.toLowerCase() === p && a.hid?.data?.length)
+        if (found) setHid("deviceName", formatDeviceLabel(found))
+        sendMain(Main.RECEIVE_HID, { path })
     }
 
     function toggleAutoValues(e: any) {
@@ -110,12 +95,6 @@
 
     onDestroy(() => {
         destroyMain(listenerId)
-        // Let hidInListen reconcile device listeners once saved
-        setTimeout(() => {
-            if (hid.device && !isDeviceUsedElsewhere(hid.device)) {
-                sendMain(Main.CLOSE_HID, { path: hid.device })
-            }
-        }, 150)
     })
 
     function onDataInput(e: CustomEvent<string>) {

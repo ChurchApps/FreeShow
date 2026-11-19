@@ -86,7 +86,16 @@ function startHelper() {
 
         // remove listeners, so they can be started again
         console.info("HID RAW INPUT HELPER STOPPED:", reason)
+        const previousDevices = { ...watchedDevices }
         Object.keys(watchedDevices).forEach((id) => delete watchedDevices[id])
+
+        // If the helper stopped unexpectedly while devices were being watched, restart it
+        if (Object.keys(previousDevices).length > 0) {
+            console.info("HID RAW INPUT HELPER: Restarting watched devices...")
+            Object.entries(previousDevices).forEach(([_, path]) => {
+                if (inputCallback) listenRawInputDevice(path, inputCallback)
+            })
+        }
     }
 
     Object.keys(watchedDevices).forEach((id) => sendCommand(child, `+${id}`))

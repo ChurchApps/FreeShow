@@ -87,6 +87,9 @@ function isRelevantDevice(device: Device): boolean {
     // Filter out internal system bus controllers
     if (productLower === "hidi2c device" || productLower === "hid i2c device") return false
 
+    // Filter out vendor-defined configuration / diagnostic endpoints (usagePage >= 0xFF00)
+    if (device.usagePage && device.usagePage >= 0xff00) return false
+
     // Windows locks keyboard endpoints (most clickers), these are read through Raw Input instead
     if (isRawInputDevice(device)) return true
 
@@ -94,6 +97,15 @@ function isRelevantDevice(device: Device): boolean {
     if (pathLower.endsWith("\\kbd") || pathLower.includes("&mi_00#")) return false
 
     return true
+}
+
+function getCompositeDeviceKey(device: Device): string {
+    let p = (device.path || "").toLowerCase()
+    const classIdx = p.lastIndexOf("#{")
+    if (classIdx > -1) p = p.slice(0, classIdx)
+    const colIdx = p.lastIndexOf("&col")
+    if (colIdx > -1) p = p.slice(0, colIdx)
+    return `${device.vendorId}:${device.productId}:${p}`
 }
 
 function isAlreadyOpen(path: string): boolean {
@@ -186,8 +198,23 @@ export async function getHidDevices(forceRefresh = false): Promise<HidDevice[]> 
             filteredDevices.push(device)
         }
 
-        supportedDevicesCache = filteredDevices
-        return filteredDevices
+        // Deduplicate composite device endpoints sharing the same physical device interface
+        const groupedDevices: Record<string, HidDevice[]> = {}
+        for (const dev of filteredDevices) {
+            const key = getCompositeDeviceKey(dev)
+            if (!groupedDevices[key]) groupedDevices[key] = []
+            groupedDevices[key].push(dev)
+        }
+
+        const deduplicatedDevices: HidDevice[] = []
+        for (const group of Object.values(groupedDevices)) {
+            // Prefer rawInput (keyboard endpoint) if available
+            const preferred = group.find((d) => d.rawInput) || group[0]
+            deduplicatedDevices.push(preferred)
+        }
+
+        supportedDevicesCache = deduplicatedDevices
+        return deduplicatedDevices
     } catch (err) {
         console.error("HID DEVICES ERROR:", err)
         return supportedDevicesCache
