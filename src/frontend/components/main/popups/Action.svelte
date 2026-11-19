@@ -5,10 +5,12 @@
     import { translateText } from "../../../utils/language"
     import { imageExtensions } from "../../../values/extensions"
     import CreateAction from "../../actions/CreateAction.svelte"
+    import HidValues from "../../actions/HidValues.svelte"
     import MidiValues from "../../actions/MidiValues.svelte"
     import { actionData } from "../../actions/actionData"
     import type { API_midi } from "../../actions/api"
     import { customActionActivations } from "../../actions/customActivation"
+    import { hidInListen } from "../../actions/hid"
     import { convertOldMidiToNewAction, defaultMidiActionChannels, midiInListen } from "../../actions/midi"
     import DragItemWrapper from "../../helpers/DragItemWrapper.svelte"
     import Icon from "../../helpers/Icon.svelte"
@@ -65,8 +67,15 @@
         loaded = true
     }
 
-    // saveSlide(true)
-    onDestroy(removeEmptyAction)
+    onDestroy(() => {
+        if (saveTimeout) {
+            clearTimeout(saveTimeout)
+            saveTimeout = null
+            stopUpdate = false
+            saveAction()
+        }
+        removeEmptyAction()
+    })
     function removeEmptyAction(actionId = "") {
         let ref = getLayoutRef()
         let indexes = $popupData.index !== undefined ? [$popupData.index] : $popupData.indexes
@@ -143,6 +152,7 @@
         }
 
         action[key] = value
+        action = action
     }
     function updateAction(key: string, value: string) {
         if (!value) {
@@ -290,6 +300,7 @@
             })
 
             midiInListen()
+            hidInListen()
         } else if ($activeShow) {
             // WIP move this from show to action
             let showMidi = _show().get("midi") || {}
@@ -511,6 +522,8 @@
                         <MaterialDropdown label={specificActivations[customActivation]?.name} options={getSpecificActivation(customActivation)} value={specificActivation} on:change={(e) => updateValue("specificActivation", `${customActivation}__${e.detail}`)} />
                     {:else if customActivation === "midi_signal_received"}
                         <MidiValues value={clone(action.midi || actionMidi)} firstActionId={action.triggers?.[0]} on:change={(e) => updateValue("midi", e)} simple />
+                    {:else if customActivation === "hid_input"}
+                        <HidValues value={clone(action.hid || {})} on:change={(e) => updateValue("hid", e)} simple />
                     {/if}
                 </div>
             </InputRow>
