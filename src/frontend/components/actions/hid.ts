@@ -5,62 +5,51 @@ import { sendMain } from "../../IPC/main"
 import { actions } from "../../stores"
 import { runAction } from "./actions"
 
-export const activeHidPaths = new Set<string>()
+const activePaths = new Set<string>()
 
 export function hidInListen() {
-    const requiredPaths = new Set<string>()
+    const required = new Set(
+        Object.values(get(actions))
+            .filter((a) => a.customActivation === "hid_input" && a.enabled !== false && a.hid?.device && a.hid?.data?.length)
+            .map((a) => a.hid!.device!)
+    )
 
-    Object.entries(get(actions)).forEach(([_id, action]: [string, Action]) => {
-        if (action.customActivation !== "hid_input") return
-        if (action.enabled === false) return
-        if (!action.hid?.device) return
-        if (!action.hid?.data?.length) return
-
-        requiredPaths.add(action.hid.device)
+    // Close unused devices
+    activePaths.forEach((path) => {
+        if (!required.has(path)) {
+            sendMain(Main.CLOSE_HID, { path })
+            activePaths.delete(path)
+        }
     })
 
-    // Close paths that are no longer needed
-    for (const path of activeHidPaths) {
-        if (!requiredPaths.has(path)) {
-            sendMain(Main.CLOSE_HID, { path })
-            activeHidPaths.delete(path)
-        }
-    }
-
-    // Start listening on newly required paths
-    for (const path of requiredPaths) {
-        if (!activeHidPaths.has(path)) {
+    // Listen to new devices
+    required.forEach((path) => {
+        if (!activePaths.has(path)) {
             sendMain(Main.RECEIVE_HID, { path })
-            activeHidPaths.add(path)
+            activePaths.add(path)
         }
-    }
+    })
 }
 
-const lastActionTriggerTime: Record<string, number> = {}
+const lastTriggerTime: Record<string, number> = {}
 
 export function receivedHid(msg: { path?: string; data: number[] } | number[]) {
-    const path = (msg as any)?.path
+    const path = (msg as any)?.path?.toLowerCase()
     const data: number[] = Array.isArray(msg) ? msg : (msg as any)?.data || []
     if (!data.length) return
 
     const now = Date.now()
 
     Object.entries(get(actions)).forEach(([actionId, action]: [string, Action]) => {
-        if (action.customActivation !== "hid_input") return
-        if (action.enabled === false) return
+        if (action.customActivation !== "hid_input" || action.enabled === false) return
         if (!action.hid?.device || !action.hid?.data?.length) return
+        if (path && action.hid.device.toLowerCase() !== path) return
 
-        // match device path strictly (case-insensitive)
-        if (path && action.hid.device.toLowerCase() !== path.toLowerCase()) return
-
-        // match data bytes strictly
-        const matches = action.hid.data.length === data.length && action.hid.data.every((val, idx) => val === data[idx])
+        const matches = action.hid.data.length === data.length && action.hid.data.every((v, i) => v === data[i])
         if (!matches) return
 
-        // Debounce action execution: max once per 400ms per action
-        const lastTime = lastActionTriggerTime[actionId] || 0
-        if (now - lastTime < 400) return
-        lastActionTriggerTime[actionId] = now
+        if (now - (lastTriggerTime[actionId] || 0) < 400) return
+        lastTriggerTime[actionId] = now
 
         runAction({ ...action, id: actionId }, { source: "hid" })
     })

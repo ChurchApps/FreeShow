@@ -35,13 +35,8 @@ function openDevice(path: string): HID {
     return new nodeHid.HID(path, { nonExclusive: true })
 }
 
-type HidEntry = {
-    device: HID
-    closed: boolean
-}
-
 type HidGroup = {
-    entries: Record<string, HidEntry>
+    device: HID
     closed: boolean
 }
 
@@ -109,11 +104,7 @@ function getCompositeDeviceKey(device: Device): string {
 }
 
 function isAlreadyOpen(path: string): boolean {
-    if (devices[path]) return true
-    for (const group of Object.values(devices)) {
-        if (group.entries[path]) return true
-    }
-    return false
+    return !!devices[path]
 }
 
 function isReadable(d: Device): boolean | "permission" {
@@ -240,24 +231,19 @@ export async function hidAwaitInput(data: { path: string }) {
         return
     }
 
-    const group: HidGroup = { entries: {}, closed: false }
+    const group: HidGroup = { device, closed: false }
     devices[deviceId] = group
-
     console.info("HID LISTENING:", deviceId)
 
-    const entry = { device, closed: false }
-    group.entries[deviceId] = entry
-
     device.on("data", (data: Buffer | number[]) => {
-        if (entry.closed || group.closed) return
-        // skip key release / idle reports, so only presses are received
+        if (group.closed) return
         if (Array.from(data).every((value) => !value)) return
         emitHidData(deviceId, data)
     })
 
     device.on("error", (err) => {
         console.error("HID ERROR:", deviceId, err)
-        entry.closed = true
+        group.closed = true
         safeClose(device)
         delete devices[deviceId]
     })
@@ -271,10 +257,7 @@ export function hidClose(data: { path: string }) {
     if (!group) return
 
     group.closed = true
-    for (const entry of Object.values(group.entries)) {
-        entry.closed = true
-        safeClose(entry.device)
-    }
+    safeClose(group.device)
     delete devices[deviceId]
     console.info("HID CLOSED LISTENER:", deviceId)
 }

@@ -4,7 +4,6 @@
     import { ToMain } from "../../../types/IPC/ToMain"
     import type { HidValues } from "../../../types/Show"
     import { destroyMain, receiveToMain, requestMain, sendMain } from "../../IPC/main"
-    import T from "../helpers/T.svelte"
     import InputRow from "../input/InputRow.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import MaterialDropdown from "../inputs/MaterialDropdown.svelte"
@@ -28,22 +27,10 @@
     }
 
     let devices: any[] = []
-    function formatDeviceLabel(d: any, allDevices: any[] = devices): string {
+    function formatDeviceLabel(d: any): string {
         if (!d) return "—"
         const baseName = d.product || d.manufacturer || "HID Device"
-        const fullName = d.manufacturer && d.product && !d.product.toLowerCase().includes(d.manufacturer.toLowerCase()) ? `${d.manufacturer} - ${baseName}` : baseName
-
-        // Check if there are multiple entries with the same vendorId and productId
-        const duplicates = allDevices.filter((item) => item.vendorId === d.vendorId && item.productId === d.productId)
-        if (duplicates.length > 1) {
-            const iface = d.interface !== undefined && d.interface >= 0 ? `Interface ${d.interface}` : ""
-            const col = d.path ? d.path.match(/Col\d+/i)?.[0] || "" : ""
-            const usage = d.usagePage ? `Usage 0x${d.usagePage.toString(16).toUpperCase()}` : ""
-            const details = [iface, col, usage].filter(Boolean).join(", ")
-            return details ? `${fullName} (${details})` : `${fullName} [${(d.path || "").slice(-12)}]`
-        }
-
-        return fullName
+        return d.manufacturer && d.product && !d.product.toLowerCase().includes(d.manufacturer.toLowerCase()) ? `${d.manufacturer} - ${baseName}` : baseName
     }
 
     function requestDevices() {
@@ -53,7 +40,7 @@
             const firstDevice = data.find((d) => !d.permission) || data[0]
             if (!hid.device && firstDevice?.path) {
                 setHid("device", firstDevice.path)
-                setHid("deviceName", formatDeviceLabel(firstDevice, data))
+                setHid("deviceName", formatDeviceLabel(firstDevice))
                 sendMain(Main.RECEIVE_HID, { path: firstDevice.path })
             }
         })

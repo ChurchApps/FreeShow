@@ -1,7 +1,3 @@
-// Windows does not allow node-hid to read keyboard devices (most presentation clickers are keyboards),
-// so these are read through Windows Raw Input in a small helper process instead (scripts/hid-input-helper).
-// This also works when FreeShow is not focused, but the key presses still reach the focused app.
-
 import { type ChildProcess, spawn } from "child_process"
 import { app } from "electron"
 import path from "path"
@@ -53,6 +49,7 @@ export function closeRawInputDevice(devicePath: string) {
     else stopHelper()
 }
 
+// Windows: Presentation clickers are keyboards, which node-hid cannot open directly, these devices are read in the background using Raw Input via a helper process.
 function startHelper() {
     const helperPath = path.join(app.getAppPath(), "public", "assets", "bin", "hid-input-helper.exe").replace(`app.asar${path.sep}`, `app.asar.unpacked${path.sep}`)
     const child = spawn(helperPath, [], { windowsHide: true, stdio: ["pipe", "pipe", "pipe"] })
