@@ -49,21 +49,10 @@ function safeClose(device: HID) {
     } catch {}
 }
 
-const lastSignatureEmitTime: Record<string, number> = {}
-
 function emitHidData(path: string, data: Buffer | number[]) {
     if (!data?.length) return
-    const arr = Array.from(data)
-    const now = Date.now()
 
-    // Minimum 200ms cooldown for the exact command signature (first 4 bytes)
-    const signature = `${path}:${arr.slice(0, Math.min(arr.length, 4)).join(",")}`
-    const lastSig = lastSignatureEmitTime[signature] || 0
-    if (now - lastSig < 200) return
-
-    lastSignatureEmitTime[signature] = now
-
-    sendToMain(ToMain.HID_DATA, { path, data: arr })
+    sendToMain(ToMain.HID_DATA, { path, data: Array.from(data) })
 }
 
 function isRelevantDevice(device: Device): boolean {

@@ -31,14 +31,10 @@ export function hidInListen() {
     })
 }
 
-const lastTriggerTime: Record<string, number> = {}
-
 export function receivedHid(msg: { path?: string; data: number[] } | number[]) {
     const path = (msg as any)?.path?.toLowerCase()
     const data: number[] = Array.isArray(msg) ? msg : (msg as any)?.data || []
     if (!data.length) return
-
-    const now = Date.now()
 
     Object.entries(get(actions)).forEach(([actionId, action]: [string, Action]) => {
         if (action.customActivation !== "hid_input" || action.enabled === false) return
@@ -47,9 +43,6 @@ export function receivedHid(msg: { path?: string; data: number[] } | number[]) {
 
         const matches = action.hid.data.length === data.length && action.hid.data.every((v, i) => v === data[i])
         if (!matches) return
-
-        if (now - (lastTriggerTime[actionId] || 0) < 400) return
-        lastTriggerTime[actionId] = now
 
         runAction({ ...action, id: actionId }, { source: "hid" })
     })
