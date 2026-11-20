@@ -2,7 +2,6 @@
 set -e
 
 version=$(grep "\"version\"" package.json | cut -d ":" -f 2 | cut -d "\"" -f 2)
-sed -i "s/version:.*/version: ${version}/" config/building/snapcraft.yaml
 arch="$(uname -m)"
 
 if [ "$arch" = "aarch64" ]; then
@@ -18,6 +17,7 @@ chmod +x scripts/snap/*.sh
 mkdir -p snap/gui
 cp -a scripts/snap/gui/. snap/gui/
 cp config/building/snapcraft.yaml snap/snapcraft.yaml
+sed -i "s/version:.*/version: ${version}/" snap/snapcraft.yaml
 if [ -e "dist/linux-arm64-unpacked" ]; then
   mv dist/linux-arm64-unpacked dist/linux-unpacked
 fi
