@@ -230,7 +230,7 @@
     else itemsList = clone(slide.items) || []
     function updateItemsList(_updater: any = null, _style: any = null) {
         // WIP show scripture style preview as well
-        itemsList = setTemplateStyle({ id: showId, index }, currentStyle, clone(slide.items) || [], outputId, slide?.customDynamicValues)
+        itemsList = setTemplateStyle({ id: showId, index }, currentStyle, clone(slide.items) || [], outputId, slide?.customDynamicValues, true)
     }
 
     // $: styleTemplate = getStyleTemplate(null, currentStyle)
