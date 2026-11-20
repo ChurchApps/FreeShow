@@ -12,7 +12,7 @@
     import AiVisual from "./AiVisual.svelte"
     import SmartAction from "./SmartAction.svelte"
 
-    let state: "loading" | "inactive" | "error" | "listening" | "processing" = "loading"
+    let state: "loading" | "inactive" | "error" | "listening" | "processing" = "inactive"
 
     // Active tab state
     let activeTab: "transcription" | "chat" = "transcription"
@@ -97,7 +97,7 @@
     $: syncSession(isEnabled, micDeviceId, engineId)
     async function syncSession(enabled: boolean | undefined, mic: string | undefined, engine: string) {
         const currentLock = ++sessionToken
-        const shouldBeActive = Boolean(enabled && mic)
+        const shouldBeActive = Boolean(enabled && mic && !$sttTempDisabled)
         const micChanged = (mic || "") !== lastMic
         const engineChanged = engine !== lastEngine
 
@@ -160,25 +160,24 @@
     }
 
     function toggleListening(enable?: boolean) {
-        const turnOn = enable === undefined ? !isListening : enable
+        const turnOn = enable ?? !isListening
         if (turnOn) {
-            if (isListening) return
             sttTempDisabled.set(false)
             enableListening()
         } else {
-            if (!isListening && state === "inactive") return
             sttTempDisabled.set(true)
-            SpeechToText.stopCapture()
+            if (state === "inactive") return
+            sessionToken++
+            SpeechToText.disable()
             state = "inactive"
         }
     }
 
     $: isListening = state === "listening"
-    $: isStarting = state === "processing"
 
     async function enableListening() {
-        if (isStarting || !isEnabled || !micDeviceId) return
-        if (isListening) return
+        if ($sttTempDisabled || state === "loading" || state === "processing" || state === "listening" || !isEnabled || !micDeviceId) return
+        state = "loading"
 
         const result = await SpeechToText.enable()
         if (result.aborted) return

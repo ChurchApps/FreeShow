@@ -24,17 +24,11 @@ export class SpeechToText {
         const operationId = ++this.sessionToken
 
         const captured = await this.restartCapture(operationId)
-        if (operationId !== this.sessionToken) {
-            this.stopCapture()
-            return { ok: false, aborted: true }
-        }
+        if (operationId !== this.sessionToken) return { ok: false, aborted: true }
         if (!captured.ok) return captured
 
         const started = await this.restartEngine(operationId)
-        if (operationId !== this.sessionToken) {
-            this.stopCapture()
-            return { ok: false, aborted: true }
-        }
+        if (operationId !== this.sessionToken) return { ok: false, aborted: true }
 
         if (!started.ok) {
             this.stopCapture()
@@ -85,10 +79,7 @@ export class SpeechToText {
         this.stream = stream
         const ac = await this.captureAudioContext(stream, token)
 
-        if (token !== this.sessionToken) {
-            this.stopCapture()
-            return { ok: false, aborted: true }
-        }
+        if (token !== this.sessionToken) return { ok: false, aborted: true }
 
         if (!ac) return { ok: false, error: "Could not create audio context" }
 
@@ -190,7 +181,7 @@ export class SpeechToText {
             return ac
         } catch (err) {
             console.error("Failed to capture audio context:", err)
-            this.stopCapture()
+            if (operationId === undefined || operationId === this.sessionToken) this.stopCapture()
             return null
         }
     }

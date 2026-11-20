@@ -16,8 +16,10 @@ export class SpeechToText {
     private static segmentListeners = new Set<SegmentListener>()
 
     static async listen(engine: string, options: SttEngineOptions): Promise<{ started: boolean; error?: string }> {
-        await this.stopInternal(false)
+        const stopping = this.stopInternal(false)
         const token = ++this.sessionToken
+        await stopping
+        if (token !== this.sessionToken) return { started: false }
 
         const created = await this.createEngine(engine, options)
         if ("error" in created) return { started: false, error: created.error }
