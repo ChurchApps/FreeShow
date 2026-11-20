@@ -1235,7 +1235,7 @@ export function enableStageOutput(options: any = {}) {
 export function changeStageOutputLayout(data: API_stage_output_layout) {
     if (!data.stageLayoutId) return
 
-    const targetId = data.outputId ? resolveOutputId(data.outputId) : null
+    const targetId = data.outputId ? resolveOutputId(data.outputId) || data.outputId : null
     const outputIds = targetId ? [targetId] : Object.keys(get(outputs))
 
     outputs.update((a) => {

@@ -608,7 +608,7 @@ export function changeOutputStyle(data: API_output_style) {
         return
     }
 
-    const targetId = data.outputId ? resolveOutputId(data.outputId) : null
+    const targetId = data.outputId ? resolveOutputId(data.outputId) || data.outputId : null
     const outputIds = targetId ? [targetId] : getAllNormalOutputs().map((a) => a.id)
     outputIds.forEach((outputId) => changeSingleOutputStyle(outputId, data.styleId || ""))
 }
