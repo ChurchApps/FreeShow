@@ -38,8 +38,18 @@ class ChurchAppsSyncManager {
         return !!headers
     }
 
+    // Churches can keep files in their own storage (e.g. Google Drive). The API says where the zip lives:
+    // external=false (or an older API / offline) means the usual content host path.
+    private async getSyncInfo(teamId: string, fileName: string): Promise<{ external: boolean; url?: string; md5?: string; modified?: string } | null> {
+        return (await this.provider.apiRequest({ api: "content", authenticated: true, scope: SCOPE, endpoint: `/files/sync/${teamId}/${fileName}` })) || null
+    }
+
     // Simple HTTP HEAD to content S3 web server.  No auth needed.
     private async getHeaders(churchId: string, teamId: string, fileName = "current.zip"): Promise<any> {
+        const info = await this.getSyncInfo(teamId, fileName)
+        // Drive's md5Checksum is the same hex MD5 the cache compares S3 ETags against
+        if (info?.external) return info.url ? { etag: info.md5, "last-modified": info.modified } : null
+
         // cache buster so CloudFront never returns a stale ETag / Last-Modified
         const randomNumber = Math.floor(Math.random() * 1000000)
         const path = `/${churchId}/files/group/${teamId}/${fileName}?cacheBuster=${randomNumber}`
@@ -73,12 +83,16 @@ class ChurchAppsSyncManager {
             }
         }
 
+        const info = await this.getSyncInfo(teamId, fileName)
+        if (info?.external && !info.url) return null
+        const external = info?.external ? new URL(info.url!) : null
+
         const randomNumber = Math.floor(Math.random() * 1000000)
-        const path = `/${churchId}/files/group/${teamId}/${fileName}?cacheBuster=${randomNumber}`
+        const path = external ? external.pathname + external.search : `/${churchId}/files/group/${teamId}/${fileName}?cacheBuster=${randomNumber}`
         console.log("Downloading data...")
 
         const filePath = await new Promise<string | null>((resolve) => {
-            httpsRequest(getChurchAppsContentUrl(), path, "GET", {}, {}, response, join(outputFolderPath, fileName), false, this.TWO_MINUTES)
+            httpsRequest(external ? external.origin : getChurchAppsContentUrl(), path, "GET", {}, {}, response, join(outputFolderPath, fileName), false, this.TWO_MINUTES)
 
             function response(err: any, filePath?: string) {
                 if (err) {
@@ -188,6 +202,14 @@ class ChurchAppsSyncManager {
             if (!presigned?.url) return false
 
             const fileBuffer = await fs.promises.readFile(filePath)
+
+            // Church's own storage (e.g. a Google Drive upload session): send the bytes as-is
+            if (presigned.rawBody) {
+                await axios.request({ method: presigned.method || "PUT", url: presigned.url, data: fileBuffer, headers: { "Content-Type": ZIP_TYPE, ...presigned.headers }, timeout: 60000, maxBodyLength: Infinity })
+                if (fileName === "current.zip") await this.setCache(teamId, filePath)
+                return true
+            }
+
             const blob = new Blob([new Uint8Array(fileBuffer)], { type: ZIP_TYPE })
 
             const formData = new FormData()

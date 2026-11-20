@@ -35,5 +35,6 @@ export const customActionActivations = [
     { id: "timer_start", common: true, name: "actions.activate_timer_starting", icon: "timer", inputs: true },
     { id: "timer_end", common: true, name: "actions.activate_timer_ending", icon: "timer", inputs: true },
 
-    { id: "midi_signal_received", common: true, name: "midi.activate", icon: "companion", inputs: true }
+    { id: "midi_signal_received", common: true, name: "midi.activate", icon: "companion", inputs: true },
+    { id: "hid_input", common: true, name: "actions.activate_on_hid_input", icon: "keyboard", inputs: true }
 ]

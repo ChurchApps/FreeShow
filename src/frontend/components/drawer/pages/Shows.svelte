@@ -267,8 +267,8 @@
                 {/each}
             </div>
 
-            <!-- reload list when changing category -->
-            {#key active}
+            <!-- reload list when changing category or sort -->
+            {#key `${active}_${sortType}`}
                 <VirtualList items={filteredShows} let:item={show} activeIndex={!isSearching || $activeShow?.data?.searchInput ? filteredShows.findIndex((a) => a.id === $activeShow?.id) : -1}>
                     <SelectElem id="show_drawer" data={{ id: show.id }} shiftRange={filteredShows} draggable>
                         {#if !isSearching || show.match}

@@ -29,7 +29,7 @@ import { formatText } from "../show/formatTextEditor"
 import { getPlainEditorText } from "../show/getTextEditor"
 import { pauseTimeline, setTimelineTime, startTimeline, stopTimeline } from "../timeline/TimelinePlayback"
 import { runActionByName, runActionId, toggleAction } from "./actions"
-import { getActions, getOutput, getOutputGroupName, getOutputSlideText, getPlayingAudioData, getPlayingAudioDuration, getPlayingAudioTime, getPlayingPlaylist, getPlayingVideoDuration, getPlayingVideoState, getPlayingVideoTime, getPlaylists, getProject, getProjects, getShow, getShowLayout, getShows, getSlide, getVariable, getVariables } from "./apiGet"
+import { getActions, getCategories, getOutput, getOutputGroupName, getOutputSlideText, getPlayingAudioData, getPlayingAudioDuration, getPlayingAudioTime, getPlayingPlaylist, getPlayingVideoDuration, getPlayingVideoState, getPlayingVideoTime, getPlaylists, getProject, getProjects, getShow, getShowLayout, getShows, getSlide, getVariable, getVariables } from "./apiGet"
 import {
     addGroup,
     addToProject,
@@ -239,8 +239,8 @@ export const API_ACTIONS = {
     transpose_show_down: (data: API_id) => formatText(transposeText(getPlainEditorText(data.id), -1), data.id),
 
     // PRESENTATION
-    next_slide: () => OutputHelper.advanceOutputs("next"), // BC
-    previous_slide: () => OutputHelper.advanceOutputs("previous"), // BC
+    next_slide: (_data?: any, { source }: { source?: string } = {}) => OutputHelper.advanceOutputs("next", source), // BC
+    previous_slide: (_data?: any, { source }: { source?: string } = {}) => OutputHelper.advanceOutputs("previous", source), // BC
     random_slide: () => randomSlide(),
     index_select_slide: (data: API_slide_index) => selectSlideByIndex(data), // BC
     name_select_slide: (data: API_strval) => selectSlideByName(data.value), // BC
@@ -408,6 +408,7 @@ export const API_ACTIONS = {
     get_show_layout: (data: API_id) => getShowLayout(data),
     get_projects: () => getProjects(),
     get_project: (data: API_id) => getProject(data),
+    get_categories: () => getCategories(),
     get_plain_text: (data: API_id) => getPlainText(data.id),
     get_groups: (data: API_id) => getShowGroups(data.id),
 

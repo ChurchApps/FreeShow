@@ -34,6 +34,8 @@ win:
         - "**/node_modules/libspotifyctl/**/*"
         - "**/node_modules/openmediatransport/**"
         - "**/node_modules/sherpa-onnx-*/**"
+        - "**/assets/bin/aero-peek-helper.exe"
+        - "**/assets/bin/hid-input-helper.exe"
     azureSignOptions:
         publisherName: Live Church Solutions
         endpoint: https://wus2.codesigning.azure.net/

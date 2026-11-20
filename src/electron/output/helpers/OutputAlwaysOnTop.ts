@@ -32,7 +32,7 @@ function setExcludedFromAeroPeek(handle: Buffer, state: boolean) {
     const hwnd = (handle.length === 8 ? handle.readBigUInt64LE(0) : handle.readUInt32LE(0)).toString()
     const enabled = state ? "1" : "0"
 
-    const helperPath = path.join(app.getAppPath(), "public", "assets", "bin", "aero-peek-helper.exe")
+    const helperPath = path.join(app.getAppPath(), "public", "assets", "bin", "aero-peek-helper.exe").replace(`app.asar${path.sep}`, `app.asar.unpacked${path.sep}`)
 
     execFile(helperPath, [hwnd, enabled], { windowsHide: true }, (error) => {
         if (error) console.warn("Could not update output Aero Peek visibility:", error)

@@ -253,6 +253,25 @@ function allLinuxGpuVendors(): string[] {
     return [...new Set(nodes.map((n) => linuxNodeVendor(`/dev/dri/${n}`)).filter(Boolean))]
 }
 
+// check if user has read/write permissions to any /dev/dri render node
+function linuxDriPermissionDenied(): boolean {
+    try {
+        const nodes = fs.readdirSync("/dev/dri").filter((n) => /^renderD\d+$/.test(n) || /^card\d+$/.test(n))
+        if (!nodes.length) return false
+        // if user cannot read and write any available node, permissions are missing
+        return !nodes.some((n) => {
+            try {
+                fs.accessSync(`/dev/dri/${n}`, fs.constants.R_OK | fs.constants.W_OK)
+                return true
+            } catch {
+                return false
+            }
+        })
+    } catch {
+        return false
+    }
+}
+
 async function runGpuHealthCheck() {
     if (healthNotified) return
 
@@ -292,25 +311,27 @@ async function runGpuHealthCheck() {
     // driver scan feeds the remediation message only: target the GPU selected in Settings, or on
     // auto every GPU missing its vendor driver (on dual-GPU machines the fix is often the iGPU's)
     let vaDriverMissing = false
+    let permissionDenied = false
     let packages: string[] = []
     if (isLinux) {
+        permissionDenied = linuxDriPermissionDenied()
         const drivers = findVaDrivers()
         const configuredNode = config.get("graphicsDevice") || ""
         const candidateVendors = configuredNode ? [linuxNodeVendor(configuredNode) || vendorName] : allLinuxGpuVendors()
         const missingVendors = (candidateVendors.length ? candidateVendors : [vendorName]).filter((v) => !vendorVaDriverPresent(v, drivers))
         vaDriverMissing = missingVendors.length > 0
         packages = [...new Set(missingVendors.flatMap((v) => vaPackagesFor(v)))]
-        console.info(`[GPU-HEALTH] VA drivers found: ${drivers.length ? drivers.join(", ") : "NONE"} (gpus=${candidateVendors.join("+") || "?"} missing=${missingVendors.join("+") || "none"})`)
+        console.info(`[GPU-HEALTH] VA drivers found: ${drivers.length ? drivers.join(", ") : "NONE"} (gpus=${candidateVendors.join("+") || "?"} missing=${missingVendors.join("+") || "none"}) permissionDenied=${permissionDenied}`)
     }
 
     healthNotified = true
     // notify once per distinct issue/platform/GPU/packages
-    const notice = [issue, process.platform, vendorName, packages.join(",")].join("|")
+    const notice = [issue, process.platform, vendorName, packages.join(","), permissionDenied].join("|")
     if (config.get("gpuHealthNotice") === notice) {
         console.info(`[GPU-HEALTH] degraded (already reported): issue=${issue} gpu_compositing=${status.gpu_compositing} video_decode=${status.video_decode} probe=${hwDecodeProbe ?? "unavailable"} vendor=${vendorName || "?"}`)
         return
     }
     config.set("gpuHealthNotice", notice)
-    console.info(`[GPU-HEALTH] degraded: issue=${issue} gpu_compositing=${status.gpu_compositing} video_decode=${status.video_decode} probe=${hwDecodeProbe ?? "unavailable"} vendor=${vendorName || "?"} vaDriverMissing=${vaDriverMissing}`)
-    sendToMain(ToMain.GPU_HEALTH, { issue, platform: process.platform, vendorName, vaDriverMissing, packages })
+    console.info(`[GPU-HEALTH] degraded: issue=${issue} gpu_compositing=${status.gpu_compositing} video_decode=${status.video_decode} probe=${hwDecodeProbe ?? "unavailable"} vendor=${vendorName || "?"} vaDriverMissing=${vaDriverMissing} permissionDenied=${permissionDenied}`)
+    sendToMain(ToMain.GPU_HEALTH, { issue, platform: process.platform, vendorName, vaDriverMissing, packages, permissionDenied })
 }

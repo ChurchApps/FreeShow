@@ -1,8 +1,8 @@
 import { parentPort } from "worker_threads"
-import { ruleViolation } from "../utils/ruleCheck"
-import { RtmpStreamer, setRtmpNoticeListener, setRtmpStatusListener } from "../streaming/RtmpStreamer"
 import { BlackmagicSender } from "../blackmagic/BlackmagicSender"
 import { cardFrameBytes } from "../blackmagic/cardFormat"
+import { RtmpStreamer, setRtmpNoticeListener, setRtmpStatusListener } from "../streaming/RtmpStreamer"
+import { ruleViolation } from "../utils/ruleCheck"
 import { FrameServer, type ServedFrame } from "./FrameServer"
 
 // Protocol-independent engine for the network sender workers (../ndi/ndiWorker, ../omt/omtWorker), which
@@ -383,14 +383,14 @@ function bgraToUyvy(bgra: Buffer, width: number, height: number): Buffer {
         let si = y * rowIn
         let di = y * rowOut
         for (let x = 0; x < width; x += 2) {
-            const b0 = bgra[si],
-                g0 = bgra[si + 1],
-                r0 = bgra[si + 2]
-            const b1 = bgra[si + 4],
-                g1 = bgra[si + 5],
-                r1 = bgra[si + 6]
-            let u = ((-43 * r0 - 85 * g0 + 128 * b0) >> 8) + 128
-            let v = ((128 * r0 - 107 * g0 - 21 * b0) >> 8) + 128
+            const b0 = bgra[si];
+                const g0 = bgra[si + 1];
+                const r0 = bgra[si + 2]
+            const b1 = bgra[si + 4];
+                const g1 = bgra[si + 5];
+                const r1 = bgra[si + 6]
+            const u = ((-43 * r0 - 85 * g0 + 128 * b0) >> 8) + 128
+            const v = ((128 * r0 - 107 * g0 - 21 * b0) >> 8) + 128
             out[di] = u < 0 ? 0 : u > 255 ? 255 : u // U
             out[di + 1] = (77 * r0 + 150 * g0 + 29 * b0) >> 8 // Y0 (0..255, no clamp needed)
             out[di + 2] = v < 0 ? 0 : v > 255 ? 255 : v // V
@@ -413,16 +413,16 @@ function bgraToUyva(bgra: Buffer, width: number, height: number): Buffer {
         let di = y * rowUyvy
         let ai = uyvySize + y * width
         for (let x = 0; x < width; x += 2) {
-            const b0 = bgra[si],
-                g0 = bgra[si + 1],
-                r0 = bgra[si + 2],
-                a0 = bgra[si + 3]
-            const b1 = bgra[si + 4],
-                g1 = bgra[si + 5],
-                r1 = bgra[si + 6],
-                a1 = bgra[si + 7]
-            let u = ((-43 * r0 - 85 * g0 + 128 * b0) >> 8) + 128
-            let v = ((128 * r0 - 107 * g0 - 21 * b0) >> 8) + 128
+            const b0 = bgra[si];
+                const g0 = bgra[si + 1];
+                const r0 = bgra[si + 2];
+                const a0 = bgra[si + 3]
+            const b1 = bgra[si + 4];
+                const g1 = bgra[si + 5];
+                const r1 = bgra[si + 6];
+                const a1 = bgra[si + 7]
+            const u = ((-43 * r0 - 85 * g0 + 128 * b0) >> 8) + 128
+            const v = ((128 * r0 - 107 * g0 - 21 * b0) >> 8) + 128
             out[di] = u < 0 ? 0 : u > 255 ? 255 : u // U
             out[di + 1] = (77 * r0 + 150 * g0 + 29 * b0) >> 8 // Y0
             out[di + 2] = v < 0 ? 0 : v > 255 ? 255 : v // V
@@ -812,7 +812,7 @@ async function captureAndSend(id: string, source: any, opts: { pipe?: number; si
     // else the shared media sources it shows, held until the composite is recorded
     const mediaFrames = layerBuf ? [] : mediaFramesFor(id)
     const assigned = mediaAssigned[id]
-    const video = layerBuf ? { width: layer!.width, height: layer!.height, format: layer!.format, data: layerBuf.buf.subarray(0, layerBuf.bytes) } : mediaFrames.length ? { media: mediaFrames.map((m) => ({ handle: m.frame.handle, width: m.frame.width, height: m.frame.height, fit: 0, alpha: m.alpha })), fill: assigned!.fill } : null
+    const video = layerBuf ? { width: layer.width, height: layer.height, format: layer.format, data: layerBuf.buf.subarray(0, layerBuf.bytes) } : mediaFrames.length ? { media: mediaFrames.map((m) => ({ handle: m.frame.handle, width: m.frame.width, height: m.frame.height, fit: 0, alpha: m.alpha })), fill: assigned.fill } : null
     if (layerBuf) layerBuf.inUse = true
     for (const m of mediaFrames) m.frame.refs++
 

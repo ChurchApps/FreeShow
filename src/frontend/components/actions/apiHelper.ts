@@ -182,7 +182,7 @@ export async function startProjectItemByName(name: string) {
     } else if (item.type === "pdf") {
         // get PDF data
         GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
-        const loadingTask = getDocument(encodeFilePath(item.id))
+        const loadingTask = getDocument({ url: encodeFilePath(item.id) })
         const pdfDoc = await loadingTask.promise
         const pages = pdfDoc.numPages
 
@@ -1097,7 +1097,7 @@ export async function getPDFThumbnails({ path, data }: API_media) {
     const totalPercent = 100
 
     GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
-    const loadingTask = getDocument(encodeFilePath(path))
+    const loadingTask = getDocument({ url: encodeFilePath(path) })
     const pdfDoc = await loadingTask.promise
     const pageCount = pdfDoc.numPages
 
@@ -1196,7 +1196,7 @@ export function addToProject(data: API_add_to_project) {
     activeProject.set(data.projectId)
 
     projects.update((a) => {
-        if (!a[data.projectId]?.shows || a[data.projectId].shows.find((item) => item.id === data.id)) return a
+        if (!a[data.projectId]?.shows) return a
         a[data.projectId].shows.push({ ...(data.data || {}), id: data.id })
         a[data.projectId].modified = Date.now()
         return a

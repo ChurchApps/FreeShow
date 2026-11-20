@@ -218,13 +218,30 @@ export function loadCustomFonts(localFonts: CustomFont[]) {
     fonts.forEach(loadCustomFont)
 }
 
+const loadedCustomFonts = new Set<string>()
 export function loadCustomFont(font: CustomFont) {
+    const key = font.path || font.name
+    if (!key || loadedCustomFonts.has(key)) return false
+    loadedCustomFonts.add(key)
+
     const type = font.type
 
     if (type === undefined) return loadUnknownType(font)
     else if (type === "local") return loadLocalFont(font)
     else if (type === "google") return loadGoogleFont(font)
     return false
+}
+
+export function removeCustomFont(font: CustomFont) {
+    const key = font.path || font.name
+    if (!key) return
+
+    loadedCustomFonts.delete(key)
+    if (!font.name) return
+
+    const family = getFontName(font.name)
+    const fontsToRemove = Array.from(document.fonts).filter((f) => f.family === family)
+    fontsToRemove.forEach((f) => document.fonts.delete(f))
 }
 
 async function loadUnknownType(font: CustomFont) {

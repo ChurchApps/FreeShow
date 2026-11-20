@@ -6,6 +6,7 @@
     import { arrayHasData, clone } from "../helpers/array"
     import { _show } from "../helpers/shows"
     import { getLayoutRef } from "../helpers/show"
+    import { setShiftAnchor, shiftAnchor } from "../helpers/select"
 
     export let id: SelectIds
     export let data: any
@@ -151,9 +152,14 @@
             return
         }
 
+        if (!dragged && !rightClick && e.button === 0 && !e.shiftKey) setShiftAnchor(id, clone(data))
+        if (e.shiftKey && shiftAnchor?.id === id && ($selected.id !== id || !$selected.data?.length)) {
+            selected.set({ id, data: [shiftAnchor.data] })
+        }
+
         // shift select range
         if (e.shiftKey && ((shiftRange.length && $selected.data[0]) || $selected.data[0]?.index !== undefined)) {
-            const searchKeys = ["id", "index", "path"]
+            const searchKeys = ["index", "id", "path"]
             let lastSelected = $selected.data[$selected.data.length - 1]
             if (!lastSelected) return
 
@@ -177,7 +183,8 @@
 
             let keys = Object.keys(data)
             // add all previous keys to new data
-            if (shiftRange) {
+            const isSameData = JSON.stringify(shiftRange[newIndex]) === JSON.stringify(data)
+            if (shiftRange && !isSameData) {
                 allNewData = allNewData
                     .map((data) => {
                         if (!data) return null

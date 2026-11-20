@@ -20,7 +20,7 @@
     const getIdentifier = {
         text: (item: Item) => {
             let text = getItemText(item)
-            return text.slice(0, 10)
+            return text.slice(0, 50)
         },
         media: (item: Item) => {
             let path = item.src

@@ -161,7 +161,6 @@ export function keydown(e: KeyboardEvent) {
         return
     }
 
-    if (isComposing(e)) return
     if (get(guideActive)) return
 
     // clicking e.g. "Show" tab button will focus that making number tab change not work
@@ -329,8 +328,13 @@ export function isFormattingKey(e: KeyboardEvent): boolean {
     return formattingKeys.includes(key)
 }
 
+// Ignore shortcut triggers while an IME is composing (e.g. Enter to confirm candidate)
+export function initImeGuards() {
+    window.addEventListener("keydown", (e) => (isComposing(e) ? e.stopImmediatePropagation() : null), true)
+}
+
 // IME candidate window check
-export function isComposing(e: KeyboardEvent): boolean {
+function isComposing(e: KeyboardEvent): boolean {
     // while keyCode is deprecated, "keyCode === 229" is an official exception
     return e.isComposing || e.keyCode === 229
 }

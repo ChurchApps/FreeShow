@@ -26,12 +26,25 @@ import { checkName } from "../../helpers/show"
 
 const SCRIPTURE_API_URL = "https://api.churchapps.org/content/bibles"
 
+let hasChecked = false
+let customApiBibleKey: string = ""
+async function getCustomApiBibleKey() {
+    if (hasChecked) return customApiBibleKey
+
+    const customKey = await requestMain(Main.GET_CONFIG_DATA, { key: "customApiBibleKey" })
+    hasChecked = true
+    customApiBibleKey = customKey || ""
+    return customApiBibleKey
+}
+
 export async function getApiBiblesList() {
+    const customKey = await getCustomApiBibleKey()
+    const key = "*" // not needed here
     try {
-        return await ApiBiblesList("*", SCRIPTURE_API_URL)
+        return await ApiBiblesList(customKey || key, customKey ? "" : SCRIPTURE_API_URL)
     } catch (err) {
         console.error("Error loading API Bible:", err)
-        return await ApiBiblesList(getKey("bibleapi"))
+        return await ApiBiblesList(customKey ? key : getKey("bibleapi"), customKey ? SCRIPTURE_API_URL : "")
     }
 }
 
@@ -47,15 +60,16 @@ export async function loadJsonBible(id: string): Promise<BibleInstance | null> {
     const isApi = !!scriptureData?.api
 
     if (isApi) {
+        const customKey = await getCustomApiBibleKey()
         const key = getKey("bibleapi")
         const apiId = scriptureData?.id || id
         try {
-            const instance = await JsonBibleApi(key, apiId, SCRIPTURE_API_URL)
+            const instance = await JsonBibleApi(customKey || key, apiId, customKey ? "" : SCRIPTURE_API_URL)
             jsonBibleCache[id] = instance
             return instance
         } catch (err) {
             console.error("Error loading API Bible:", err)
-            const instance = await JsonBibleApi(key, apiId)
+            const instance = await JsonBibleApi(key, apiId, customKey ? SCRIPTURE_API_URL : "")
             jsonBibleCache[id] = instance
             return instance
         }

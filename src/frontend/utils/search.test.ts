@@ -95,6 +95,12 @@ describe("showSearchFilter", () => {
         expect(showSearchFilter("here", { id: "nothingbetter", name: "There's Nothing Better" } as any)).toBe(0)
         expect(showSearchFilter("here", { id: "anointinghere", name: "There's An Anointing Here" } as any)).toBe(84)
     })
+    it("matches letter-to-digit and digit-to-letter boundaries in alphanumeric titles", () => {
+        expect(showSearchFilter("12345", { id: "test", name: "TEST12345" } as any)).toBeGreaterThan(0)
+        expect(showSearchFilter("test", { id: "test", name: "12345TEST" } as any)).toBeGreaterThan(0)
+        expect(showSearchFilter("12345", { id: "test", name: "[12345]TEST" } as any)).toBeGreaterThan(0)
+        expect(showSearchFilter("test", { id: "test", name: "[12345]TEST" } as any)).toBeGreaterThan(0)
+    })
     it("matches partially typed words at word starts (type-ahead)", () => {
         expect(showSearchFilter("amaz grac", shows[0])).toBe(89)
     })

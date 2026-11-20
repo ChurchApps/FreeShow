@@ -1,4 +1,5 @@
 import fs from "fs"
+import http from "http"
 import https from "https"
 import { dirname } from "path"
 import type { ErrorLog } from "../../types/Main"
@@ -15,7 +16,15 @@ export function httpsRequest(hostname: string, path: string, method: "POST" | "G
         callback(err, result)
     }
 
-    const [cleanHostname, ...base] = hostname.replace(/^https?:\/\//, "").replace(/\/+$/, "").split("/")
+    const isPlainHttp = /^http:\/\//i.test(hostname.trim())
+    const [hostAndPort, ...base] = hostname
+        .trim()
+        .replace(/^https?:\/\//i, "")
+        .replace(/\/+$/, "")
+        .split("/")
+    const [cleanHostname, portString] = hostAndPort.split(":")
+    const port = portString ? Number(portString) : isPlainHttp ? 80 : 443
+    const transport = isPlainHttp ? http : https
     const fullPath = (base.length ? `/${base.join("/")}` : "") + (path.startsWith("/") ? path : `/${path}`)
 
     const headersObj = headers as Record<string, string>
@@ -28,7 +37,7 @@ export function httpsRequest(hostname: string, path: string, method: "POST" | "G
 
     const options = {
         hostname: cleanHostname,
-        port: 443,
+        port,
         path: fullPath,
         method,
         headers: {
@@ -45,7 +54,7 @@ export function httpsRequest(hostname: string, path: string, method: "POST" | "G
     }
 
     try {
-        const request = https.request(options, (response) => {
+        const request = transport.request(options, (response) => {
             const statusCode = response.statusCode || 0
 
             const abortWithError = (msg: string, status?: number) => {
@@ -65,8 +74,9 @@ export function httpsRequest(hostname: string, path: string, method: "POST" | "G
                 request.destroy()
 
                 try {
-                    const redirectUrl = new URL(response.headers.location, `https://${cleanHostname}${fullPath}`)
-                    return httpsRequest(redirectUrl.hostname, redirectUrl.pathname + redirectUrl.search, method, headers, content, cb, outputFilePath, onlyHeaders, timeoutMs, redirectCount + 1)
+                    const baseUrl = `${isPlainHttp ? "http" : "https"}://${hostAndPort}`
+                    const redirectUrl = new URL(response.headers.location, `${baseUrl}${fullPath}`)
+                    return httpsRequest(redirectUrl.origin, redirectUrl.pathname + redirectUrl.search, method, headers, content, cb, outputFilePath, onlyHeaders, timeoutMs, redirectCount + 1)
                 } catch (urlErr: any) {
                     return cb(urlErr, null)
                 }

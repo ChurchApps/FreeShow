@@ -1,7 +1,7 @@
 import { ContentProvider } from "../base/ContentProvider"
 import { getKey } from "../../utils/keys"
 import { pcoConnect, pcoDisconnect, pcoInitialize, pcoStartupLoad, type PCOScopes } from "./connect"
-import { pcoRequest, pcoLoadServices, pcoFetchFolderTree, pcoFetchServiceTree, pcoLoadSinglePlan, type PCOFolderTreeNode } from "./request"
+import { pcoRequest, pcoLoadServices, pcoFetchFolderTree, pcoFetchServiceTree, pcoLoadSinglePlan, pcoCheckPlans, type PCOFolderTreeNode } from "./request"
 import { pcoGetLiveData, pcoGetPusherAuth, type PCOLiveData } from "./live"
 
 // Re-export types from connect file
@@ -55,8 +55,8 @@ export class PlanningCenterProvider extends ContentProvider<PCOScopes, PCOAuthDa
         return pcoRequest(data)
     }
 
-    async loadServices(data?: { syncFolderIds?: string[] }): Promise<void> {
-        return pcoLoadServices(data?.syncFolderIds)
+    async loadServices(data?: { syncFolderIds?: string[]; songOrigin?: string }): Promise<void> {
+        return pcoLoadServices(data?.syncFolderIds, data?.songOrigin)
     }
 
     async fetchFolderTree(): Promise<PCOFolderTreeNode[]> {
@@ -71,6 +71,10 @@ export class PlanningCenterProvider extends ContentProvider<PCOScopes, PCOAuthDa
         return pcoLoadSinglePlan(serviceTypeId, planId)
     }
 
+    async checkPlans(plans: { serviceTypeId: string; planId: string }[]): Promise<{ planId: string; updatedAt: string; itemsCount: number; missing?: boolean }[]> {
+        return pcoCheckPlans(plans)
+    }
+
     async getLiveData(serviceTypeId: string, planId: string): Promise<PCOLiveData | null> {
         return pcoGetLiveData(serviceTypeId, planId)
     }
@@ -79,9 +83,9 @@ export class PlanningCenterProvider extends ContentProvider<PCOScopes, PCOAuthDa
         return pcoGetPusherAuth(socketId, channelName, serviceTypeId)
     }
 
-    async startupLoad(scope: PCOScopes, data?: { syncFolderIds?: string[] }): Promise<void> {
+    async startupLoad(scope: PCOScopes, data?: { syncFolderIds?: string[]; songOrigin?: string }): Promise<void> {
         pcoInitialize()
-        return pcoStartupLoad(scope, data?.syncFolderIds)
+        return pcoStartupLoad(scope, data?.syncFolderIds, data?.songOrigin)
     }
 
     protected handleAuthCallback(_req: any, _res: any): void {

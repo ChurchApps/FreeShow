@@ -107,7 +107,7 @@ export function findPatterns(sections: string[], autoGroups: boolean) {
         }
 
         // 2. Single-line Section Breaks
-        if (lines.length === 1 && !rawName.includes(" ")) {
+        if (lines.length === 1 && !rawName.includes(" ") && !trimmedFirstLine.match(/^\[#\d+/)) {
             passedInstrumentalBreak = true
             return rawName.toLowerCase()
         }

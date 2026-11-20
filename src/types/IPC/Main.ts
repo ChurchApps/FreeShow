@@ -56,6 +56,7 @@ export enum Main {
     MINIMIZE = "MINIMIZE",
     FULLSCREEN = "FULLSCREEN",
     /////
+    GET_CONFIG_DATA = "GET_CONFIG_DATA",
     IMPORT = "IMPORT",
     IMPORT_FILES = "IMPORT_FILES",
     BIBLE = "BIBLE",
@@ -125,6 +126,9 @@ export enum Main {
     SEND_MIDI = "SEND_MIDI",
     RECEIVE_MIDI = "RECEIVE_MIDI",
     CLOSE_MIDI = "CLOSE_MIDI",
+    GET_HID_DEVICES = "GET_HID_DEVICES",
+    RECEIVE_HID = "RECEIVE_HID",
+    CLOSE_HID = "CLOSE_HID",
     GET_LYRICS = "GET_LYRICS",
     SEARCH_LYRICS = "SEARCH_LYRICS",
     RECORDER = "RECORDER",
@@ -160,6 +164,7 @@ export enum Main {
     PCO_PUSHER_AUTH = "PCO_PUSHER_AUTH",
     PCO_FETCH_SERVICE_TREE = "PCO_FETCH_SERVICE_TREE",
     PCO_LOAD_PLAN = "PCO_LOAD_PLAN",
+    PCO_CHECK_PLANS = "PCO_CHECK_PLANS",
     ONSTAGE_LOAD_SERVICE = "ONSTAGE_LOAD_SERVICE",
     ONSTAGE_GET_TEAMS = "ONSTAGE_GET_TEAMS",
     ONSTAGE_SWITCH_TEAM = "ONSTAGE_SWITCH_TEAM",
@@ -199,6 +204,7 @@ export interface MainSendPayloads {
     // DEV
     [Main.LOG]: any
     /////
+    [Main.GET_CONFIG_DATA]: { key: string }
     [Main.IMPORT]: { channel: string; format: { name: string; extensions: string[] } }
     [Main.IMPORT_FILES]: { id: string; paths: string[] }
     [Main.BIBLE]: { id: string; name: string }
@@ -244,6 +250,9 @@ export interface MainSendPayloads {
     [Main.SEND_MIDI]: any
     [Main.RECEIVE_MIDI]: any
     [Main.CLOSE_MIDI]: { id: string }
+    [Main.GET_HID_DEVICES]: undefined
+    [Main.RECEIVE_HID]: { path: string }
+    [Main.CLOSE_HID]: { path: string }
     [Main.GET_LYRICS]: { song: LyricSearchResult }
     [Main.SEARCH_LYRICS]: { artist: string; title: string }
     [Main.RESTORE]?: { path: string }
@@ -277,6 +286,7 @@ export interface MainSendPayloads {
     [Main.PCO_PUSHER_AUTH]: { socketId: string; channelName: string; serviceTypeId: string }
     [Main.PCO_FETCH_SERVICE_TREE]: undefined
     [Main.PCO_LOAD_PLAN]: { serviceTypeId: string; planId: string }
+    [Main.PCO_CHECK_PLANS]: { plans: { serviceTypeId: string; planId: string }[] }
     [Main.ONSTAGE_LOAD_SERVICE]: { serviceId: string; data?: any }
     [Main.ONSTAGE_GET_TEAMS]: undefined
     [Main.ONSTAGE_SWITCH_TEAM]: { teamId: string }
@@ -340,6 +350,7 @@ export interface MainReturnPayloads {
     [Main.CLOSE]: boolean | void
     [Main.MAXIMIZED]: boolean
     /////////////////////
+    [Main.GET_CONFIG_DATA]: string
     [Main.BIBLE]: { id: string; error?: string; content?: [string, Bible] }
     [Main.SHOW]: { id: string; error?: string; content?: [string, Show] }
     ///
@@ -367,6 +378,7 @@ export interface MainReturnPayloads {
     [Main.SLIDESHOW_GET_APPS]: string[]
     [Main.GET_MIDI_OUTPUTS]: { name: string }[]
     [Main.GET_MIDI_INPUTS]: { name: string }[]
+    [Main.GET_HID_DEVICES]: Promise<any[]>
     [Main.GET_LYRICS]: Promise<{ lyrics: string; source: string; title: string; artist: string }>
     [Main.SEARCH_LYRICS]: Promise<LyricSearchResult[]>
     [Main.GET_SIMILAR]: { path: string; name: string }[]
@@ -390,6 +402,7 @@ export interface MainReturnPayloads {
     [Main.PROVIDER_DISCONNECT]: { success: boolean }
     [Main.PROVIDER_FETCH_FOLDERS]: Promise<PCOFolderTreeNode[]>
     [Main.PCO_FETCH_SERVICE_TREE]: Promise<PCOFolderTreeNode[]>
+    [Main.PCO_CHECK_PLANS]: Promise<{ planId: string; updatedAt: string; itemsCount: number; missing?: boolean }[]>
     [Main.PCO_LIVE_GET]: Promise<{ liveId: string | null; liveChannel: string | null; orgId: string | null; liveStartAt: string | null; liveEndAt: string | null; length: number | null; isPreService: boolean; serviceStartAt: string | null; serviceEndAt: string | null } | null>
     [Main.PCO_PUSHER_AUTH]: Promise<{ auth: string; channel_data?: string } | null>
     [Main.ONSTAGE_GET_TEAMS]: Promise<{ id: string; name: string; current: boolean }[]>

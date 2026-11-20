@@ -173,6 +173,7 @@ export const actionRevealUsed: Writable<boolean> = writable(false)
 export const actionMoreOptionsUsed: Writable<boolean> = writable(false)
 export const dynamicValuesRevealUsed: Writable<boolean> = writable(false)
 export const groupsMoreOptionsEnabled: Writable<boolean> = writable(false)
+export const pcoPlansWithUpdates: Writable<string[]> = writable([])
 
 // EDIT
 export const editColumns: Writable<number> = writable(1)

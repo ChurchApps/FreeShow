@@ -15,15 +15,22 @@
         // Exponential moving average for smooth transitions
         displayedAudioLevel += (target - displayedAudioLevel) * SMOOTHING_FACTOR
 
+        // Stop loop when audio has settled back to zero
+        if (target === 0 && displayedAudioLevel < 0.005) {
+            displayedAudioLevel = 0
+            animationFrameId = 0
+            return
+        }
+
         animationFrameId = requestAnimationFrame(updateLevel)
     }
 
-    // Start/stop frame loop depending on listening state
-    $: if (state === "listening") {
+    // Wake up animation loop only when audio level changes and is non-zero
+    $: if (state === "listening" && $audioLevelStore > 0) {
         if (!animationFrameId) {
             updateLevel()
         }
-    } else {
+    } else if (state !== "listening") {
         if (animationFrameId) {
             cancelAnimationFrame(animationFrameId)
             animationFrameId = 0

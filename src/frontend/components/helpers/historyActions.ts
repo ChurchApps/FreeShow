@@ -629,7 +629,10 @@ function handleTemplate(obj, data, initializing) {
         if (template?.settings?.firstSlideTemplate && template?.settings?.createFirstSlide && !slideId) {
             const layout = data.remember.layout || show.settings?.activeLayout
             const firstSlide = show.slides[show.layouts?.[layout]?.slides?.[0]?.id]
-            const firstSlideHasText = firstSlide?.items?.some((item) => getItemText(item).trim())
+            const firstSlideHasText = firstSlide?.items?.some((item) => {
+                const text = getItemText(item)
+                return !text.includes("{") && text.trim()
+            })
 
             if (!firstSlide || firstSlideHasText) {
                 const id = uid()

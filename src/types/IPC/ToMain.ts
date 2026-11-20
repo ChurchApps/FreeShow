@@ -39,7 +39,8 @@ export enum ToMain {
     API_TRIGGER2 = "API_TRIGGER2",
     OPEN_FOLDER2 = "OPEN_FOLDER2",
     OPEN_FILE2 = "OPEN_FILE2",
-    RECEIVE_MIDI2 = "RECEIVE_MIDI2"
+    RECEIVE_MIDI2 = "RECEIVE_MIDI2",
+    HID_DATA = "HID_DATA"
 }
 export interface ToMainSendPayloads {
     [ToMain.ALERT]: string
@@ -58,10 +59,10 @@ export interface ToMainSendPayloads {
     [ToMain.PDF_IMPORT_PROGRESS]: { filePath: string; name: string; progress: number; total: number; status: "importing" | "complete" | "error"; message?: string }
     [ToMain.RTMP_STATUS]: { outputId: string; destinations: RtmpStatus }
     [ToMain.ICECAST_STATUS]: { connected: boolean; connecting?: boolean; error?: string }
-    [ToMain.GPU_HEALTH]: { issue: "compositing" | "video-decode"; platform: string; vendorName: string; vaDriverMissing: boolean; packages: string[] }
+    [ToMain.GPU_HEALTH]: { issue: "compositing" | "video-decode"; platform: string; vendorName: string; vaDriverMissing: boolean; packages: string[]; permissionDenied?: boolean }
     // Unified provider callbacks
     [ToMain.PROVIDER_CONNECT]: { providerId: ContentProviderId; success: boolean; isFirstConnection?: boolean }
-    [ToMain.PROVIDER_PROJECTS]: { providerId: ContentProviderId; categoryName: string; shows: any; projects: any; pcoPlans?: { planId: string; serviceTypeId: string; name: string; date: string }[] }
+    [ToMain.PROVIDER_PROJECTS]: { providerId: ContentProviderId; categoryName: string; shows: any; projects: any; pcoPlans?: { planId: string; serviceTypeId: string; name: string; date: string; updatedAt?: string; itemsCount?: number }[] }
     [ToMain.WEBSOCKET]: "connected"
     [ToMain.AUDIO_METADATA]: { filePath: string; metadata: ICommonTagsResult }
     [ToMain.GET_DYNAMIC_VALUES]: string[]
@@ -78,6 +79,7 @@ export interface ToMainSendPayloads {
     // AI
     [ToMain.AI_STATUS]: { state: "listening" | "stopped" | "error"; message?: string }
     [ToMain.AI_TRANSCRIPT]: { text: string; interim?: boolean; startMs?: number; endMs?: number; language?: string; music?: boolean; utteranceEnd?: boolean; confidence?: number; glue?: boolean }
+    [ToMain.HID_DATA]: { path?: string; data: number[] }
 }
 
 export interface ToMainReturnPayloads {

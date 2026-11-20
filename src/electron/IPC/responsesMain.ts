@@ -41,6 +41,7 @@ import { listGraphicsDevices } from "../utils/gpu"
 import { getMachineId } from "../utils/helpers"
 import { LyricSearch } from "../utils/LyricSearch"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "../utils/midi"
+import { getHidDevices, hidAwaitInput, hidClose } from "../utils/hid"
 import { deleteShows, deleteShowsNotIndexed, getAllShows, getEmptyShows, refreshAllShows } from "../utils/shows"
 import { correctSpelling } from "../utils/spellcheck"
 import { executeSpotifyCommand, getSpotifyState } from "../utils/spotify"
@@ -82,6 +83,7 @@ export const mainResponses: MainResponses = {
     [Main.FULLSCREEN]: () => getMainWindow()?.setFullScreen(!getMainWindow()?.isFullScreen()),
     [Main.SPELLCHECK]: (a) => correctSpelling(a),
     /// //////////////////////
+    [Main.GET_CONFIG_DATA]: (data) => config.get(data.key),
     [Main.SAVE]: (a) => save(a),
     [Main.BACKUPS]: () => getBackups(),
     [Main.DELETE_BACKUP]: (data) => deleteBackup(data),
@@ -161,6 +163,10 @@ export const mainResponses: MainResponses = {
     },
     [Main.RECEIVE_MIDI]: (data) => receiveMidi(data),
     [Main.CLOSE_MIDI]: (data) => closeMidiInPorts(data.id),
+    // HID
+    [Main.GET_HID_DEVICES]: () => getHidDevices(true),
+    [Main.RECEIVE_HID]: (data) => hidAwaitInput(data),
+    [Main.CLOSE_HID]: (data) => hidClose(data),
     // LYRICS
     [Main.GET_LYRICS]: (data) => getLyrics(data),
     [Main.SEARCH_LYRICS]: (data) => searchLyrics(data),
@@ -202,6 +208,7 @@ export const mainResponses: MainResponses = {
     [Main.PROVIDER_FETCH_FOLDERS]: (data) => ContentProviderRegistry.fetchFolderTree(data.providerId),
     [Main.PCO_FETCH_SERVICE_TREE]: () => ContentProviderRegistry.fetchServiceTree("planningcenter"),
     [Main.PCO_LOAD_PLAN]: (data) => ContentProviderRegistry.loadSinglePlan(data.serviceTypeId, data.planId),
+    [Main.PCO_CHECK_PLANS]: (data) => ContentProviderRegistry.checkPcoPlans(data.plans).catch(() => []),
     [Main.PCO_LIVE_GET]: (data) => ContentProviderRegistry.getPcoLiveData(data.serviceTypeId, data.planId).catch(() => null),
     [Main.PCO_PUSHER_AUTH]: (data) => ContentProviderRegistry.getPcoPusherAuth(data.socketId, data.channelName, data.serviceTypeId),
     [Main.ONSTAGE_GET_TEAMS]: () => ContentProviderRegistry.getOnStageTeams().catch(() => []),

@@ -247,7 +247,7 @@ export async function playPdf(data: OutSlide | null, next: boolean, loop = false
     const targetId = located?.path || data.id
 
     GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
-    const loadingTask = getDocument(encodeFilePath(targetId))
+    const loadingTask = getDocument({ url: encodeFilePath(targetId) })
     const pdfDoc = await loadingTask.promise
     const pages = pdfDoc.numPages
 
@@ -608,7 +608,7 @@ export function changeOutputStyle(data: API_output_style) {
         return
     }
 
-    const targetId = data.outputId ? resolveOutputId(data.outputId) : null
+    const targetId = data.outputId ? resolveOutputId(data.outputId) || data.outputId : null
     const outputIds = targetId ? [targetId] : getAllNormalOutputs().map((a) => a.id)
     outputIds.forEach((outputId) => changeSingleOutputStyle(outputId, data.styleId || ""))
 }

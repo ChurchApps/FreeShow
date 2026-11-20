@@ -1,4 +1,5 @@
 import { get } from "svelte/store"
+import { uid } from "uid"
 import type { ContentProviderId } from "../../electron/contentProviders/base/types"
 import type { ToMainSendPayloads } from "../../types/IPC/ToMain"
 import { ToMain } from "../../types/IPC/ToMain"
@@ -7,6 +8,7 @@ import type { Show, Slide } from "../../types/Show"
 import { Transcript } from "../ai/stt/transcript"
 import { API_ACTIONS, triggerAction } from "../components/actions/api"
 import { receivedMidi } from "../components/actions/midi"
+import { receivedHid } from "../components/actions/hid"
 import { menuClick } from "../components/context/menuClick"
 import { generateScriptureShowFromReference } from "../components/drawer/bible/scripture"
 import { getCurrentTimerValue } from "../components/drawer/timers/timers"
@@ -91,6 +93,7 @@ import {
 import { setupCloudSync } from "../utils/cloudSync"
 import { newToast } from "../utils/common"
 import { translateText } from "../utils/language"
+import { startPcoPlanChangeWatcher } from "../utils/pcoPlanSync"
 import { confirmCustom } from "../utils/popup"
 import { getProviderItemLink, setProviderItemLink, syncProviderItemLinks } from "../utils/providerItemLinks"
 import { initializeClosing, saveComplete } from "../utils/save"
@@ -178,20 +181,29 @@ export const mainResponses: MainResponses = {
     // GPU health degradation notice (electron utils/gpu.ts, ~20s after start): verbose alert with what
     // happened, the implications, and concrete remediation. Composed here so every string is i18n'd.
     [ToMain.GPU_HEALTH]: (a) => {
+        if (get(activePopup) === "initialize") return
+
+        // don't inform about this "common" issue
         const compositing = a.issue === "compositing"
+        if (compositing) return
+
         let html = `<h3>${translateText(compositing ? "gpu.no_acceleration" : "gpu.no_video_decode")}</h3><p>${translateText(compositing ? "gpu.no_acceleration_info" : "gpu.no_video_decode_info")}</p>`
-        if (a.vaDriverMissing && a.packages?.length) {
+        if (a.permissionDenied) {
+            html += `<p>User lacks permission to access graphics hardware. Run this, log out and back in:</p><pre style="user-select: text;">sudo usermod -a -G video,render $USER</pre>`
+        } else if (a.vaDriverMissing && a.packages?.length) {
             // Linux with no VA-API driver installed at all: name the exact package(s) for the GPU vendor
             html += `<p>${translateText("gpu.va_driver_missing")}</p><pre style="user-select: text;">sudo apt install ${a.packages.join(" ")}</pre>`
         } else {
             html += `<p>${translateText("gpu.update_drivers")}${a.vendorName ? ` (${a.vendorName})` : ""}</p>`
         }
+
         alertMessage.set(html)
         activePopup.set("alert")
     },
     [ToMain.SPELL_CHECK]: (a) => spellcheck.set(a),
     [Main.CLOSE]: (a) => initializeClosing(a ?? false),
     [ToMain.RECEIVE_MIDI2]: (a) => receivedMidi(a),
+    [ToMain.HID_DATA]: (a) => receivedHid(a),
     [Main.DELETE_SHOWS]: (a) => {
         if (!a.deleted.length) {
             newToast("toast.delete_shows_empty")
@@ -357,14 +369,6 @@ export const mainResponses: MainResponses = {
     [ToMain.PROVIDER_PROJECTS]: async (data) => {
         if (!data.projects) return
 
-        // Planning Center items are seperated into multiple categories based on the type: Songs (default) & Regular items (generic)
-        if (data.providerId === "planningcenter" && data.shows.some((a) => a.category === "planning_center_generic")) {
-            createCategory("Planning Center (Generic)", "presentation")
-        }
-
-        // CREATE CATEGORY
-        createCategory(data.categoryName)
-
         const replaceIds: { [key: string]: string } = {}
         const allShows = keysToID(get(shows))
         const songOrigin = get(contentProviderData)[data.providerId]?.songOrigin
@@ -372,6 +376,18 @@ export const mainResponses: MainResponses = {
 
         // migrate legacy links & remove links to deleted shows
         await syncProviderItemLinks(data.providerId)
+
+        // placeholder mode does not download any shows, uses only local shows or creates placeholders
+        const placeholderMode = songOrigin === "placeholder"
+        if (!placeholderMode) {
+            // Planning Center items are seperated into multiple categories based on the type: Songs (default) & Regular items (generic)
+            if (data.providerId === "planningcenter" && data.shows.some((a) => a.category === "planning_center_generic")) {
+                createCategory("Planning Center (Generic)", "presentation")
+            }
+
+            // CREATE CATEGORY
+            createCategory(data.categoryName)
+        }
 
         function updateExistingShow(showId: string) {
             shows.update((a) => {
@@ -394,6 +410,17 @@ export const mainResponses: MainResponses = {
         const tempShows: { id: string; show: Show }[] = []
         for (const show of data.shows) {
             const id = show.id
+
+            if (placeholderMode) {
+                const link = getProviderItemLink(data.providerId, id)
+                const showName = show?.name?.toLowerCase() || ""
+                const matched = allShows.find(({ id: sid }) => sid === (link?.showId || id)) || (showName ? allShows.find(({ id: sid, name }) => sid !== id && name?.toLowerCase() === showName) : null)
+                if (matched) {
+                    replaceIds[id] = matched.id
+                    if (!link) setProviderItemLink(data.providerId, id, matched.id, "local")
+                }
+                continue
+            }
 
             // if empty content and name is a scripture reference, generate slides from the active scripture
             const isEmptyContent = Object.keys(show.slides || {}).length === 0
@@ -480,7 +507,8 @@ export const mainResponses: MainResponses = {
                 tempShows.push({ id: showId, show: { ...show, origin, name: checkName(show.name, showId) } })
             }
         }
-        setTempShows(tempShows)
+        // in placeholder mode provider shows are never imported
+        if (!placeholderMode) setTempShows(tempShows)
 
         function createProviderProject(providerId: ContentProviderId, projectBase: Project) {
             const templateId = get(contentProviderData)[providerId]?.projectTemplate || ""
@@ -541,7 +569,17 @@ export const mainResponses: MainResponses = {
             const project = createProviderProject(data.providerId, projectBase)
 
             // REPLACE IDS
-            project.shows = project.shows.map((a) => ({ ...a, id: replaceIds[a.id] || a.id }))
+            project.shows = project.shows.map((a) => {
+                const mappedId = replaceIds[a.id] || a.id
+
+                // in placeholder mode, unmatched provider shows become a show_placeholder item
+                if (placeholderMode && a.type === "show" && !get(shows)[mappedId]) {
+                    const showName = a.name || data.shows?.find((s) => s.id === a.id)?.name || "—"
+                    return { type: "show_placeholder", id: uid(5), name: showName, scheduleLength: a.scheduleLength }
+                }
+
+                return { ...a, id: mappedId }
+            })
 
             const projectId = currentProject.id
             if (!allProjects[projectId] || allProjects[projectId].deleted) createdProjectIds.push(projectId)
@@ -555,14 +593,15 @@ export const mainResponses: MainResponses = {
             projectView.set(false)
         }
 
-        // store available PCO plans for Live timer setup
         if (data.providerId === "planningcenter" && data.pcoPlans?.length) {
+            // store available PCO plans for Live timer setup
             contentProviderData.update((a) => {
                 if (!a.planningcenter) a.planningcenter = {}
                 const existing = a.planningcenter.availablePlans || []
                 a.planningcenter.availablePlans = [...existing.filter((e) => !data.pcoPlans!.some((i) => i.planId === e.planId)), ...data.pcoPlans!]
                 return a
             })
+            startPcoPlanChangeWatcher()
         }
     },
     [ToMain.OPEN_FOLDER2]: (a) => {

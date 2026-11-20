@@ -19,6 +19,7 @@
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
     import Tip from "../../main/Tip.svelte"
+    import { stopPcoPlanChangeWatcher } from "../../../utils/pcoPlanSync"
 
     let ip = "localhost"
 
@@ -121,7 +122,7 @@
                 }
             }
 
-            const data = providerId === "planningcenter" ? { syncFolderIds: $contentProviderData.planningcenter?.syncFolderIds || [] } : undefined
+            const data = providerId === "planningcenter" ? { syncFolderIds: $contentProviderData.planningcenter?.syncFolderIds || [], songOrigin: $contentProviderData.planningcenter?.songOrigin || "" } : undefined
             sendMain(Main.PROVIDER_LOAD_SERVICES, { providerId, cloudOnly: cloudOnly[providerId] || false, data })
         } else {
             if ($cloudSyncData.enabled && providerId === $cloudSyncData.id) {
@@ -139,6 +140,7 @@
                     c[providerId] = false
                     return c
                 })
+                stopPcoPlanChangeWatcher()
             })
         }
     }
@@ -164,9 +166,11 @@
     $: projectTemplateOptions = [{ value: "", label: translateText("main.none") }, ...sortByName(keysToID($projectTemplates)).map(({ id, name }) => ({ value: id, label: name }))]
 
     $: providerOriginOptions = [
-        { value: "", label: "Ask when existing show is found" },
-        { value: "local", label: "Always use local instance" },
-        { value: "online", label: "Always use online instance" }
+        { value: "", label: "Ask when existing show is found", data: "Ask to use online or local, if existing both places, first time" },
+        { value: "local", label: "Prioritize local instance", data: "Use local if existing, download if not" },
+        // currently for Planning Center only
+        ...($providerConnections.planningcenter ? [{ value: "placeholder", label: "Always use local instance", data: "Creates placeholders for unmatched shows" }] : []),
+        { value: "online", label: "Always use online instance", data: "Online instance will always be used" }
     ]
 
     // OnStage

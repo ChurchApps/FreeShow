@@ -21,7 +21,7 @@ platforms:
     arm64:
         build-on: arm64
         build-for: arm64
-base: core24
+base: core26
 grade: stable
 confinement: strict
 layout:
@@ -35,7 +35,7 @@ parts:
         plugin: dump
         stage-packages:
             - libasound2t64
-            - libnode109
+            - libnode127
             - libglu1-mesa
             - libltc11
             - libproxy1v5

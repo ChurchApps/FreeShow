@@ -21,4 +21,11 @@ export function getSelected(hasToBeId: SelectIds | null, index: null | number = 
 
 export function deselect() {
     selected.set({ id: null, data: [] })
+    shiftAnchor = null
+}
+
+// SHIFT RANGE
+export let shiftAnchor: { id: string; data: any } | null = null
+export function setShiftAnchor(id: string, data: any) {
+    shiftAnchor = id ? { id, data } : null
 }

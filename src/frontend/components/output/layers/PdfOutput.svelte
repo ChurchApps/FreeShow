@@ -39,7 +39,7 @@
 
         if (loadedPath !== targetPath || !loadedDoc) {
             loadingTask?.destroy()
-            loadingTask = getDocument(encodeFilePath(targetPath))
+            loadingTask = getDocument({ url: encodeFilePath(targetPath) })
             loadedDoc = await loadingTask.promise
             loadedPath = targetPath
         }

@@ -211,24 +211,24 @@
             </span>
         </div>
 
-        <MaterialButton
-            title="media.back10"
-            on:click={() => {
-                setTime(null, Math.max(currentTime - 10, 0.01))
-            }}
-        >
-            <Icon id="back_10" white size={1.3} />
-        </MaterialButton>
-        <MaterialButton
-            title="media.forward10"
-            on:click={() => {
-                setTime(null, Math.min(currentTime + 10, duration - 0.1))
-            }}
-        >
-            <Icon id="forward_10" white size={1.3} />
-        </MaterialButton>
-
         {#if !isMic}
+            <MaterialButton
+                title="media.back10"
+                on:click={() => {
+                    setTime(null, Math.max(currentTime - 10, 0.01))
+                }}
+            >
+                <Icon id="back_10" white size={1.3} />
+            </MaterialButton>
+            <MaterialButton
+                title="media.forward10"
+                on:click={() => {
+                    setTime(null, Math.min(currentTime + 10, duration - 0.1))
+                }}
+            >
+                <Icon id="forward_10" white size={1.3} />
+            </MaterialButton>
+
             <MaterialButton
                 title={"media._loop" + ($media[path]?.loop ? ": settings.enabled" : "")}
                 on:click={() => {

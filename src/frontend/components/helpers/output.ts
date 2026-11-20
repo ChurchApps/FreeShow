@@ -1235,7 +1235,7 @@ export function enableStageOutput(options: any = {}) {
 export function changeStageOutputLayout(data: API_stage_output_layout) {
     if (!data.stageLayoutId) return
 
-    const targetId = data.outputId ? resolveOutputId(data.outputId) : null
+    const targetId = data.outputId ? resolveOutputId(data.outputId) || data.outputId : null
     const outputIds = targetId ? [targetId] : Object.keys(get(outputs))
 
     outputs.update((a) => {
@@ -1933,7 +1933,7 @@ export function itemNeedsAutoSize(item: Item) {
     return itemHasAutoSize(item) && !item.autoFontSize
 }
 
-export function setTemplateStyle(outSlide: OutSlide | null, currentStyle: Styles, items: Item[] | undefined, outputId: string, slideDynamicValues?: { [key: string]: any }) {
+export function setTemplateStyle(outSlide: OutSlide | null, currentStyle: Styles, items: Item[] | undefined, outputId: string, slideDynamicValues?: { [key: string]: any }, preview = false) {
     if (!Array.isArray(items)) return []
 
     const isDrawerScripture = outSlide?.id === "temp"
@@ -1967,6 +1967,7 @@ export function setTemplateStyle(outSlide: OutSlide | null, currentStyle: Styles
 
     function checkSpecificOutput(item: Item) {
         if (!item) return false
+        if (preview) return true // always show in preview
         if (outSlide === null) return true // always show in slides preview
         return isOutputBound(item.bindings, outputId)
     }

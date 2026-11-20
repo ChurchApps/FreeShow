@@ -94,7 +94,7 @@ export function copy(clip: Clipboard | null = null, getData = true, shouldDuplic
         return
     }
 
-    if (get(selected).id) copyData = get(selected)
+    if (get(selected).id) copyData = clone(get(selected))
     else if (get(activeEdit).items?.length) copyData = { id: "item", data: get(activeEdit) }
     else if (get(activePage) === "stage" && get(activeStage).items?.length) {
         copyData = { id: "stage_item", data: get(activeStage) }
@@ -658,13 +658,11 @@ const pasteActions = {
         const projectId = isTemplate ? get(editingProjectTemplate) : get(activeProject)
         if (!projectId || !data?.length) return
 
-        const store = isTemplate ? projectTemplates : projects
-        store.update((a) => {
-            if (!a[projectId]?.shows) return a
-            a[projectId].shows.push(...data)
-            a[projectId].modified = Date.now()
-            return a
-        })
+        const currentProject = isTemplate ? get(projectTemplates)[projectId] : get(projects)[projectId]
+        if (!currentProject?.shows) return
+
+        const projectItems = [...clone(currentProject.shows), ...clone(data)]
+        history({ id: "UPDATE", newData: { key: "shows", data: projectItems }, oldData: { id: projectId }, location: { page: "show", id: isTemplate ? "project_template" : "project_ref" } })
     },
     stage_item: (data: any) => {
         const stageId = get(activeStage).id
@@ -988,6 +986,18 @@ const deleteActions = {
 
             if (get(activeShow)!.type === "section") {
                 activeShow.set(null)
+            }
+
+            // if "collapsed mode" is enabled in the project, then select the section the removed show was in so it does not collapse
+            if (get(projects)[projectId || ""].sectionsCollapsed) {
+                const removedShowIndex = indexes[0]
+                for (let i = removedShowIndex - 1; i >= 0; i--) {
+                    const show = projectItems[i]
+                    if (show?.type === "section") {
+                        activeShow.set({ ...show, index: i })
+                        break
+                    }
+                }
             }
         }
 
