@@ -40,6 +40,8 @@ parts:
             - libltc11
             - libproxy1v5
             - libdrm-common
+            - libusb-1.0-0
+            - libudev1
 apps:
     freeshow:
         command: command.sh
