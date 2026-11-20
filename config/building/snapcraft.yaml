@@ -30,6 +30,8 @@ lint:
             # Sharp is loaded dynamically; retain its native binding and libvips.
             - resources/app.asar.unpacked/node_modules/@img/sharp-linux-*/lib/*.node
             - resources/app.asar.unpacked/node_modules/@img/sharp-libvips-linux-*/lib/libvips-cpp.so.*
+            # Retain the NDI file SDK even though its advanced library is not bundled.
+            - resources/app.asar.unpacked/node_modules/grandiose/build/Release/libndifile.so*
             # Preserve this staged library for dynamically loaded dependencies.
             - usr/lib/*/libpsl.so.*
 layout:
@@ -52,8 +54,6 @@ parts:
             - libudev1
         prime:
             - "*"
-            # The addon uses libndi, not the separate advanced file SDK.
-            - "-resources/app.asar.unpacked/node_modules/grandiose/build/Release/libndifile.so*"
             # libltc-wrapper uses the copy in build/Release at runtime.
             - "-resources/app.asar.unpacked/node_modules/libltc-wrapper/libltc/arm-bin"
             - "-resources/app.asar.unpacked/node_modules/libltc-wrapper/libltc/arm64-bin"
