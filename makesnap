@@ -15,9 +15,9 @@ npm run build
 npm run pack
 
 chmod +x scripts/snap/*.sh
-mkdir -p snap
-mv scripts/snap/gui snap
-mv config/building/snapcraft.yaml snap
+mkdir -p snap/gui
+cp -a scripts/snap/gui/. snap/gui/
+cp config/building/snapcraft.yaml snap/snapcraft.yaml
 if [ -e "dist/linux-arm64-unpacked" ]; then
   mv dist/linux-arm64-unpacked dist/linux-unpacked
 fi
