@@ -3,8 +3,10 @@ set -e
 
 version=$(grep "\"version\"" package.json | cut -d ":" -f 2 | cut -d "\"" -f 2)
 arch="$(uname -m)"
+app_dir="dist/linux-unpacked"
 
 if [ "$arch" = "aarch64" ]; then
+  app_dir="dist/linux-arm64-unpacked"
   # GCC 15 on arm64 can fail compiling @discordjs/opus unless this warning is not treated as an error.
   CFLAGS="-Wno-error=implicit-function-declaration" npm install
 else
@@ -18,11 +20,9 @@ mkdir -p snap/gui
 cp -a scripts/snap/gui/. snap/gui/
 cp config/building/snapcraft.yaml snap/snapcraft.yaml
 sed -i "s/version:.*/version: ${version}/" snap/snapcraft.yaml
-if [ -e "dist/linux-arm64-unpacked" ]; then
-  mv dist/linux-arm64-unpacked dist/linux-unpacked
-fi
-mkdir -p dist/linux-unpacked/resources/app.asar.unpacked/node_modules/@img
+sed -i "s|source: dist/linux-unpacked/|source: ${app_dir}/|" snap/snapcraft.yaml
+mkdir -p "$app_dir/resources/app.asar.unpacked/node_modules/@img"
 cp -a "node_modules/@img/sharp-libvips-linux-$(node -p 'process.arch')" \
-  dist/linux-unpacked/resources/app.asar.unpacked/node_modules/@img/
-cp scripts/snap/*.sh dist/linux-unpacked
+  "$app_dir/resources/app.asar.unpacked/node_modules/@img/"
+cp scripts/snap/*.sh "$app_dir"
 snapcraft --verbose pack
