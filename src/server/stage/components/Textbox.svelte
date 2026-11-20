@@ -48,6 +48,10 @@
     $: lineBg = item?.specialStyle?.lineBg
     $: lineStyleBox = lineGap ? `gap: ${lineGap}px;` : ""
     $: lineStyle = (lineRadius ? `border-radius: ${lineRadius}px;` : "") + (lineBg ? `background: ${lineBg};` : "")
+    function getListStyle(list: Item["list"], size: number, textStyle: string) {
+        const defaultFontSize = Number(getStyles(textStyle, true)?.["font-size"]) || 100
+        return list?.enabled ? `font-size: ${size || defaultFontSize}px;display: list-item;list-style: inside ${list.style || "disc"};` : ""
+    }
 
     // AUTO SIZE
 
@@ -547,7 +551,7 @@
                             </div>
                         {/if}
                         {#if !chordOnly}
-                            <div class="break" class:reveal={item?.lineReveal && revealed < i} style="{style ? lineStyle : ''}{style ? line.align : ''}">
+                            <div class="break" class:reveal={item?.lineReveal && revealed < i} style="{style ? lineStyle : ''}{style ? line.align : ''}{item.list?.enabled && line.text?.reduce((value, text) => (value += text.value || ''), '')?.length ? getListStyle(item.list, fontSize, line.text?.[0]?.style || '') : ''}{item.list?.enabled ? `color: ${getStyles(line.text?.[0]?.style).color || ''};` : ''}">
                                 {#each line.text || [] as text}
                                     {@const value = text.value?.replaceAll("\n", "<br>") || "<br>"}
                                     <!-- remove font size it it's 0 -->

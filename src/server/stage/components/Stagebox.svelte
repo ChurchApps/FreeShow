@@ -208,7 +208,7 @@
                 {#if currentSlide}
                     {#key item || currentSlide}
                         <!-- autoStage={show.settings.autoStretch !== false} -->
-                        <SlideText {currentSlide} {slideOffset} stageItem={item} chords={typeof item.chords === "boolean" ? item.chords : item.chords?.enabled} autoSize={isAutoSized} {fontSize} autoStage {textStyle} style={item.type ? item.keepStyle : false} />
+                        <SlideText {currentSlide} {slideOffset} stageItem={item} chords={typeof item.chords === "boolean" ? item.chords : item.chords?.enabled} autoSize={isAutoSized} fontSize={isAutoSized ? 0 : fontSize} autoStage {textStyle} style={item.type ? item.keepStyle : false} />
                     {/key}
                 {/if}
             {:else if item.type === "slide_notes" || id.includes("notes")}
