@@ -13,15 +13,6 @@ export function applyCommandLineSwitches() {
     app.commandLine.appendSwitch("disable-background-media-suspend")
 
     if (process.platform === "linux") applyLinuxSwitches()
-    if (process.platform === "darwin") applyMacSwitches()
-}
-
-function applyMacSwitches() {
-    // might have to disable to fix a pixel-rendering issue, but it caused HEVC videos to not render
-    if (process.env.FS_MAC_DISABLE_GRAPHITE === "1") {
-        app.commandLine.appendSwitch("disable-features", "SkiaGraphite")
-        console.info("[MAC] FS_MAC_DISABLE_GRAPHITE=1: Ganesh backend forced explicitly")
-    }
 }
 
 function applyLinuxSwitches() {
