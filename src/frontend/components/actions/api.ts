@@ -378,6 +378,8 @@ export const API_ACTIONS = {
 
     // Smart
     smart_toggle_stt: (data: API_toggle_specific = {}) => toggleSttListening(data),
+    smart_start_stt: () => toggleSttListening({ value: true }),
+    smart_stop_stt: () => toggleSttListening({ value: false }),
 
     // OTHER
     close: () => save(true),

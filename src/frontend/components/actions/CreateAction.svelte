@@ -58,6 +58,8 @@
         "change_output_style",
         "change_stage_output_layout",
         "send_midi",
+        "smart_start_stt",
+        "smart_stop_stt",
         "run_action"
     ]
     // remove actions that are not fully implemented to CustomInput yet

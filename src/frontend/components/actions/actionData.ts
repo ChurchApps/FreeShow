@@ -135,6 +135,8 @@ export const actionData = {
 
     // Smart
     smart_toggle_stt: { SECTION: "settings.ai", name: "actions.toggle_specific", replace: ["STT"], icon: "mic", input: "toggle" },
+    smart_start_stt: { name: "actions.turn_on_stt", icon: "mic" },
+    smart_stop_stt: { name: "actions.turn_off_stt", icon: "mic" },
 
     // OTHER
     toggle_log_song_usage: { SECTION: "settings.other", name: "settings.log_song_usage", icon: "history", input: "toggle" },

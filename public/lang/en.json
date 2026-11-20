@@ -716,6 +716,8 @@
         "enable": "Enable",
         "enable_specific": "Enable $1",
         "toggle_specific": "Toggle $1",
+        "turn_on_stt": "Turn on STT",
+        "turn_off_stt": "Turn off STT",
         "undo": "Undo",
         "redo": "Redo",
         "cut": "Cut",
