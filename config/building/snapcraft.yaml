@@ -24,6 +24,14 @@ platforms:
 base: core26
 grade: stable
 confinement: strict
+lint:
+    ignore:
+        - library:
+            # Sharp is loaded dynamically; retain its native binding and libvips.
+            - resources/app.asar.unpacked/node_modules/@img/sharp-linux-*/lib/*.node
+            - resources/app.asar.unpacked/node_modules/@img/sharp-libvips-linux-*/lib/libvips-cpp.so.*
+            # Preserve this staged library for dynamically loaded dependencies.
+            - usr/lib/*/libpsl.so.*
 layout:
     /usr/share/alsa:
         bind: $SNAP/usr/share/alsa
@@ -42,6 +50,30 @@ parts:
             - libdrm-common
             - libusb-1.0-0
             - libudev1
+        prime:
+            - "*"
+            # The addon uses libndi, not the separate advanced file SDK.
+            - "-resources/app.asar.unpacked/node_modules/grandiose/build/Release/libndifile.so*"
+            # libltc-wrapper uses the copy in build/Release at runtime.
+            - "-resources/app.asar.unpacked/node_modules/libltc-wrapper/libltc/arm-bin"
+            - "-resources/app.asar.unpacked/node_modules/libltc-wrapper/libltc/arm64-bin"
+            - "-resources/app.asar.unpacked/node_modules/libltc-wrapper/libltc/bin"
+            - "-resources/app.asar.unpacked/node_modules/jazz-midi/bin/linuxa7"
+            - "-resources/app.asar.unpacked/node_modules/jazz-midi/bin/*/linuxa7"
+            - "-resources/app.asar.unpacked/node_modules/@img/sharp-linuxmusl-*"
+            - "-resources/app.asar.unpacked/node_modules/@img/sharp-libvips-linuxmusl-*"
+            - "-resources/app.asar.unpacked/node_modules/node-hid/prebuilds/*-linux-*-musl"
+            - to amd64:
+                - "-resources/app.asar.unpacked/node_modules/better-sqlite3/prebuilds/linux-arm64.node"
+                - "-resources/app.asar.unpacked/node_modules/node-hid/prebuilds/*-linux-arm*"
+                - "-resources/app.asar.unpacked/node_modules/openmediatransport/lib/linux-arm64"
+            - to arm64:
+                - "-resources/app.asar.unpacked/node_modules/better-sqlite3/prebuilds/linux-x64.node"
+                - "-resources/app.asar.unpacked/node_modules/node-hid/prebuilds/*-linux-x64*"
+                - "-resources/app.asar.unpacked/node_modules/node-hid/prebuilds/*-linux-arm"
+                - "-resources/app.asar.unpacked/node_modules/openmediatransport/lib/linux-amd64"
+                - "-resources/app.asar.unpacked/node_modules/jazz-midi/bin/linux64"
+                - "-resources/app.asar.unpacked/node_modules/jazz-midi/bin/*/linux64"
 apps:
     freeshow:
         command: command.sh
