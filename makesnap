@@ -21,5 +21,8 @@ cp config/building/snapcraft.yaml snap/snapcraft.yaml
 if [ -e "dist/linux-arm64-unpacked" ]; then
   mv dist/linux-arm64-unpacked dist/linux-unpacked
 fi
+mkdir -p dist/linux-unpacked/resources/app.asar.unpacked/node_modules/@img
+cp -a "node_modules/@img/sharp-libvips-linux-$(node -p 'process.arch')" \
+  dist/linux-unpacked/resources/app.asar.unpacked/node_modules/@img/
 cp scripts/snap/*.sh dist/linux-unpacked
 snapcraft --verbose pack
