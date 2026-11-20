@@ -1,5 +1,6 @@
 <script lang="ts">
     import { activePopup, popupData, styles } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import T from "../../helpers/T.svelte"
     import InputRow from "../../input/InputRow.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
@@ -27,11 +28,13 @@
     let style = $styles[styleId]
     function updateStyle(key: string, value: any) {
         styles.update((a) => {
+            // the style might not be stored yet (e.g. the default style on a fresh install)
+            if (!a[styleId]) a[styleId] = { name: translateText("example.default") }
             a[styleId][key] = value
             return a
         })
 
-        style[key] = value
+        style = { ...(style || {}), [key]: value }
     }
 
     let showMore = !!style?.showAsFaded || !!style?.skipVirtualBreaks || active > 4
