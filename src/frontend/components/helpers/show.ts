@@ -415,8 +415,9 @@ export function removeTemplatesFromShow(showId: string, slideId?: string, enable
     }
 }
 
-export function getLayoutRef(showId = "active", _updater?: Shows | Show) {
-    return _show(showId).layouts("active").ref()[0] || []
+export function getLayoutRef(showId = "active", _updater?: Shows | Show, layoutId?: string) {
+    const layouts = layoutId ? [layoutId] : "active"
+    return _show(showId).layouts(layouts).ref()[0] || []
 }
 
 // a child slide has no "locked" state of its own, so check its parent (group) slide

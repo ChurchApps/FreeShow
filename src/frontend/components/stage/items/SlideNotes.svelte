@@ -8,7 +8,7 @@
     export let slideOffset = 0
     export let autoSize = 100
 
-    $: showRef = currentSlide ? getLayoutRef(currentSlide.id) : []
+    $: showRef = currentSlide ? getLayoutRef(currentSlide.id, $showsCache, currentSlide.layout) : []
 
     $: slideIndex = currentSlide && currentSlide.index !== undefined && currentSlide.id !== "temp" ? currentSlide.index : null
     $: customOffset = getStageTextLayoutOffset(showRef, slideOffset, slideIndex)
