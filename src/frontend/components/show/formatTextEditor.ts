@@ -188,7 +188,7 @@ export function formatText(text: string, showId = "", itemIndex = 0) {
     const parentItemAlign: { [key: string]: string } = {}
     const parentAlign: { [key: string]: string } = {}
     Object.keys(newSlides).forEach((slideId) => {
-        let slide = newSlides[slideId]
+        const slide = newSlides[slideId]
         if (!slide) return
 
         const oldSlideId = replacedIds[slideId] || slideId
@@ -233,11 +233,11 @@ export function formatText(text: string, showId = "", itemIndex = 0) {
             })
             // newSlides[slideId].items = slide.items
         } else if (show.slides?.[slideId] && itemIndex === 0) {
-            // add back full old slide including its style
-            // only if text content is the same ??
-            // skip when itemIndex > 0: the newly parsed items must be preserved
-            slide = clone(show.slides[slideId])
-            newSlides[slideId] = slide
+            // The existing slide already contains its media and text styling.
+            const existingSlide = clone(show.slides[slideId])
+            delete existingSlide.id
+            newSlides[slideId] = existingSlide
+            return
         } else if (parentStyles[slideId]) {
             // newly split and created slide
             // add same style as parent
