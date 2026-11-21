@@ -6,6 +6,7 @@
     import type { ProjectProgressItem } from "../../helpers/projectProgress"
     import { getCurrentProjectIndexes, getProjectItemLabel, getProjectItems } from "../../helpers/projectProgress"
     import { getGroupName, getLayoutRef } from "../../helpers/show"
+    import { getSlideProgress } from "../../helpers/slideProgress"
 
     export let tracker: any
     export let outputId = ""
@@ -29,7 +30,6 @@
 
     interface ProgressEntry {
         layoutGroups: LayoutGroupInfo[]
-        slidesLength: number
         layoutSeed: string
         groupSeed: string
         trackerKey: string
@@ -49,8 +49,7 @@
     let layoutGroups: LayoutGroupInfo[] = []
     let projectItems: ProjectProgressItem[] = []
     let currentProjectIndexes: number[] = []
-    let slidesLength = 0
-    let progressData: ProgressEntry = { layoutGroups: [], slidesLength: 0, layoutSeed: "", groupSeed: "", trackerKey: "" }
+    let progressData: ProgressEntry = { layoutGroups: [], layoutSeed: "", groupSeed: "", trackerKey: "" }
 
     $: if (!outputId) outputId = getFirstActiveOutput()?.id || ""
     $: currentOutput = $outputs[outputId] || $allOutputs[outputId] || {}
@@ -58,22 +57,23 @@
     $: currentShowId = currentSlideOut?.id || ""
     $: currentShowSlide = currentSlideOut?.index ?? -1
     $: currentShow = currentShowId ? $showsCache[currentShowId] : null
-    $: currentLayoutRef = getCachedLayoutRef(currentShowId, currentShow, $showsCache)
+    $: liveLayoutId = currentSlideOut?.layout || currentShow?.settings?.activeLayout || ""
+    $: layoutSeed = getLayoutSeed(currentShow, liveLayoutId)
+    $: currentLayoutRef = getCachedLayoutRef(currentShowId, liveLayoutId, layoutSeed)
     $: currentShowSlides = currentShow?.slides || {}
     $: currentGroups = $groups
-    $: progressData = getProgress(currentShowId, currentShow, currentLayoutRef, currentShowSlides, currentGroups, tracker)
+    $: progressData = getProgress(currentShowId, currentShow, currentLayoutRef, currentShowSlides, currentGroups, tracker, layoutSeed)
     $: layoutGroups = progressData.layoutGroups
     $: projectItems = getProjectItems($projects[$activeProject || ""]?.shows || [], $showsCache)
     $: currentProjectIndexes = getCurrentProjectIndexes($projects[$activeProject || ""]?.shows || [], currentOutput?.out || {}, typeof $activeShow?.index === "number" ? $activeShow.index : -1)
-    $: slidesLength = progressData.slidesLength
+    $: slideProgress = getSlideProgress(currentLayoutRef, currentShowSlide)
 
     let progressElem: HTMLElement | undefined
     $: column = (progressElem?.offsetWidth || 0) < (progressElem?.offsetHeight || 0)
 
-    function getLayoutSeed(show: Show | null) {
+    function getLayoutSeed(show: Show | null, layoutId: string) {
         if (!show) return "0"
 
-        const layoutId = show.settings?.activeLayout || ""
         const layoutSlides = show.layouts?.[layoutId]?.slides || []
         if (!layoutSlides.length) return layoutId
 
@@ -81,7 +81,7 @@
         layoutSlides.forEach((layoutSlide) => {
             const slide = show.slides?.[layoutSlide.id]
             const slideChildren = Array.isArray(slide?.children) ? (slide?.children as string[]) : []
-            const children = slideChildren.join(",")
+            const children = slideChildren.map((id) => `${id}:${layoutSlide.children?.[id]?.disabled ? 1 : 0}`).join(",")
             const group = slide?.group || ""
             const globalGroup = slide?.globalGroup || ""
             const disabled = layoutSlide?.disabled ? 1 : 0
@@ -98,22 +98,20 @@
             .join("|")
     }
 
-    function getCachedLayoutRef(showId: string, show: Show | null, cacheSource: any): LayoutRef[] {
-        if (!showId || !show) return []
+    function getCachedLayoutRef(showId: string, layoutId: string, seed: string): LayoutRef[] {
+        if (!showId || !layoutId) return []
 
-        const seed = getLayoutSeed(show)
         const cached = layoutCache.get(showId)
         if (cached && cached.seed === seed) return cached.ref
 
-        const ref = getLayoutRef(showId, cacheSource)
+        const ref = getLayoutRef(showId, undefined, layoutId)
         layoutCache.set(showId, { seed, ref })
         return ref
     }
 
-    function getProgress(showId: string, show: Show | null, layoutRef: LayoutRef[], slides: { [key: string]: Slide | undefined }, groupsStore: ShowGroups, trackerData: any): ProgressEntry {
-        if (!showId || !show || !layoutRef.length) return { layoutGroups: [], slidesLength: 0, layoutSeed: "", groupSeed: "", trackerKey: "" }
+    function getProgress(showId: string, show: Show | null, layoutRef: LayoutRef[], slides: { [key: string]: Slide | undefined }, groupsStore: ShowGroups, trackerData: any, layoutSeed: string): ProgressEntry {
+        if (!showId || !show || !layoutRef.length) return { layoutGroups: [], layoutSeed: "", groupSeed: "", trackerKey: "" }
 
-        const layoutSeed = getLayoutSeed(show)
         const groupSeed = getGroupSeed(groupsStore)
         const trackerKey = trackerData?.oneLetter ? "one" : "full"
         const cacheKey = `${showId}:${trackerKey}`
@@ -162,7 +160,7 @@
             }
         })
 
-        const entry: ProgressEntry = { layoutGroups, slidesLength: layoutRef.length, layoutSeed, groupSeed, trackerKey }
+        const entry: ProgressEntry = { layoutGroups, layoutSeed, groupSeed, trackerKey }
         progressCache.set(cacheKey, entry)
         return entry
     }
@@ -171,11 +169,11 @@
 <div class="progress" bind:this={progressElem} class:barBG={type === "bar"} style={accent ? "--accent: " + accent : ""}>
     {#if type === "number"}
         <div class="align autoFontSize" style="{autoSize ? 'font-size: ' + autoSize + 'px;' : ''}{item?.alignX ? '' : (item?.align || 'justify-content: center;').replaceAll('text-align', 'justify-content')}">
-            <span style="color: var(--accent);">{currentShowSlide + 1}</span>/{slidesLength}
+            <span style="color: var(--accent);">{slideProgress.currentSlideNumber}</span>/{slideProgress.slidesLength}
         </div>
     {:else if type === "bar"}
         <!-- progress bar -->
-        <div class="bar" style="width: {slidesLength ? ((currentShowSlide + 1) / slidesLength) * 100 : 0}%;"></div>
+        <div class="bar" style="width: {slideProgress.slidesLength ? (slideProgress.currentSlideNumber / slideProgress.slidesLength) * 100 : 0}%;"></div>
     {:else if type === "group"}
         <!-- group sequence -->
         <div class="align groups autoFontSize" class:column style="{autoSize ? 'font-size: ' + autoSize + 'px;' : ''}{item?.alignX ? '' : (item?.align || 'justify-content: center;').replaceAll('text-align', 'justify-content')}">

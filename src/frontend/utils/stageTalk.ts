@@ -8,6 +8,7 @@ import { checkWindowCapture, getFirstOutput } from "../components/helpers/output
 import { getCurrentProjectIndexes, getProjectItems } from "../components/helpers/projectProgress"
 import { getGroupName, getLayoutRef } from "../components/helpers/show"
 import { _show } from "../components/helpers/shows"
+import { getSlideProgress } from "../components/helpers/slideProgress"
 import { getCustomStageLabel } from "../components/stage/stage"
 import { actions, activeProject, activeShow, events, groups, media, metronome, metronomeTimer, outputs, projects, showsCache, stageShows, timeFormat, timers, variables } from "../stores"
 import { connections } from "./../stores"
@@ -178,9 +179,9 @@ export const receiveSTAGE = {
         const currentSlideOut = get(outputs)[outputId]?.out?.slide || null
         const currentShowId = currentSlideOut?.id || ""
         const currentShowSlide = currentSlideOut?.index ?? -1
-        const currentLayoutRef = getLayoutRef(currentShowId)
+        const currentLayoutRef = getLayoutRef(currentShowId, undefined, currentSlideOut?.layout)
         const currentShowSlides = _show(currentShowId).get("slides") || {}
-        const slidesLength = currentLayoutRef.length || 0
+        const slideProgress = getSlideProgress(currentLayoutRef, currentShowSlide)
 
         // get custom group names
         const layoutGroups = currentLayoutRef.map((a) => {
@@ -211,7 +212,7 @@ export const receiveSTAGE = {
         const currentProjectIndexes = getCurrentProjectIndexes(currentProjectItems, currentOut, activeProjectItemIndex)
         const projectItems = getProjectItems(currentProjectItems, get(showsCache))
 
-        data.progress = { currentShowSlide, slidesLength, layoutGroups, projectItems, currentProjectIndexes }
+        data.progress = { currentShowSlide, ...slideProgress, layoutGroups, projectItems, currentProjectIndexes }
 
         return data
     },
