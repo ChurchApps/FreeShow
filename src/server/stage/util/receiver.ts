@@ -75,6 +75,9 @@ export const receiver = {
     SHOW_DATA: (data: { id: string; show: Show }) => {
         if (!data.id || !data.show) return
         _update("showsCache", data.id, data.show)
+
+        const output = _get("output")
+        if (output?.id && output.out?.slide?.id === data.id) send("REQUEST_PROGRESS", { outputId: output.id })
     },
 
     EVENTS: (data: any) => events.set(data),

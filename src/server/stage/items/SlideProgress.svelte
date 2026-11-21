@@ -16,6 +16,7 @@
     $: projectItems = progress.projectItems || []
 
     $: currentShowSlide = progress?.currentShowSlide ?? -1
+    $: currentSlideNumber = progress.currentSlideNumber ?? currentShowSlide + 1
     $: currentProjectIndexes = progress?.currentProjectIndexes || []
     $: slidesLength = progress.slidesLength || 0
 
@@ -35,10 +36,10 @@
 
 <div class="progress" bind:this={progressElem} class:barBG={type === "bar"} style={accent ? "--accent: " + accent : ""}>
     {#if type === "number"}
-        <div class="align autoFontSize" style={autoSize ? "font-size: " + autoSize + "px" : ""}><span style="color: var(--accent);">{currentShowSlide + 1}</span>/{slidesLength}</div>
+        <div class="align autoFontSize" style={autoSize ? "font-size: " + autoSize + "px" : ""}><span style="color: var(--accent);">{currentSlideNumber}</span>/{slidesLength}</div>
     {:else if type === "bar"}
         <!-- progress bar -->
-        <div class="bar" style="width: {slidesLength ? ((currentShowSlide + 1) / slidesLength) * 100 : 0}%;"></div>
+        <div class="bar" style="width: {slidesLength ? (currentSlideNumber / slidesLength) * 100 : 0}%;"></div>
     {:else if type === "group"}
         <!-- group sequence -->
         <div class="align groups autoFontSize" class:column style={autoSize ? "font-size: " + autoSize + "px" : ""}>

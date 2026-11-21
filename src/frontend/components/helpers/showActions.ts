@@ -70,6 +70,7 @@ import { getCustomMetadata, getGroupName, getLayoutRef } from "./show"
 import { _show } from "./shows"
 import { addZero, getMonthName, getWeekday, joinTime, joinTimeBig, secondsToTime } from "./time"
 import { stopTimers } from "./timerTick"
+import { getUpcomingGroupIndex } from "./upcomingGroup"
 
 const getProjectIndex = {
     next: (index: number | null, items: ProjectShowRef[]) => {
@@ -935,15 +936,17 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
     if (!text || typeof text !== "string" || !text.includes("{")) return text || ""
 
     const isOutputWin = isOutputWindow()
+    let stageSlide: OutSlide | null = null
 
     if (type === "stage") {
         const stageLayoutId: string = isOutputWin ? Object.values(get(outputs))[0]?.stageOutput || id : id
         const sourceOutputId = get(stageShows)[stageLayoutId]?.settings?.output
         const outputStores = isOutputWin ? get(allOutputs) : get(outputs)
         const outputId = sourceOutputId && outputStores[sourceOutputId] ? sourceOutputId : getActiveOutputs(outputStores, false, true, true)[0]
-        const outSlide = outputStores[outputId]?.out?.slide
-        showId = outSlide?.id
-        slideIndex = outSlide?.index ?? -1
+        stageSlide = outputStores[outputId]?.out?.slide || null
+        showId = stageSlide?.id
+        layoutId = stageSlide?.layout
+        slideIndex = stageSlide?.index ?? -1
     }
 
     const currentShow = showId ? _show(showId).get() || null : null
@@ -1073,7 +1076,7 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
             outputId = sourceOutputId && outputStores[sourceOutputId] ? sourceOutputId : getActiveOutputs(outputStores, false, true, true)[0]
         }
 
-        const outSlide: OutSlide | null = output?.out?.slide || null
+        const outSlide: OutSlide | null = type === "stage" ? stageSlide : output?.out?.slide || null
 
         if (!showId || (outSlide?.id && type !== "show")) {
             showId = outSlide?.id
@@ -1264,16 +1267,14 @@ const dynamicValues = {
         return groupColor
     }, // DEPRECATED
     slide_group_upcoming: ({ show, ref, slideIndex, outSlide }) => {
-        if (slideIndex < 0) return ""
-        let nextParentIndex = slideIndex + 1
-        while (ref[nextParentIndex]?.type !== "parent" && nextParentIndex < ref.length) nextParentIndex++
+        const nextParentIndex = getUpcomingGroupIndex(ref, slideIndex)
+        if (nextParentIndex === undefined) return ""
         const group = show?.slides?.[ref[nextParentIndex]?.id]?.group || ""
         return getGroupName({ show, showId: outSlide?.id }, ref[nextParentIndex]?.id, group, nextParentIndex, false, false)
     },
     slide_group_upcoming_color: ({ show, ref, slideIndex }) => {
-        if (slideIndex < 0) return ""
-        let nextParentIndex = slideIndex + 1
-        while (ref[nextParentIndex]?.type !== "parent" && nextParentIndex < ref.length) nextParentIndex++
+        const nextParentIndex = getUpcomingGroupIndex(ref, slideIndex)
+        if (nextParentIndex === undefined) return ""
         const groupColor = show?.slides?.[ref[nextParentIndex]?.id]?.color || ""
         return groupColor
     },
