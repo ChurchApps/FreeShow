@@ -573,6 +573,10 @@ export async function startShow(showId: string) {
     while (slideRef[index] && slideRef[index]?.data?.disabled) index++
     if (!slideRef[index]) return
 
+    // don't start if already started
+    const outSlide = getFirstActiveOutput()?.out?.slide
+    if (outSlide?.id === showId && outSlide?.layout === activeLayout && outSlide?.index === index) return
+
     const slideData = slideRef[index]?.data
     checkActionTrigger(slideData, index)
 
