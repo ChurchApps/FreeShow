@@ -20,7 +20,7 @@ const PCI_VENDOR_NAMES: { [id: number]: string } = {
 function vaPackagesFor(vendorName: string): string[] {
     if (vendorName === "Intel") return ["intel-media-va-driver-non-free"]
     if (vendorName === "AMD") return ["mesa-va-drivers"]
-    if (vendorName === "NVIDIA") return ["nvidia-vaapi-driver"]
+    if (vendorName === "NVIDIA") return [] // Chromium blocks VA-API on NVIDIA on Linux
     return ["intel-media-va-driver-non-free", "mesa-va-drivers"]
 }
 
@@ -345,7 +345,9 @@ async function runGpuHealthCheck() {
         const drivers = findVaDrivers()
         const configuredNode = config.get("graphicsDevice") || ""
         const candidateVendors = configuredNode ? [linuxNodeVendor(configuredNode) || vendorName] : allLinuxGpuVendors()
-        const missingVendors = (candidateVendors.length ? candidateVendors : [vendorName]).filter((v) => !vendorVaDriverPresent(v, drivers))
+        const missingVendors = (candidateVendors.length ? candidateVendors : [vendorName])
+            .filter((v) => v !== "NVIDIA") // Chromium blocks NVIDIA VA-API by default; avoid false missing-driver alarms
+            .filter((v) => !vendorVaDriverPresent(v, drivers))
         vaDriverMissing = missingVendors.length > 0
         packages = [...new Set(missingVendors.flatMap((v) => vaPackagesFor(v)))]
         console.info(`[GPU-HEALTH] VA drivers found: ${drivers.length ? drivers.join(", ") : "NONE"} (gpus=${candidateVendors.join("+") || "?"} missing=${missingVendors.join("+") || "none"}) permissionDenied=${permissionDenied}`)
