@@ -205,6 +205,7 @@ export function getActionEventData(event: any, action: any) {
     event.color = null
     delete event.location
     delete event.notes
+    delete event.notesInternal
 
     return event
 }

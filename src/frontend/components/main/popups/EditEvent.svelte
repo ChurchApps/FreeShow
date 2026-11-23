@@ -89,6 +89,7 @@
             repeat: false,
             repeatData: defaultRepeatData,
             notes: "",
+            notesInternal: "",
             origin: undefined
         }
 
@@ -316,13 +317,22 @@
         <MaterialColorInput label="calendar.color" style="min-width: 200px;max-width: 200px;" value={editEvent.color || ""} on:input={(e) => (editEvent.color = e.detail)} noLabel />
     </InputRow>
 
-    {#if showMore}
-        <InputRow>
-            <MaterialDropdown label="calendar.calendar" value={editEvent.origin || ""} options={calendarOptions} disabled={isCurrentOriginImported} allowEmpty addNew={isCurrentOriginImported ? null : "new.calendar"} on:change={(e) => handleCalendarChange(e.detail)} on:new={(e) => handleCreateCalendar(e.detail)} />
-        </InputRow>
+    {#if showMore || editEvent.notes || editEvent.notesInternal}
+        {#if showMore}
+            <InputRow>
+                <MaterialDropdown label="calendar.calendar" value={editEvent.origin || ""} options={calendarOptions} disabled={isCurrentOriginImported} allowEmpty addNew={isCurrentOriginImported ? null : "new.calendar"} on:change={(e) => handleCalendarChange(e.detail)} on:new={(e) => handleCreateCalendar(e.detail)} />
+            </InputRow>
+        {/if}
 
-        <MaterialTextInput label="calendar.location" value={editEvent.location || ""} on:input={(e) => (editEvent.location = e.detail)} />
-        <MaterialTextInput label="calendar.notes" value={editEvent.notes || ""} on:input={(e) => (editEvent.notes = e.detail)} />
+        {#if showMore || editEvent.location}
+            <MaterialTextInput label="calendar.location" value={editEvent.location || ""} on:input={(e) => (editEvent.location = e.detail)} />
+        {/if}
+        {#if showMore || editEvent.notes}
+            <MaterialTextInput label="midi.description" value={editEvent.notes || ""} on:input={(e) => (editEvent.notes = e.detail)} />
+        {/if}
+        {#if showMore || editEvent.notesInternal}
+            <MaterialTextInput label="calendar.notes" value={editEvent.notesInternal || ""} on:input={(e) => (editEvent.notesInternal = e.detail)} />
+        {/if}
     {/if}
 
     <MaterialButton class="popup-options {showMore ? 'active' : ''}" icon="options" iconSize={1.3} title={showMore ? "actions.close" : "create_show.more_options"} on:click={() => (showMore = !showMore)} white />

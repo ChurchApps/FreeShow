@@ -4,6 +4,7 @@ export interface Event {
     name: string
     color: null | string
     notes?: string
+    notesInternal?: string
     location?: string
     action?: any
     show?: string // <= 1.1.7
