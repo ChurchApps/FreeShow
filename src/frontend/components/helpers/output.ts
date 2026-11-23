@@ -1861,11 +1861,10 @@ export function getItemsCountByType(items: Item[]) {
 
 export const defaultLayers: string[] = ["background", "slide", "overlays"]
 
+export const GET_DEFAULT_STYLE = () => ({ name: translateText("example.default") }) as Styles
 export function getCurrentStyle(stylesUpdater: { [key: string]: Styles }, styleId: string | undefined): Styles {
-    const defaultStyle = { name: "" }
-
-    if (!styleId) return defaultStyle
-    return stylesUpdater[styleId] || defaultStyle
+    if (!styleId) return GET_DEFAULT_STYLE()
+    return stylesUpdater[styleId] || GET_DEFAULT_STYLE()
 }
 
 export function getOutputTransitions(slideData: SlideData | null, styleTransition: any, transitionDataUpdater: any, disableTransitions: boolean) {
