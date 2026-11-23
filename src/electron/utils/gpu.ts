@@ -74,6 +74,32 @@ export async function listGraphicsDevices(): Promise<GraphicsDeviceOption[]> {
     return [] // Windows: no reliable persistable mechanism (see header) — selector not shown
 }
 
+// When graphicsDevice is auto on multi-GPU Linux systems, prefer the GPU driving connected displays
+function getOptimalLinuxRenderNode(): string | null {
+    try {
+        const nodes = fs.readdirSync("/dev/dri").filter((n) => /^renderD\d+$/.test(n))
+        if (nodes.length < 2) return null
+
+        // Pick the render node whose physical device owns an active display connector
+        for (const n of nodes) {
+            const devPath = path.resolve("/sys/class/drm", n, "device")
+            const cardMatch = fs.readdirSync("/sys/class/drm").some((entry) => {
+                if (!entry.includes("-")) return false
+                try {
+                    const isConnected = fs.readFileSync(path.join("/sys/class/drm", entry, "status"), "utf8").trim() === "connected"
+                    return isConnected && path.resolve("/sys/class/drm", entry, "device") === devPath
+                } catch {
+                    return false
+                }
+            })
+            if (cardMatch) return "/dev/dri/" + n
+        }
+        return null
+    } catch {
+        return null
+    }
+}
+
 // ---- application (BEFORE app ready; switches must precede GPU process launch) ----
 
 export function applyGraphicsDeviceSelection() {
@@ -83,7 +109,8 @@ export function applyGraphicsDeviceSelection() {
 
     if (isLinux) {
         // env override kept as a no-rebuild debugging lever; the Settings value is the product mechanism
-        const node = process.env.FS_LINUX_RENDER_NODE || configured
+        const autoNode = !configured ? getOptimalLinuxRenderNode() : null
+        const node = process.env.FS_LINUX_RENDER_NODE || configured || autoNode
         if (!node) return
         if (!/^\/dev\/dri\/renderD\d+$/.test(node)) {
             console.warn(`[GPU] configured graphics device "${node}" is not a DRM render node path, using auto`)
