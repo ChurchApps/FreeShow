@@ -644,12 +644,17 @@ function playGroup(globalGroupIds: string[], { showRef, outSlide, currentShowId 
     const index = targetIndex ?? fallbackIndex ?? firstMatchingGroup
     if (index === undefined) return
 
+    const activeLayout = _show(currentShowId).get("settings.activeLayout")
+
+    // don't output if already outputted
+    if (outSlide?.id === currentShowId && outSlide?.layout === activeLayout && outSlide?.index === index) return
+
     // WIP duplicate of "slideClick" in Slides.svelte
     const data = showRef[index]?.data
     checkActionTrigger(data, index)
     // allow custom actions to trigger first
     setTimeout(() => {
-        setOutput("slide", { id: currentShowId, layout: _show(currentShowId).get("settings.activeLayout"), index, line: 0 })
+        setOutput("slide", { id: currentShowId, layout: activeLayout, index, line: 0 })
         updateOut(currentShowId, index, showRef, extra, "")
     })
 

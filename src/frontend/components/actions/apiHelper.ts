@@ -242,6 +242,10 @@ export function selectSlideByName(name: string) {
 function outputSlide(showRef, data: API_slide_index) {
     if (get(outLocked)) return
 
+    // don't output if already outputted
+    const outSlide = getFirstActiveOutput()?.out?.slide
+    if (outSlide?.id === data.showId && outSlide?.layout === data.layoutId && outSlide?.index === data.index) return
+
     const showId = data.showId || get(activeShow)?.id || ""
     updateOut(showId, data.index, showRef)
     const activeLayout = _show(showId).get("settings.activeLayout")
