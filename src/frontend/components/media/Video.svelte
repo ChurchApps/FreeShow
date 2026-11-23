@@ -5,7 +5,7 @@
     import { findGroupRendererId, getMirrorVideo, MirrorCloneDrawer, MirrorRegistration, mirrorRegistryTick, mirrorVideoKey } from "./video/mirrorVideoRegistry"
     import { enableSubtitle, encodeFilePath, isVideoSupported } from "../helpers/media"
     import { SoftLoopSync } from "./video/softLoop"
-    import { clampPlaybackRate, syncVideoToAudio, videoSync } from "./video/videoSync"
+    import { clampPlaybackRate, clearVideoSyncState, syncVideoToAudio, videoSync } from "./video/videoSync"
 
     export let outputId: string
     export let path: string
@@ -55,6 +55,9 @@
     function subscribeSync(targetPath: string, outputId: string, pauseCenter: boolean) {
         unsubscribeSync?.()
         unsubscribeSync = null
+        clearVideoSyncState(video)
+        clearVideoSyncState(blurVideo)
+        clearVideoSyncState(softLoopVideo)
         if (!pauseCenter && targetPath && outputId) {
             let lastSyncedTime: number | null = null
             unsubscribeSync = videoSync(targetPath, outputId, (data) => {
@@ -161,6 +164,7 @@
 
         const cleanupVideo = (el: HTMLVideoElement | null | undefined) => {
             if (!el) return
+            clearVideoSyncState(el)
             try {
                 el.pause()
                 el.removeAttribute("src")
