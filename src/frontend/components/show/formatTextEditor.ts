@@ -255,6 +255,9 @@ export function formatText(text: string, showId = "", itemIndex = 0) {
         // remove "id" key
         delete slide.id
 
+        // full old slide items already added above
+        if (oldSlideId === slideId && itemIndex === 0) return
+
         // add back old items
         const oldItems = show.slides?.[oldSlideId]?.items || []
         if (!oldItems.length) return
