@@ -596,10 +596,16 @@ async function processSongItem(item: ProjectItem, itemsEndpoint: string, placeho
     let sections: SongSection[] = []
 
     // Get sections from API first
-    const apiSections: SongSection[] = (await pcoRequest({ scope: "services", endpoint: `${arrangementEndpoint}/sections` }))[0]?.attributes.sections || []
+    let apiSections: SongSection[] = (await pcoRequest({ scope: "services", endpoint: `${arrangementEndpoint}/sections` }))[0]?.attributes.sections || []
 
     // Parse sections from chord chart if available (contains repeat markers etc.)
     const chordChartSections = song.chord_chart ? parseChordChartIntoSections(song.chord_chart) : []
+
+    // Ignore Planning Center's fallback "General" section, if other sections already exist
+    const hasOtherSections = apiSections.some((s) => s.label.toLowerCase() !== "general") || chordChartSections.some((s) => s.label.toLowerCase() !== "general")
+    if (hasOtherSections) {
+        apiSections = apiSections.filter((s) => s.label.toLowerCase() !== "general")
+    }
 
     // Merge API sections with chord chart sections
     const mergedSections = apiSections.map((apiSec) => {
