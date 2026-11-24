@@ -266,7 +266,7 @@
         {/if}
         <video class="media" style={mediaStyleString} bind:this={video} on:loadedmetadata={loaded} on:playing={playing} on:error bind:currentTime={videoTime} muted src={encodeFilePath(path)} loop={videoData.loop}>
             {#each tracks as track}
-                <track label={track.name} srclang={track.lang} kind="subtitles" src="data:text/vtt;charset=utf-8,{encodeURI(track.vtt)}" />
+                <track label={track.name} srclang={track.lang} kind="subtitles" src="data:text/vtt;charset=utf-8,{encodeURIComponent(track.vtt)}" />
             {/each}
         </video>
         {#if softLoopValue > 0 && videoData.loop}
