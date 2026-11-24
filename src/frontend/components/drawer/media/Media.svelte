@@ -142,7 +142,8 @@
         else setOutput("background", { name: item.name, id: item.id, cameraGroup: item.group || item.cameraGroup, type })
     }
 
-    let onlineTab = $drawerTabsData.media?.openedSubSubTab?.online || "youtube"
+    const onlineTabs = ["website", "youtube", "vimeo"]
+    let onlineTab = $drawerTabsData.media?.openedSubSubTab?.online || "website"
     $: if (active === "online" && onlineTab === "pixabay" && (searchValue !== null || activeView)) loadFilesAsync()
     $: if (active === "online" && onlineTab === "unsplash" && (searchValue !== null || activeView)) loadFilesAsync()
 
@@ -535,6 +536,10 @@
     </div>
 {:else if active === "online"}
     <div class="tabs">
+        <MaterialButton style="flex: 1;" isActive={onlineTab === "website"} on:click={() => setSubSubTab("website")}>
+            <Icon size={1.2} id="web" white />
+            <p><T id="items.web" /></p>
+        </MaterialButton>
         <MaterialButton style="flex: 1;" isActive={onlineTab === "youtube"} on:click={() => setSubSubTab("youtube")}>
             <Icon style={onlineTab === "youtube" ? "fill: #ff0000" : ""} size={1.2} id="youtube" white />
             <p>YouTube</p>
@@ -569,7 +574,7 @@
     <div class="grid" class:list={$mediaOptions.mode === "list"} style="height: 100%;">
         {#if isProviderSection && activeProviderId}
             <ContentLibraryBrowser providerId={activeProviderId} columns={$mediaOptions.columns} {searchValue} />
-        {:else if active === "online" && (onlineTab === "youtube" || onlineTab === "vimeo")}
+        {:else if active === "online" && onlineTabs.includes(onlineTab)}
             <div class="gridgap context #player">
                 <PlayerVideos active={onlineTab} {searchValue} />
             </div>
@@ -640,13 +645,13 @@
         <MaterialZoom columns={$mediaOptions.columns} defaultValue={5} on:change={(e) => mediaOptions.set({ ...$mediaOptions, columns: e.detail })} />
     </FloatingInputs>
 {:else if active === "online"}
-    {#if onlineTab === "youtube" || onlineTab === "vimeo"}
+    {#if onlineTabs.includes(onlineTab)}
         <FloatingInputs onlyOne>
             <MaterialButton
                 title="groups.toggle_global_group"
                 on:click={() => {
                     popupData.set({ active: onlineTab })
-                    activePopup.set("player")
+                    activePopup.set("create_online")
                 }}
             >
                 <Icon id="add" />

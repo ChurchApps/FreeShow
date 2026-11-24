@@ -56,3 +56,21 @@ export function formatUrl(url: string) {
     if (url[url.length - 1] === "/") url = url.slice(0, -1)
     return url
 }
+
+export function normalizeWebsiteUrl(url: string) {
+    url = url.trim()
+    if (!url) return ""
+    return /^[a-z]+:\/\//i.test(url) ? url : "https://" + url
+}
+
+export function getWebsiteDomain(url: string, includePath = false) {
+    try {
+        const parsed = new URL(normalizeWebsiteUrl(url))
+        const host = parsed.hostname.replace(/^www\./, "")
+        if (!includePath) return host
+        const pathname = parsed.pathname.replace(/\/$/, "")
+        return pathname ? host + pathname : host
+    } catch {
+        return ""
+    }
+}

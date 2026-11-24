@@ -1,9 +1,16 @@
 <script lang="ts">
-    import type { Category } from "../../../../types/Tabs"
+    import { onDestroy, onMount } from "svelte"
+    import { uid } from "uid"
+    import { OUTPUT } from "../../../../types/Channels"
+    import { Main } from "../../../../types/IPC/Main"
+    import type { PlayerVideo } from "../../../../types/Tabs"
+    import { sendMain } from "../../../IPC/main"
     import { activeFocus, activePlayerTagFilter, activeShow, focusMode, outLocked, outputs, playerTags, playerVideos } from "../../../stores"
     import { translateText } from "../../../utils/language"
+    import { destroy, receive } from "../../../utils/request"
     import { clone, sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
+    import { encodeFilePath } from "../../helpers/media"
     import { findMatchingOut, setOutput } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
@@ -24,7 +31,7 @@
     // search
     $: if (videos || searchValue !== undefined || $activePlayerTagFilter) filterSearch()
     const filter = (s: string) => s.toLowerCase().replace(/[.,\/#!?$%\^&\*;:{}=\-_`~()]/g, "")
-    let fullFilteredVideos: (Category & { rid: string })[] = []
+    let fullFilteredVideos: (PlayerVideo & { rid: string })[] = []
     function filterSearch() {
         fullFilteredVideos = clone(videos)
 
@@ -69,6 +76,47 @@
             return a
         })
     }
+
+    function openPreview(id: string) {
+        if ($focusMode) activeFocus.set({ id, type: "player" })
+        else activeShow.set({ id, type: "player" })
+    }
+
+    // WEBSITE (Thumbnail)
+
+    const THUMBNAIL_MAX_AGE = 30 * 24 * 60 * 60 * 1000 // 30 days
+    const requestedThumbnails = new Set<string>()
+    const listenerId = "WEBSITE_THUMBS_" + uid()
+
+    onMount(() => {
+        receive(
+            OUTPUT,
+            {
+                WEBSITE_THUMBNAIL: (data: { websiteId: string; path: string; updated: number }) => {
+                    if (!data?.websiteId || !data.path) return
+                    playerVideos.update((a) => {
+                        if (!a[data.websiteId]) return a
+                        a[data.websiteId].thumbnail = data.path
+                        a[data.websiteId].thumbnailUpdated = data.updated
+                        return a
+                    })
+                }
+            },
+            listenerId
+        )
+    })
+    onDestroy(() => destroy(OUTPUT, listenerId))
+
+    $: if (active === "website" && videos.length) {
+        const now = Date.now()
+        for (const video of videos) {
+            if (!video.id || requestedThumbnails.has(video.rid)) continue
+            if (!video.thumbnail || !video.thumbnailUpdated || now - video.thumbnailUpdated > THUMBNAIL_MAX_AGE) {
+                requestedThumbnails.add(video.rid)
+                sendMain(Main.WEBSITE_CAPTURE, { id: video.rid, action: "thumbnail", url: video.id })
+            }
+        }
+    }
 </script>
 
 {#if fullFilteredVideos.length}
@@ -76,7 +124,7 @@
         {@const tags = video.tags || []}
 
         <Card
-            loaded={loaded[video.rid]}
+            loaded={active === "website" || loaded[video.rid]}
             class="context #player_button"
             preview={$activeShow?.id === video.rid}
             active={findMatchingOut(video.rid, $outputs) !== null}
@@ -100,8 +148,7 @@
             }}
             on:dblclick={() => {
                 if (iconClicked) return
-                if ($focusMode) activeFocus.set({ id: video.rid, type: "player" })
-                else activeShow.set({ id: video.rid, type: "player" })
+                openPreview(video.rid)
             }}
         >
             <!-- icons -->
@@ -120,22 +167,32 @@
                 {/if}
             </div>
 
-            <SelectElem id="player" data={video.rid} style="width: 100%;" draggable>
-                <img src={getThumbnail(video.id || "")} alt="Video thumbnail for {video.name || 'video'}" style="width: 100%;height: 100%;aspect-ratio: 19/9;object-fit: cover;" on:load={() => (loaded[video.rid] = true)} />
+            <SelectElem id="player" data={video.rid} style="width: 100%;height: 100%;" draggable>
+                {#if active === "website" && !video.thumbnail}
+                    <div class="website" data-title={video.id || ""}><Icon id="web" size={3} white /></div>
+                {:else}
+                    <img src={active === "website" ? `${encodeFilePath(video.thumbnail || "")}?v=${video.thumbnailUpdated || 0}` : getThumbnail(video.id || "")} alt="Thumbnail for {video.name || 'video'}" style="width: 100%;height: 100%;aspect-ratio: 19/9;object-fit: cover;" on:load={() => (loaded[video.rid] = true)} />
+                {/if}
             </SelectElem>
         </Card>
     {/each}
 {:else}
     <Center size={1.2} faded>
-        {#if videos.length}
-            <T id="empty.search" />
-        {:else}
-            <T id="empty.player" />
-        {/if}
+        <T id="empty.{videos.length ? 'search' : 'general'}" />
     </Center>
 {/if}
 
 <style>
+    .website {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: var(--primary-darker);
+        opacity: 0.8;
+    }
+
     /* icons */
 
     .icons {

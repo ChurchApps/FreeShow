@@ -15,7 +15,7 @@
 
     export let optionsOpen: boolean
 
-    $: active = $drawerTabsData.media?.openedSubSubTab?.online || "youtube"
+    $: active = $drawerTabsData.media?.openedSubSubTab?.online || "website"
 
     $: info = [
         { label: "info.likes", value: $photoApiCredits.likes },

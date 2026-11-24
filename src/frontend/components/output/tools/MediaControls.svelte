@@ -30,6 +30,7 @@
     $: path = background?.path || background?.id
     $: type = background?.type || "image"
     if (path && !type) type = getMediaType(getExtension(path)) as MediaType
+    $: isVideo = type === "video" || (type === "player" && $playerVideos[path || ""]?.type !== "website")
 
     // LISTENER
 
@@ -41,7 +42,7 @@
             unsubscriber = null
         }
 
-        if (!path || (type !== "video" && type !== "player")) return
+        if (!path || !isVideo) return
 
         // interpolate video time (so slider updates more smoothly) / slider step is 1 anyway
         // const interpolator = new TimeInterpolator((time) => videoTime = time)
@@ -114,7 +115,7 @@
 {#if background}
     {#if big}
         <!--  -->
-        {#if type === "video" || background?.type === "player"}
+        {#if isVideo}
             <FloatingInputs side="center" style="width: 80%;">
                 <MaterialButton title={videoData.paused ? "media.play" : "media.pause"} disabled={$outLocked} on:click={playPause}>
                     <Icon id={videoData.paused ? "play" : "pause"} white={videoData.paused} size={1.5} />
@@ -163,7 +164,7 @@
             {/if}
         </span>
 
-        {#if type === "video" || background?.type === "player"}
+        {#if isVideo}
             <span class="group">
                 <Button center title={translateText(videoData.paused ? "media.play" : "media.pause")} disabled={$outLocked} on:click={playPause}>
                     <Icon id={videoData.paused ? "play" : "pause"} white={videoData.paused} size={1.2} />

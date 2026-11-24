@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { MediaStyle } from "../../../../types/Main"
     import type { ProjectShowRef } from "../../../../types/Projects"
-    import { activeShow, media, outLocked, outputs, styles } from "../../../stores"
+    import { activeShow, media, outLocked, outputs, playerVideos, styles } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import Image from "../../drawer/media/Image.svelte"
     import Icon from "../../helpers/Icon.svelte"
@@ -11,6 +11,7 @@
     import { clearSlide } from "../../output/clear"
     import Center from "../../system/Center.svelte"
     import VideoShow from "../VideoShow.svelte"
+    import WebsiteShow from "../WebsiteShow.svelte"
 
     export let projectShow: ProjectShowRef | null = null
     $: show = projectShow || $activeShow
@@ -56,6 +57,10 @@
             <Center>
                 <Icon size={4} id="close" style="color: var(--disconnected);" white />
             </Center>
+        {:else if show.type === "player" && $playerVideos[show.id]?.type === "website"}
+            {#key show.id}
+                <WebsiteShow id={show.id} />
+            {/key}
         {:else if show.type === "video" || show.type === "player"}
             <VideoShow {mediaPath} {show} {mediaStyle} />
         {:else}

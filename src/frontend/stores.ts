@@ -19,7 +19,7 @@ import type { Dictionary, Styles, Themes } from "../types/Settings"
 import type { Action, CustomFont, Emitter, ID, Overlays, Scene, ShowGroups, ShowList, Shows, ShowType, SlideTimer, Tag, Templates, Timer, Transition, TrimmedShows } from "../types/Show"
 import type { ServerData } from "../types/Socket"
 import type { ActiveStage, StageLayouts } from "../types/Stage"
-import type { BibleCategories, Categories, DrawerTabs, EditMode, SettingsTabs, TopViews } from "../types/Tabs"
+import type { BibleCategories, Categories, DrawerTabs, EditMode, PlayerVideos, SettingsTabs, TopViews } from "../types/Tabs"
 import type { AiSuggestion } from "./../types/ai/Ai"
 import type { AiSettings } from "./../types/ai/AiSettings"
 import type { Outputs, RtmpStatus, SyncedOutputs } from "./../types/Output"
@@ -305,8 +305,8 @@ export type AudioEffectPresets = {
 }
 export const audioEffectPresets: Writable<AudioEffectPresets> = writable({}) // {}
 
-// PLAYER
-export const playerVideos: Writable<Categories> = writable({}) // {default}
+// PLAYER (ONLINE, Website, YouTube, Vimeo)
+export const playerVideos: Writable<PlayerVideos> = writable({}) // {default}
 
 // TEMPLATES
 export const templateCategories: Writable<Categories> = writable({}) // {default}

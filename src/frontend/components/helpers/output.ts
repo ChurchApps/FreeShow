@@ -47,7 +47,8 @@ import {
     theme,
     themes,
     transitionData,
-    usageLog
+    usageLog,
+    playerVideos
 } from "../../stores"
 import { trackScriptureUsage } from "../../utils/analytics"
 import { isMainWindow, isOutputWindow, newToast } from "../../utils/common"
@@ -370,7 +371,7 @@ function checkAudio(type: string, data: any, allOutputIds: string[], outs: strin
                 if (bgPath && bgPath !== newPath) VideoPlayer.stop(bgPath, outputId)
             })
 
-            VideoPlayer.start(newPath, { loop: data.loop, muted: data.muted, startAt: data.startAt || 0, isOnline: data.type === "player", hasActiveBg }, allOutputIds)
+            VideoPlayer.start(newPath, { loop: data.loop, muted: data.muted, startAt: data.startAt || 0, isOnline: data.type === "player" && get(playerVideos)[newPath]?.type !== "website", hasActiveBg }, allOutputIds)
         } else {
             VideoPlayer.stopByOutputIds(allOutputIds)
         }

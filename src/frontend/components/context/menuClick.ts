@@ -1306,9 +1306,9 @@ const clickActions = {
             activePage.set("edit")
         } else if (obj.sel.id === "player") {
             const id = obj.sel.data[0]
-            const onlineTab = get(drawerTabsData).media?.openedSubSubTab?.online || "youtube"
+            const onlineTab = get(drawerTabsData).media?.openedSubSubTab?.online || "website"
             popupData.set({ active: onlineTab, id })
-            activePopup.set("player")
+            activePopup.set("create_online")
         } else if (obj.sel.id === "audio") {
             const path = obj.sel.data[0]?.path
             if (!path) return

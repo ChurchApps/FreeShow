@@ -119,7 +119,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     regex_manager: RegexManager,
     choose_chord: ChooseChord,
     choose_media_input: ChooseMediaInput,
-    player: CreatePlayer,
+    create_online: CreatePlayer,
     rename: Rename,
     color: Color,
     color_gradient: ColorGradient,
