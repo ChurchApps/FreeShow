@@ -178,7 +178,8 @@ export const textSections: { [key: string]: EditBoxSection } = {
                         options: [
                             { label: "edit.uppercase", value: "uppercase", style: "text-transform: uppercase;" },
                             { label: "edit.lowercase", value: "lowercase", style: "text-transform: lowercase;" },
-                            { label: "edit.capitalize", value: "capitalize", style: "text-transform: capitalize;" }
+                            { label: "edit.capitalize", value: "capitalize-line", style: "text-transform: capitalize;" },
+                            { label: "edit.capitalize_each_word", value: "capitalize", style: "text-transform: capitalize;" }
                         ],
                         allowEmpty: true
                     }
