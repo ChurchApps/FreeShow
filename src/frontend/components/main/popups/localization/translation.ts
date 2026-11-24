@@ -13,7 +13,7 @@ import { isoLanguages } from "./isoLanguages"
 
 const api = "https://translate.googleapis.com/translate_a/single"
 export async function translate(text: string, language: string, source = "auto"): Promise<string> {
-    const query = `${api}?client=gtx&sl=${source}&tl=${language}&dt=t&q=${encodeURI(text)}`
+    const query = `${api}?client=gtx&sl=${source}&tl=${language}&dt=t&q=${encodeURIComponent(text)}`
 
     return new Promise((resolve, reject) => {
         fetch(query)
