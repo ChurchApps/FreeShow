@@ -54,5 +54,5 @@
 
 <MaterialTextInput label="inputs.video_id" value={data.id || ""} placeholder="e.g. X-AJdKty74M" disabled={!!(data.id && editId)} on:change={(e) => setValue("id", e.detail)} autofocus={!data.id} pasteBtn={!data.id} />
 {#if !editId}
-    <MaterialTextInput label="inputs.name" value={data.name} disabled={!data.id} on:change={(e) => setValue("name", e.detail)} />
+    <MaterialTextInput label="inputs.name" value={data.name} disabled={!data.name && !data.id} on:change={(e) => setValue("name", e.detail)} />
 {/if}
