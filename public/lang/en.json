@@ -238,6 +238,8 @@
         "inputs": "Inputs",
         "outputs": "Outputs",
         "channels": "Channels",
+        "multi_channel": "Multi-channel routing",
+        "reset_routing": "Reset audio routing",
         "playlists": "Playlists",
         "playlist_settings": "Playlist settings",
         "open_audio_folder": "Open related audio folder",

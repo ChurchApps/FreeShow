@@ -95,5 +95,6 @@
 
     <MaterialNumberInput label="audio.delay (ms)" value={delayMs} min={0} max={5000} step={10} defaultValue={0} on:change={(e) => updateChannelData("delay", e.detail)} showSlider />
 {:else if isMicNode}
+    <!-- only worked with up to two channels -->
     <MaterialNumberInput label="audio.channels" value={micChannels} min={1} max={32} step={1} defaultValue={2} on:change={(e) => updateMicChannels(e.detail)} />
 {/if}

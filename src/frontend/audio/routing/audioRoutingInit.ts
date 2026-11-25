@@ -5,19 +5,7 @@ import { audioRouting, dictionary, outputs } from "../../stores"
 import { waitUntilValueIsDefined } from "../../utils/common"
 import { translateText } from "../../utils/language"
 import { confirmCustom } from "../../utils/popup"
-
-export function deduplicateConnections(connections: AudioRoutingConnection[]): AudioRoutingConnection[] {
-    const seen = new Set<string>()
-    return connections.filter((c) => {
-        const fromCh = c.fromChannelIndex ?? (c.from.startsWith("mic_sub_") ? (c.channelIndex ?? -1) : -1)
-        const toCh = c.toChannelIndex ?? (c.to.startsWith("speaker_sub_") ? (c.channelIndex ?? 0) : 0)
-        const connType = c.type || "audio"
-        const key = `${c.from}:${fromCh}->${c.to}:${toCh}:${connType}`
-        if (seen.has(key)) return false
-        seen.add(key)
-        return true
-    })
-}
+import { deduplicateConnections } from "./audioRoutingHelpers"
 
 export async function initAudioRouting(data: AudioRoutingConfig | null) {
     if (data && data.channels && data.connections && data.channels.length > 0) {

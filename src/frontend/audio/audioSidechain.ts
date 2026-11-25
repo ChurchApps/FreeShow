@@ -3,6 +3,7 @@ import type { AudioRoutingConnection } from "../../types/AudioRouting"
 import { audioRouting, channelSidechainMultipliers } from "../stores"
 import { dbToGain, MIN_DB } from "./dBUtils"
 import { AudioInputCapture } from "./routing/audioInputCapture"
+import { getConnectionFromChannel } from "./routing/audioRoutingHelpers"
 import { AudioRoutingManager } from "./routing/audioRoutingManager"
 
 interface ChannelState {
@@ -112,7 +113,7 @@ export class AudioSidechain {
                 const viz = inputCapture.getVisualizerData(c.from)
                 if (!viz) continue
 
-                const fromCh = c.fromChannelIndex ?? (c.from.startsWith("mic_sub_") ? c.channelIndex : undefined)
+                const fromCh = getConnectionFromChannel(c)
                 let db: number | undefined
                 if (fromCh !== undefined && viz.channels?.[fromCh]) {
                     db = viz.channels[fromCh].db

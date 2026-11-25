@@ -19,6 +19,7 @@
     export let isExpanded: boolean = false
     export let hasSubNodes: boolean = false
     export let channels: number = 0
+    export let showMultichannel = false
     export let isEnabled: boolean = true
     export let isMuted: boolean = false
     export let hasEffects: boolean = false
@@ -36,7 +37,7 @@
     export let onMouseDown: (e: MouseEvent, portType: "in" | "out" | "sidechain", chIdx?: number) => void
     export let onMouseEnter: (e: MouseEvent) => void
     export let onMouseLeave: () => void
-    export let onMouseEnterPort: (e: MouseEvent, portType?: "in" | "out" | "sidechain", chIdx?: number) => void = () => {}
+    export let onMouseEnterPort: (e: MouseEvent, portType: "in" | "out" | "sidechain", chIdx?: number) => void = () => {}
     export let onMouseLeavePort: () => void = () => {}
     export let onHoverPort: (e: MouseEvent, portType: "in" | "out" | "sidechain", chIdx?: number) => void = () => {}
     export let onHoverPortEnd: () => void = () => {}
@@ -67,8 +68,31 @@
     $: hasInPort = nodeType !== "input" && (type !== "network" || isSubNode) && (!isSubNode || nodeType === "output")
     $: hasOutPort = nodeType !== "output" && (type !== "output_window" || isSubNode)
 
+    $: activeInChannels = showMultichannel && hasInPort ? (isChannel || (isSubNode && type === "network") ? 2 : isSubNode && type === "speaker" ? Math.max(1, channels || 2) : 1) : 1
+    $: activeOutChannels = showMultichannel && hasOutPort && type !== "metronome" && !(type === "mic" && (!isSubNode || channels === 1)) ? 2 : 1
+    $: maxPorts = Math.max(activeInChannels, activeOutChannels)
+
+    $: inPorts = activeInChannels > 1 ? Array.from({ length: activeInChannels }, (_, i) => i) : [undefined]
+    $: outPorts = activeOutChannels > 1 ? Array.from({ length: activeOutChannels }, (_, i) => i) : [undefined]
+
     $: hasValidPort = (dragStartType === "input" && hasInPort) || (dragStartType === "output" && hasOutPort) || (isStartChannel && ((dragStartPortType === "in" && hasOutPort) || (dragStartPortType === "out" && (hasInPort || (isChannel && id !== dragStartId))) || (dragStartPortType === "sidechain" && ((isChannel && id !== dragStartId) || isInputCol) && hasOutPort)))
     $: isValidHover = isConnecting && id !== dragStartId && ((dragStartType === "input" && isChannel) || (dragStartType === "output" && isChannel) || (isStartChannel && ((dragStartPortType === "in" && isInputCol) || (dragStartPortType === "out" && (isOutputCol || isChannel)) || (dragStartPortType === "sidechain" && (isChannel || isInputCol)))))
+
+    function getChannelPortTitle(chIdx?: number): string {
+        if (chIdx === undefined) return ""
+        const chLabel = `${translateText("midi.channel")} ${chIdx + 1}`
+        return chIdx === 0 ? `${chLabel} (L)` : chIdx === 1 ? `${chLabel} (R)` : chLabel
+    }
+
+    function enterPort(e: MouseEvent, portType: "in" | "out" | "sidechain", chIdx?: number) {
+        onMouseEnterPort(e, portType, chIdx)
+        onHoverPort(e, portType, chIdx)
+    }
+
+    function leavePort() {
+        onMouseLeavePort()
+        onHoverPortEnd()
+    }
 </script>
 
 <div
@@ -82,79 +106,22 @@
     data-node-id={id}
     on:mouseenter={onMouseEnter}
     on:mouseleave={onMouseLeave}
-    style="{activeColor ? `--port-color: ${activeColor};` : ''}{channels > 1 ? `min-height: ${channels * 30}px;` : ''}"
+    style="{activeColor ? `--port-color: ${activeColor};` : ''}{maxPorts > 1 ? `min-height: ${maxPorts * 30 + (isChannel ? 18 : 0)}px;` : ''}"
 >
-    {#if nodeType !== "input" && type !== "network" && !isSubNode}
-        <!-- placed first so ::after area is under the main port -->
-        {#if isChannel}
-            <div
-                class="port port-sidechain"
-                data-title={translateText("audio.sidechain")}
-                on:mouseenter={(e) => {
-                    onMouseEnterPort(e, "sidechain")
-                    onHoverPort(e, "sidechain")
-                }}
-                on:mouseleave={() => {
-                    onMouseLeavePort()
-                    onHoverPortEnd()
-                }}
-                on:mousedown={(e) => onMouseDown(e, "sidechain")}
-                on:contextmenu={(e) => onPortContextMenu(e, "sidechain")}
-            ></div>
-        {/if}
+    {#if hasInPort}
+        <div class:ports-column-in={activeInChannels > 1}>
+            {#if isChannel && activeInChannels === 1}
+                <div class="port port-sidechain" data-title={translateText("audio.sidechain")} on:mouseenter={(e) => enterPort(e, "sidechain")} on:mouseleave={leavePort} on:mousedown={(e) => onMouseDown(e, "sidechain")} on:contextmenu={(e) => onPortContextMenu(e, "sidechain")}></div>
+            {/if}
 
-        <div
-            class="port port-in"
-            class:hasSidechainPort={isChannel}
-            on:mouseenter={(e) => {
-                onMouseEnterPort(e, "in")
-                onHoverPort(e, "in")
-            }}
-            on:mouseleave={() => {
-                onMouseLeavePort()
-                onHoverPortEnd()
-            }}
-            on:mousedown={(e) => onMouseDown(e, "in")}
-            on:contextmenu={(e) => onPortContextMenu(e, "in")}
-        ></div>
-    {/if}
-
-    {#if isSubNode && nodeType === "output" && channels > 1}
-        <div class="ports-column-in">
-            {#each Array(channels) as _, chIdx}
-                <div
-                    class="port port-in port-multi"
-                    data-ch-index={chIdx}
-                    data-port-type="in"
-                    data-title="{translateText('midi.channel')} {chIdx + 1}"
-                    on:mouseenter={(e) => {
-                        onMouseEnterPort(e, "in", chIdx)
-                        onHoverPort(e, "in", chIdx)
-                    }}
-                    on:mouseleave={() => {
-                        onMouseLeavePort()
-                        onHoverPortEnd()
-                    }}
-                    on:mousedown={(e) => onMouseDown(e, "in", chIdx)}
-                    on:contextmenu={(e) => onPortContextMenu(e, "in", chIdx)}
-                ></div>
+            {#each inPorts as chIdx}
+                <div class="port port-in" class:port-multi={chIdx !== undefined} class:hasSidechainPort={isChannel && chIdx === undefined} data-ch-index={chIdx} data-port-type="in" data-title={getChannelPortTitle(chIdx)} on:mouseenter={(e) => enterPort(e, "in", chIdx)} on:mouseleave={leavePort} on:mousedown={(e) => onMouseDown(e, "in", chIdx)} on:contextmenu={(e) => onPortContextMenu(e, "in", chIdx)}></div>
             {/each}
+
+            {#if isChannel && activeInChannels > 1}
+                <div class="port port-sidechain port-multi" data-title={translateText("audio.sidechain")} on:mouseenter={(e) => enterPort(e, "sidechain")} on:mouseleave={leavePort} on:mousedown={(e) => onMouseDown(e, "sidechain")} on:contextmenu={(e) => onPortContextMenu(e, "sidechain")}></div>
+            {/if}
         </div>
-    {:else if isSubNode && nodeType === "output"}
-        <div
-            class="port port-in"
-            data-port-type="in"
-            on:mouseenter={(e) => {
-                onMouseEnterPort(e, "in")
-                onHoverPort(e, "in")
-            }}
-            on:mouseleave={() => {
-                onMouseLeavePort()
-                onHoverPortEnd()
-            }}
-            on:mousedown={(e) => onMouseDown(e, "in")}
-            on:contextmenu={(e) => onPortContextMenu(e, "in")}
-        ></div>
     {/if}
 
     <div class="card-content">
@@ -219,7 +186,8 @@
             <MaterialToggleSwitch label="" checked={isEnabled} on:change={(e) => onToggleEnabled?.(e.detail)} small />
         {/if}
 
-        {#if type === "icecast" || isChannel || (type === "mic" && isSubNode)}
+        <!-- || (type === "mic" && isSubNode) -->
+        {#if type === "icecast" || isChannel}
             <MaterialButton
                 variant="outlined"
                 icon="options"
@@ -237,44 +205,12 @@
         <AudioMeter channelId={id} />
     {/if}
 
-    {#if nodeType !== "output" && (type !== "output_window" || isSubNode)}
-        {#if isSubNode && nodeType === "input" && channels > 1}
-            <div class="ports-column-out">
-                {#each Array(channels) as _, chIdx}
-                    <div
-                        class="port port-out port-multi"
-                        data-ch-index={chIdx}
-                        data-port-type="out"
-                        data-title="{translateText('midi.channel')} {chIdx + 1}"
-                        on:mouseenter={(e) => {
-                            onMouseEnterPort(e, "out", chIdx)
-                            onHoverPort(e, "out", chIdx)
-                        }}
-                        on:mouseleave={() => {
-                            onMouseLeavePort()
-                            onHoverPortEnd()
-                        }}
-                        on:mousedown={(e) => onMouseDown(e, "out", chIdx)}
-                        on:contextmenu={(e) => onPortContextMenu(e, "out", chIdx)}
-                    ></div>
-                {/each}
-            </div>
-        {:else}
-            <div
-                class="port port-out"
-                data-port-type="out"
-                on:mouseenter={(e) => {
-                    onMouseEnterPort(e, "out")
-                    onHoverPort(e, "out")
-                }}
-                on:mouseleave={() => {
-                    onMouseLeavePort()
-                    onHoverPortEnd()
-                }}
-                on:mousedown={(e) => onMouseDown(e, "out")}
-                on:contextmenu={(e) => onPortContextMenu(e, "out")}
-            ></div>
-        {/if}
+    {#if hasOutPort}
+        <div class:ports-column-out={activeOutChannels > 1}>
+            {#each outPorts as chIdx}
+                <div class="port port-out" class:port-multi={chIdx !== undefined} data-ch-index={chIdx} data-port-type="out" data-title={getChannelPortTitle(chIdx)} on:mouseenter={(e) => enterPort(e, "out", chIdx)} on:mouseleave={leavePort} on:mousedown={(e) => onMouseDown(e, "out", chIdx)} on:contextmenu={(e) => onPortContextMenu(e, "out", chIdx)}></div>
+            {/each}
+        </div>
     {/if}
 </div>
 
