@@ -2,7 +2,7 @@
     import { createEventDispatcher, onDestroy, onMount } from "svelte"
     import type { Styles } from "../../../types/Settings"
     import type { Item, TemplateStyleOverride } from "../../../types/Show"
-    import { createVirtualBreaks } from "../../show/slides"
+    import { formatTextLines } from "../../show/slides"
     import { outputs, slidesOptions, styles, variables } from "../../stores"
     import { getItemText } from "../edit/scripts/textStyle"
     import { clone } from "../helpers/array"
@@ -48,7 +48,7 @@
     export let normalWrap = false
     export let updateDynamicValues = true
 
-    $: lines = createVirtualBreaks(clone(item?.lines || []), outputStyle?.skipVirtualBreaks)
+    $: lines = formatTextLines(item?.lines || [], outputStyle?.skipVirtualBreaks)
     $: if (linesStart !== null && linesEnd !== null && lines.length) {
         lines = lines.filter((a) => Array.isArray(a.text) && a.text.filter((a) => a.value !== undefined)?.length)
 

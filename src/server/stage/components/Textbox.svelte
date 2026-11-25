@@ -4,7 +4,7 @@
     import Button from "../../common/components/Button.svelte"
     import Icon from "../../common/components/Icon.svelte"
     import autosize, { getAutoSizeOptions } from "../../common/util/autosize"
-    import { createVirtualBreaks } from "../../common/util/show"
+    import { formatTextLines } from "../../common/util/show"
     import { getStyles } from "../../common/util/style"
     import { getDynamicValue, replaceDynamicValues } from "../helpers/show"
     import { getItemText } from "../helpers/textStyle"
@@ -542,7 +542,7 @@
     {#if item.lines}
         <div class="align" style={style ? item.align : null} bind:this={alignElem}>
             <div class="lines" data-chord-size-ratio={chordFontSize ? chordFontSize / 100 : null} style="{style ? lineStyleBox : ''}{chordsStyle}">
-                {#each createVirtualBreaks(item.lines) as line, i}
+                {#each formatTextLines(item.lines) as line, i}
                     {@const chordOnly = chords && chordOnlyLines[i]}
                     {#if !maxLines || i < maxLines}
                         {#if chordLines[i]}

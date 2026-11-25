@@ -76,24 +76,40 @@ export function getGroupName({ show, showId }: { show: Show; showId: string }, s
     return name
 }
 
-export const VIRTUAL_BREAK_CHAR = "[_VB]"
-export function createVirtualBreaks(lines: Line[], skip: boolean = false) {
-    if (!lines?.length) return []
+export function formatTextLines(lines: Line[], skipVirtualBreaks = false) {
+    lines = clone(lines || [])
 
-    const replaceWith = skip ? "" : "<br>"
+    const replaceWith = skipVirtualBreaks ? "" : "<br>"
     lines.forEach((line) => {
         if (!Array.isArray(line?.text)) return
 
         line.text.forEach((text) => {
             if (typeof text !== "object" || text === null) return
             if (!text.value) text.value = ""
+
             text.value = replaceVirtualBreaks(text.value, replaceWith)
+            text.value = replaceShortHyphens(text.value)
         })
     })
 
     return lines
 }
-export function replaceVirtualBreaks(line: string, replaceWith: string = "<br>") {
+
+export const VIRTUAL_BREAK_CHAR = "[_VB]"
+export function replaceVirtualBreaks(line: string, replaceWith = "<br>") {
     // replace & remove spaces
     return line.replaceAll(VIRTUAL_BREAK_CHAR, replaceWith).replace(/\s*<br>\s*/g, "<br>")
+}
+
+// replaces hyphens with 1-3 letter prefixes/suffixes with non-breaking hyphens
+// ignores punctuation, numbers, and standalone hyphens
+const HYPHENATED_WORD_REGEX = /[\p{L}\p{N}]+(?:-[\p{L}\p{N}]+)+/gu
+function replaceShortHyphens(text: string) {
+    if (!text?.includes("-")) return text
+
+    return text.replace(HYPHENATED_WORD_REGEX, (word) => {
+        if (/\d/.test(word)) return word
+        const parts = word.split("-")
+        return parts.map((part, i) => (i && (parts[i - 1].length <= 3 || part.length <= 3) ? "\u2011" : i ? "-" : "") + part).join("")
+    })
 }

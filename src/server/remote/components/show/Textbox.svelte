@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { Item } from "../../../../types/Show"
     import autosize, { getAutoSizeOptions, type AutosizeTypes } from "../../../common/util/autosize"
-    import { createVirtualBreaks } from "../../../common/util/show"
+    import { formatTextLines } from "../../../common/util/show"
     import { getStyles } from "../../../common/util/style"
     import { send } from "../../util/socket"
     import { mediaCache } from "../../util/stores"
@@ -81,7 +81,7 @@
     {#if item.lines}
         <div class="align" style={item.align}>
             <div class="lines" style={lineStyleBox}>
-                {#each createVirtualBreaks(item.lines) as line}
+                {#each formatTextLines(item.lines) as line}
                     <div class="break" style="{lineStyle}{line.align}">
                         {#each line.text || [] as text}
                             <!-- remove font size it it's 0 -->
