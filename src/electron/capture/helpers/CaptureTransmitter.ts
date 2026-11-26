@@ -530,9 +530,10 @@ export class CaptureTransmitter {
         return { width: this.STAGE_FRAME_MAX_WIDTH, quality: 70 }
     }
 
-    static sendControllerThumbnail(outputId: string, jpeg: Buffer, size: Size) {
+    static sendControllerThumbnail(outputId: string, jpeg: Uint8Array, size: Size) {
         this.thumbWanted.delete(outputId)
-        toServer(CONTROLLER, { channel: "OUTPUT_FRAME", data: { frame: "data:image/jpeg;base64," + jpeg.toString("base64"), width: size.width, height: size.height } })
+        const base64 = Buffer.from(jpeg.buffer, jpeg.byteOffset, jpeg.byteLength).toString("base64")
+        toServer(CONTROLLER, { channel: "OUTPUT_FRAME", data: { frame: "data:image/jpeg;base64," + base64, width: size.width, height: size.height } })
     }
 
     private static stagePushIntervalMs() {
