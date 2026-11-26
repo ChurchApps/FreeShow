@@ -51,6 +51,26 @@ describe("SyncLedger — per-item merge (#3335)", () => {
             const b = new SyncLedger({ changes, deviceId: "B" })
 
             expect(b.resolveCloudEntry(ID, KEY, /* localExists */ false).action).toBe("skip")
+            expect(b.localMergedIn).toBe(false)
+        })
+
+        it("a local deletion (missing locally, unmarked in cloud) marks localMergedIn so it uploads", () => {
+            const changes = makeChanges(["A", "B"])
+            const a = new SyncLedger({ changes, deviceId: "A" })
+
+            expect(a.resolveCloudEntry(ID, KEY, /* localExists */ false).action).toBe("skip")
+            expect(changes.deleted[INST]).toContain("A")
+            expect(a.localMergedIn).toBe(true)
+        })
+
+        it("deleting an item previously created locally marks localMergedIn so it uploads", () => {
+            const changes = makeChanges(["A", "B"], { created: { [INST]: ["A"] } })
+            const cloudChanges = makeChanges(["A", "B"], { created: { [INST]: ["A"] } })
+            const a = new SyncLedger({ changes, cloudChanges, deviceId: "A" })
+
+            expect(a.resolveCloudEntry(ID, KEY, /* localExists */ false).action).toBe("skip")
+            expect(changes.deleted[INST]).toContain("A")
+            expect(a.localMergedIn).toBe(true)
         })
     })
 

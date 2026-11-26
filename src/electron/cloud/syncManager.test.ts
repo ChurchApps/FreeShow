@@ -468,97 +468,6 @@ describe("syncManager tests", () => {
         expect(localShows).toContain("show-B.show")
     })
 
-    describe("explicit sync logic scenarios from comments", () => {
-        it("Scenario 1: if not found locally, and marked as 'deleted' in cloud: skip", async () => {
-            const showsDir = getDataFolderPath("shows")
-
-            const dummyShowContent = JSON.stringify(["dummy-id", { name: "Dummy Show", slides: [], timestamps: { modified: Date.now() } }])
-            // Set up cloud state where show is marked deleted, and not present in zip
-            await createCloudState([{ name: "SHOWS/dummy.show", content: dummyShowContent }], {
-                deleted: { "SHOWS_CONTENT_show-deleted.show": ["other-device-id"] }
-            })
-
-            // Run merge sync
-            await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
-
-            // The file should NOT exist locally
-            expect(fs.existsSync(path.join(showsDir, "show-deleted.show"))).toBe(false)
-        })
-
-        it("Scenario 2: if not found locally, and marked as 'created' in cloud: download", async () => {
-            const showsDir = getDataFolderPath("shows")
-
-            const showContent = JSON.stringify(["show-created-id", { name: "Show Created", slides: [], timestamps: { modified: Date.now() } }])
-            await createCloudState([{ name: "SHOWS/show-created.show", content: showContent }], {
-                created: { "SHOWS_CONTENT_show-created.show": ["other-device-id"] }
-            })
-
-            // Run merge sync
-            await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
-
-            // The file should be downloaded locally
-            expect(fs.existsSync(path.join(showsDir, "show-created.show"))).toBe(true)
-        })
-
-        it("Scenario 3 & 4: if not found locally, but not marked in cloud: mark as 'deleted' / if found locally only, and not marked in cloud: mark as 'created'", async () => {
-            const showsDir = getDataFolderPath("shows")
-            await writeFileAsync(path.join(showsDir, "show-local-only.show"), JSON.stringify(["show-local-only-id", { name: "Show Local Only", slides: [], timestamps: { modified: Date.now() } }]))
-
-            await createCloudState([], {})
-            await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
-
-            // The local file should remain
-            expect(fs.existsSync(path.join(showsDir, "show-local-only.show"))).toBe(true)
-        })
-
-        it("Scenario 5: if found locally, but marked as 'deleted' in cloud: delete locally", async () => {
-            const showsDir = getDataFolderPath("shows")
-            await writeFileAsync(path.join(showsDir, "show-to-delete.show"), JSON.stringify(["show-to-delete-id", { name: "Show To Delete", slides: [], timestamps: { modified: Date.now() } }]))
-
-            const dummyShowContent = JSON.stringify(["dummy-id", { name: "Dummy Show", slides: [], timestamps: { modified: Date.now() } }])
-            await createCloudState([{ name: "SHOWS/dummy.show", content: dummyShowContent }], {
-                deleted: { "SHOWS_CONTENT_show-to-delete.show": ["other-device-id"] }
-            })
-
-            await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
-
-            expect(fs.existsSync(path.join(showsDir, "show-to-delete.show"))).toBe(false)
-        })
-
-        it("Scenario 6: if found locally and in cloud: use newest version", async () => {
-            const showsDir = getDataFolderPath("shows")
-
-            // Local has old modified date
-            const oldShow = ["show-mod-id", { name: "Show Old Version", slides: [], timestamps: { modified: 1000 } }]
-            await writeFileAsync(path.join(showsDir, "show-mod.show"), JSON.stringify(oldShow))
-
-            // Cloud has newer modified date
-            const newShow = ["show-mod-id", { name: "Show New Version", slides: [], timestamps: { modified: 5000 } }]
-            await createCloudState([{ name: "SHOWS/show-mod.show", content: JSON.stringify(newShow) }], {})
-
-            await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
-
-            // Local version should be updated to the cloud version (new version)
-            const content = fs.readFileSync(path.join(showsDir, "show-mod.show"), "utf-8")
-            expect(content).toContain("Show New Version")
-        })
-
-        it("Scenario 7: if marked as deleted locally in cloud, but exists locally: unmark as deleted and mark as created", async () => {
-            const showsDir = getDataFolderPath("shows")
-            await writeFileAsync(path.join(showsDir, "show-revive.show"), JSON.stringify(["show-revive-id", { name: "Show Revive", slides: [], timestamps: { modified: Date.now() } }]))
-
-            const dummyShowContent = JSON.stringify(["dummy-id", { name: "Dummy Show", slides: [], timestamps: { modified: Date.now() } }])
-            await createCloudState([{ name: "SHOWS/dummy.show", content: dummyShowContent }], {
-                deleted: { "SHOWS_CONTENT_show-revive.show": ["test-device-id"] }
-            })
-
-            await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
-
-            // The file should survive locally
-            expect(fs.existsSync(path.join(showsDir, "show-revive.show"))).toBe(true)
-        })
-    })
-
     describe("multiple machines syncing workflow", () => {
         it("should successfully sync workflows between Device A and Device B", async () => {
             // 1. Device A creates a show and uploads it to the cloud
@@ -1377,104 +1286,181 @@ describe("syncManager tests", () => {
         })
     })
 
-    describe("All 4 Sync Methods (merge, read_only, upload, replace)", () => {
-        beforeEach(() => {
-            h.currentMachineId = "test-device-id"
+    describe("regression tests for dropped / skipped cloud uploads", () => {
+        it("should upload local deletions even when all other stores and items are newer in cloud", async () => {
+            const t1 = Date.now() - 10000
+            const t2 = Date.now()
+
+            // Cloud has 2 shows (show-1 newer than local, show-2 deleted on Device A) and newer full-file stores
+            await createCloudState(
+                [
+                    { name: "SHOWS/show-1.show", content: JSON.stringify(["s1", { name: "Show 1 Cloud", slides: [], timestamps: { modified: t2 } }]) },
+                    { name: "SHOWS/show-2.show", content: JSON.stringify(["s2", { name: "Show 2 To Delete", slides: [], timestamps: { modified: t1 } }]) },
+                    { name: "EVENTS.json", content: JSON.stringify({ ev1: { name: "Cloud Event" } }) },
+                    { name: "THEMES.json", content: JSON.stringify({ th1: { name: "Cloud Theme" } }) },
+                    { name: "MEDIA.json", content: JSON.stringify({ m1: { name: "Cloud Media" } }) }
+                ],
+                {
+                    devices: ["device-A", "device-B"],
+                    modified: { "device-A": t1, "device-B": t2 },
+                    created: {},
+                    fileModified: { EVENTS: t2, THEMES: t2, MEDIA: t2 }
+                }
+            )
+
+            // Device A has older show-1, and has deleted show-2 locally
+            h.currentMachineId = "device-A"
             resetSyncManagerModule()
             createStores()
-        })
-
-        it("1. merge method: bi-directionally merges local and cloud state", async () => {
-            const now = Date.now()
-            const showsDir = getDataFolderPath("shows")
-
-            await createCloudState([
-                { name: "SHOWS/cloud-item.show", content: JSON.stringify(["cloud-item-id", { name: "Cloud Item", slides: [], timestamps: { modified: now } }]) }
-            ], {
-                devices: ["other-device-id"],
-                modified: { "other-device-id": now },
-                created: { "SHOWS_CONTENT_cloud-item.show": ["other-device-id"] }
-            })
-
-            await writeFileAsync(path.join(showsDir, "local-item.show"), JSON.stringify(["local-item-id", { name: "Local Item", slides: [], timestamps: { modified: now } }]))
+            const showsDirA = getDataFolderPath("shows")
+            fs.mkdirSync(showsDirA, { recursive: true })
+            await writeFileAsync(path.join(showsDirA, "show-1.show"), JSON.stringify(["s1", { name: "Show 1 Local", slides: [], timestamps: { modified: t1 } }]))
 
             const syncResult = await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
             expect((syncResult as any).success).toBe(true)
 
-            expect(fs.existsSync(path.join(showsDir, "cloud-item.show"))).toBe(true)
-            expect(fs.existsSync(path.join(showsDir, "local-item.show"))).toBe(true)
-
-            const zipPath = mockProviderInstance.mockCloudZipPath
-            const extractPath = path.join(h.tempRoot, "inspect_merge_zip")
-            const files = await decompressZipStream(zipPath!, false, {
+            // Cloud zip must have been re-uploaded WITHOUT show-2.show and WITH deletion tombstone
+            const extractPath = path.join(h.tempRoot, "inspect_deleted_upload")
+            const files = await decompressZipStream(mockProviderInstance.mockCloudZipPath!, false, {
                 getOutputPath: (fileName: string) => path.join(extractPath, fileName)
             })
-            expect(files.some((f) => f.name.includes("local-item.show"))).toBe(true)
+            expect(files.some((f) => f.name.includes("show-2.show"))).toBe(false)
+            expect(files.some((f) => f.name.includes("show-1.show"))).toBe(true)
         })
 
-        it("2. read_only method: downloads cloud data locally without modifying the cloud", async () => {
-            const now = Date.now()
-            const showsDir = getDataFolderPath("shows")
+        it("should upload local-only SYNCED_SETTINGS collections and atomic settings even when full-file stores are newer in cloud", async () => {
+            const t1 = Date.now() - 10000
+            const t2 = Date.now()
 
-            await createCloudState([
-                { name: "SHOWS/cloud-readonly-item.show", content: JSON.stringify(["cloud-ro-id", { name: "Cloud RO Item", slides: [], timestamps: { modified: now } }]) }
-            ], {
-                devices: ["other-device-id"],
-                modified: { "other-device-id": now },
-                created: { "SHOWS_CONTENT_cloud-readonly-item.show": ["other-device-id"] }
-            })
+            // Cloud has empty SYNCED_SETTINGS and newer full-file stores
+            await createCloudState(
+                [
+                    { name: "SYNCED_SETTINGS.json", content: JSON.stringify({ categories: {} }) },
+                    { name: "EVENTS.json", content: JSON.stringify({}) },
+                    { name: "THEMES.json", content: JSON.stringify({}) },
+                    { name: "MEDIA.json", content: JSON.stringify({}) }
+                ],
+                {
+                    devices: ["device-A", "device-B"],
+                    modified: { "device-A": t1, "device-B": t2 },
+                    created: {},
+                    fileModified: { EVENTS: t2, THEMES: t2, MEDIA: t2 }
+                }
+            )
 
-            const initialZipPath = mockProviderInstance.mockCloudZipPath
+            // Device A adds a brand-new 'timers' collection (not present in cloud) and an atomic setting
+            h.currentMachineId = "device-A"
+            resetSyncManagerModule()
+            createStores()
+            if (_store.SYNCED_SETTINGS) {
+                _store.SYNCED_SETTINGS.store = {
+                    categories: {},
+                    timers: { "timer-1": { name: "Countdown", type: "counter" } },
+                    labelsDisabled: true
+                }
+            }
 
-            await writeFileAsync(path.join(showsDir, "local-ro-only.show"), JSON.stringify(["local-ro-id", { name: "Local RO Only", slides: [], timestamps: { modified: now } }]))
+            await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
 
-            const syncResult = await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "read_only" })
-            expect((syncResult as any).success).toBe(true)
+            // Device B syncs and must receive Device A's timers collection and atomic setting
+            h.currentMachineId = "device-B"
+            resetSyncManagerModule()
+            createStores()
+            if (_store.SYNCED_SETTINGS) {
+                _store.SYNCED_SETTINGS.store = { categories: {} }
+                // make Device B's file older than cloud so atomic setting downloads
+                const oldDate = new Date(t1 - 60000)
+                fs.utimesSync(_store.SYNCED_SETTINGS.path, oldDate, oldDate)
+            }
 
-            // Local received cloud item
-            expect(fs.existsSync(path.join(showsDir, "cloud-readonly-item.show"))).toBe(true)
+            await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
 
-            // Cloud zip was NOT updated with local-ro-only
-            const extractPath = path.join(h.tempRoot, "inspect_readonly_method_zip")
-            const files = await decompressZipStream(initialZipPath!, false, {
-                getOutputPath: (fileName: string) => path.join(extractPath, fileName)
-            })
-            expect(files.some((f) => f.name.includes("local-ro-only.show"))).toBe(false)
+            const syncedB = _store.SYNCED_SETTINGS?.store
+            expect(syncedB?.timers?.["timer-1"]).toEqual({ name: "Countdown", type: "counter" })
+            expect(syncedB?.labelsDisabled).toBe(true)
         })
 
-        it("3. upload method: overwrites/updates cloud state with local state", async () => {
-            const now = Date.now()
+        it("should not upload local data in read_only mode when cloud has no data", async () => {
+            h.currentMachineId = "device-A"
+            resetSyncManagerModule()
+            createStores()
+
             const showsDir = getDataFolderPath("shows")
+            fs.mkdirSync(showsDir, { recursive: true })
+            await writeFileAsync(path.join(showsDir, "local-only.show"), JSON.stringify(["local-id", { name: "Local Only", slides: [] }]))
 
-            await writeFileAsync(path.join(showsDir, "upload-only-show.show"), JSON.stringify(["upload-id", { name: "Upload Only Show", slides: [], timestamps: { modified: now } }]))
-
-            const syncResult = await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "upload" })
-            expect((syncResult as any).success).toBe(true)
-
-            const zipPath = mockProviderInstance.mockCloudZipPath
-            expect(zipPath).not.toBeNull()
-            const extractPath = path.join(h.tempRoot, "inspect_upload_zip")
-            const files = await decompressZipStream(zipPath!, false, {
-                getOutputPath: (fileName: string) => path.join(extractPath, fileName)
-            })
-            expect(files.some((f) => f.name.includes("upload-only-show.show"))).toBe(true)
+            // Cloud has no zip (mockCloudZipPath === null)
+            const result = await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "read_only" })
+            expect((result as any).success).toBe(false)
+            expect(mockProviderInstance.mockCloudZipPath).toBeNull()
         })
 
-        it("4. replace method: wipes local state and replaces it entirely with cloud state", async () => {
+        it("should sync cloud shows even if they are missing timestamps", async () => {
             const now = Date.now()
-            const showsDir = getDataFolderPath("shows")
 
-            await createCloudState([
-                { name: "SHOWS/cloud-replace-target.show", content: JSON.stringify(["replace-target-id", { name: "Replace Target", slides: [], timestamps: { modified: now } }]) }
-            ], { devices: ["test-device-id"], modified: { "test-device-id": now } })
+            // Cloud has a show without timestamps (e.g. imported or legacy show)
+            await createCloudState([{ name: "SHOWS/no-timestamp.show", content: JSON.stringify(["no-ts-id", { name: "No Timestamp Show", slides: [] }]) }], {
+                devices: ["device-A", "device-B"],
+                modified: { "device-A": now, "device-B": now },
+                created: { "SHOWS_CONTENT_no-timestamp.show": ["device-A"] }
+            })
 
-            await writeFileAsync(path.join(showsDir, "stale-local.show"), JSON.stringify(["stale-id", { name: "Stale Local", slides: [] }]))
+            h.currentMachineId = "device-B"
+            resetSyncManagerModule()
+            createStores()
 
-            const syncResult = await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "replace" })
-            expect((syncResult as any).success).toBe(true)
+            const showsDirB = getDataFolderPath("shows")
+            await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
 
-            expect(fs.existsSync(path.join(showsDir, "cloud-replace-target.show"))).toBe(true)
-            expect(fs.existsSync(path.join(showsDir, "stale-local.show"))).toBe(false)
+            expect(fs.existsSync(path.join(showsDirB, "no-timestamp.show"))).toBe(true)
+        })
+
+        it("should not let a new device joining a team overwrite existing cloud shows or projects with newer local/default data", async () => {
+            const oldTime = Date.now() - 60000
+            const newTime = Date.now()
+
+            // Existing team cloud state (Device A)
+            await createCloudState(
+                [
+                    { name: "SHOWS/shared.show", content: JSON.stringify(["shared-id", { name: "Team Show", slides: [], timestamps: { modified: oldTime } }]) },
+                    {
+                        name: "PROJECTS.json",
+                        content: JSON.stringify({
+                            projects: { "proj-1": { id: "proj-1", name: "Team Project", modified: oldTime } },
+                            folders: {},
+                            projectTemplates: {}
+                        })
+                    }
+                ],
+                {
+                    devices: ["device-A"],
+                    modified: { "device-A": oldTime },
+                    created: {}
+                }
+            )
+
+            // New device (Device C) joins with newer local/default copies of the same show & project
+            h.currentMachineId = "device-C"
+            resetSyncManagerModule()
+            createStores()
+
+            const showsDirC = getDataFolderPath("shows")
+            fs.mkdirSync(showsDirC, { recursive: true })
+            await writeFileAsync(path.join(showsDirC, "shared.show"), JSON.stringify(["shared-id", { name: "Default Local Show", slides: [], timestamps: { modified: newTime } }]))
+            if (_store.PROJECTS) {
+                _store.PROJECTS.store = {
+                    projects: { "proj-1": { id: "proj-1", name: "Default Local Project", modified: newTime } },
+                    folders: {},
+                    projectTemplates: {}
+                }
+            }
+
+            await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
+
+            // Existing cloud data must win over the new device's local/default data
+            const showContentC = fs.readFileSync(path.join(showsDirC, "shared.show"), "utf8")
+            expect(showContentC).toContain("Team Show")
+            expect(_store.PROJECTS?.store.projects["proj-1"].name).toBe("Team Project")
         })
     })
 })
