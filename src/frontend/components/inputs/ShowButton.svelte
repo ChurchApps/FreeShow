@@ -86,6 +86,8 @@
                 //     subicon = type
             } else if (type === "effect") {
                 iconID = "effects"
+            } else if (type === "player" && ($playerVideos[id]?.type === "website" || show.data?.type === "website")) {
+                iconID = "web"
             }
             // else if (type === "player") iconID = "live"
             else iconID = type
@@ -239,6 +241,10 @@
 
         if (type === "player") {
             const player = $playerVideos[id] || show.data
+            if (player?.type === "website") {
+                thumbnailPath = player.thumbnail || ""
+                return
+            }
             if (player?.type === "youtube") {
                 thumbnailPath = `https://i.ytimg.com/vi/${player.id}/sddefault.jpg`
                 return

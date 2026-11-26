@@ -91,6 +91,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
 
     const cloudDataPath = await provider.getData(data.churchId, data.teamId, EXTRACT_LOCATION)
     if (!cloudDataPath) {
+        if (readOnly) return await finish(false, "No cloud data found.")
         const uploadResult = await uploadLocalData()
         return await finish(uploadResult.success, uploadResult.error)
     }
@@ -142,6 +143,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
             if (!deviceExists) {
                 markAsNewSync()
                 CHANGES.devices.push(deviceId)
+                localMergedIn = true
             } else if (isNewDevice) {
                 removeDeviceRecords()
             }
@@ -375,16 +377,18 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
             // device's items (see #3335). Items present on both sides have no per-item "modified" to compare,
             // so conflicts fall back to whichever whole settings file is newer (see #3772).
             const cloudFileIsNewer = isNewDevice || (await isCloudNewerThanFile(localStore.path, modifiedDates[file.name]))
-            for (const [type, object] of Object.entries<{ [key: string]: any }>(cloudFileData)) {
-                const isCollection = SYNCED_SETTINGS_COLLECTIONS.includes(type) && !!object && typeof object === "object" && !Array.isArray(object)
+            for (const type of new Set([...Object.keys(cloudFileData), ...Object.keys(localData)])) {
+                const object = cloudFileData[type]
+                const isCollection = SYNCED_SETTINGS_COLLECTIONS.includes(type)
                 if (!isCollection) {
                     // atomic setting (e.g. drawSettings): keep newest-file-wins
-                    if (cloudFileIsNewer) localData[type] = object
+                    if (cloudFileIsNewer && type in cloudFileData) localData[type] = object
+                    else if (!cloudFileIsNewer && JSON.stringify(localData[type]) !== JSON.stringify(object)) localMergedIn = true
                     continue
                 }
 
                 if (!localData[type] || typeof localData[type] !== "object") localData[type] = {}
-                localData[type] = ledger.mergeCollection(id, type, object, localData[type], cloudFileIsNewer)
+                localData[type] = ledger.mergeCollection(id, type, object || {}, localData[type], cloudFileIsNewer)
             }
         } else {
             // merge individual objects
@@ -654,7 +658,6 @@ async function deleteUnusedZips(folderPath: string, excludeZip: string) {
 
 async function checkCloudEntry(id: ChangeId, key: string, cloudData: any, getLocalData: () => Promise<any> | any, isCloudNewer?: () => Promise<boolean>) {
     const cloudModTime = getModifiedDate(cloudData)
-    if (cloudData !== null && !cloudModTime) return { action: "skip" } // invalid: no modified time
 
     const localValue = await getLocalData()
 
@@ -663,10 +666,10 @@ async function checkCloudEntry(id: ChangeId, key: string, cloudData: any, getLoc
 
     // exists both locally and in cloud → resolve the tie by modified time (newest wins) and let the
     // ledger apply it — it still forces delete/skip first if the item is marked deleted/created.
-    let localModTime = getModifiedDate(localValue)
-    if (cloudData !== null && !localModTime) localModTime = setModifiedDate()
+    const localModTime = getModifiedDate(localValue)
 
-    const cloudIsNewer = isCloudNewer ? await isCloudNewer() : cloudModTime > localModTime
+    // new devices will download from cloud if existing
+    const cloudIsNewer = isNewDevice || (isCloudNewer ? await isCloudNewer() : cloudModTime > localModTime)
     return ledger.resolveCloudEntry(id, key, true, cloudIsNewer)
 
     function getModifiedDate(data: any): number {
@@ -676,13 +679,6 @@ async function checkCloudEntry(id: ChangeId, key: string, cloudData: any, getLoc
         if (data.timestamps?.created) return data.timestamps.created
         // everything else
         return data.modified || 0
-    }
-
-    // some entries might be missing the "modified" key, this ensures they all have it
-    function setModifiedDate() {
-        const now = Date.now()
-        localValue.modified = now
-        return now
     }
 }
 
@@ -724,6 +720,10 @@ type ChangeId = keyof typeof _store | "SHOWS_CONTENT" | "BIBLES"
 // keep track of last changed time so we can know which devices to ignore eventually
 function getLatestChanges() {
     const deviceId = getDeviceId()
+
+    if (!CHANGES.devices) CHANGES.devices = []
+    if (!CHANGES.devices.includes(deviceId)) CHANGES.devices.push(deviceId)
+
     if (!CHANGES.modified) CHANGES.modified = {}
     CHANGES.modified[deviceId] = Date.now()
     return CHANGES

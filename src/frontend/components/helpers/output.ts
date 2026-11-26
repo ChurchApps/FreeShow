@@ -47,7 +47,8 @@ import {
     theme,
     themes,
     transitionData,
-    usageLog
+    usageLog,
+    playerVideos
 } from "../../stores"
 import { trackScriptureUsage } from "../../utils/analytics"
 import { isMainWindow, isOutputWindow, newToast } from "../../utils/common"
@@ -370,7 +371,7 @@ function checkAudio(type: string, data: any, allOutputIds: string[], outs: strin
                 if (bgPath && bgPath !== newPath) VideoPlayer.stop(bgPath, outputId)
             })
 
-            VideoPlayer.start(newPath, { loop: data.loop, muted: data.muted, startAt: data.startAt || 0, isOnline: data.type === "player", hasActiveBg }, allOutputIds)
+            VideoPlayer.start(newPath, { loop: data.loop, muted: data.muted, startAt: data.startAt || 0, isOnline: data.type === "player" && get(playerVideos)[newPath]?.type !== "website", hasActiveBg }, allOutputIds)
         } else {
             VideoPlayer.stopByOutputIds(allOutputIds)
         }
@@ -1861,11 +1862,10 @@ export function getItemsCountByType(items: Item[]) {
 
 export const defaultLayers: string[] = ["background", "slide", "overlays"]
 
+export const GET_DEFAULT_STYLE = () => ({ name: translateText("example.default") }) as Styles
 export function getCurrentStyle(stylesUpdater: { [key: string]: Styles }, styleId: string | undefined): Styles {
-    const defaultStyle = { name: "" }
-
-    if (!styleId) return defaultStyle
-    return stylesUpdater[styleId] || defaultStyle
+    if (!styleId) return GET_DEFAULT_STYLE()
+    return stylesUpdater[styleId] || GET_DEFAULT_STYLE()
 }
 
 export function getOutputTransitions(slideData: SlideData | null, styleTransition: any, transitionDataUpdater: any, disableTransitions: boolean) {

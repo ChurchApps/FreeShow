@@ -208,6 +208,8 @@ export function toStageStreamSubscribers(msg: any) {
 
 // FUNCTIONS
 
+let controllerThumbAt: { [outputId: string]: number } = {}
+
 function initialize(id: ServerName, socket: Socket) {
     const name: string = getOS(socket.handshake.headers["user-agent"] || "")
     toApp(id, { channel: "CONNECTION", id: socket.id, data: { name } })
@@ -224,6 +226,10 @@ function initialize(id: ServerName, socket: Socket) {
             const outputId = msg.data.outputId
             const window = OutputHelper.getOutput(outputId)?.window
             if (!window || window.isDestroyed()) return
+
+            const minInterval = msg.data.drawing ? 120 : 700
+            if (Date.now() - (controllerThumbAt[outputId] || 0) < minInterval) return
+            controllerThumbAt[outputId] = Date.now()
 
             // the capture worker encodes the thumbnail; only an output it is not capturing is captured here
             CaptureHelper.Transmitter.requestControllerThumbnail(outputId)

@@ -379,7 +379,7 @@
                 <video style={mediaStyleString} src={encodeFilePath(mediaPath)} on:loadedmetadata={onLoad} on:playing={onPlay} bind:this={video} bind:currentTime={videoTime} bind:paused={videoData.paused} bind:duration={videoData.duration} bind:muted={videoData.muted} volume={Math.min(1, Math.max(0, mainVol))} loop={videoData.loop}>
                     <track kind="captions" src="" label="No captions available" />
                     {#each tracks as track}
-                        <track label={track.name} srclang={track.lang} kind="subtitles" src="data:text/vtt;charset=utf-8,{encodeURI(track.vtt)}" />
+                        <track label={track.name} srclang={track.lang} kind="subtitles" src="data:text/vtt;charset=utf-8,{encodeURIComponent(track.vtt)}" />
                     {/each}
                 </video>
 

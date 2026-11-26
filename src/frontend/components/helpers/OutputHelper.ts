@@ -5,7 +5,7 @@ import type { ProjectShowRef, ShowRef } from "../../../types/Projects"
 import type { LayoutRef, OutSlide, Slide } from "../../../types/Show"
 import { AudioPlayer } from "../../audio/audioPlayer"
 import { sendMain } from "../../IPC/main"
-import { activeFocus, activeProject, activeShow, focusMode, outLocked, outputs, outputSlideCache, projects, showsCache, special } from "../../stores"
+import { activeFocus, activeProject, activeShow, focusMode, outLocked, outputs, outputSlideCache, playerVideos, projects, showsCache, special } from "../../stores"
 import { playFolder, togglePlayingMedia } from "../../utils/shortcuts"
 import { openProjectItem } from "../show/project"
 import { clone } from "./array"
@@ -110,7 +110,7 @@ export class OutputHelper {
     // don't go to next if active is same as currently outputted video/audio
     private static toggleActiveMedia(outputId: string) {
         const outBg = this.getOut(outputId).background
-        if ((outBg?.type === "video" || outBg?.type === "player") && (outBg?.path || outBg?.id) === this.getActiveItem()?.id) {
+        if ((outBg?.type === "video" || (outBg?.type === "player" && get(playerVideos)[outBg?.id || ""]?.type !== "website")) && (outBg?.path || outBg?.id) === this.getActiveItem()?.id) {
             togglePlayingMedia()
             return true
         }

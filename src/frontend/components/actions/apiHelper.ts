@@ -8,8 +8,8 @@ import { clearAudio } from "../../audio/audioFading"
 import { AudioPlayer } from "../../audio/audioPlayer"
 import { AudioPlaylist } from "../../audio/audioPlaylist"
 import { dbToGain } from "../../audio/dBUtils"
-import { activeDrawerTab, activeEdit, activePage, activeProject, activeShow, activeTimers, audioChannelsData, audioPlaylists, audioRouting, draw, drawSettings, drawTool, folders, groupNumbers, groups, media, openScripture, outLocked, outputs, overlays, pdfImports, playingAudio, playingMetronome, projects, refreshEditSlide, selected, shows, showsCache, sortedShowsList, special, styles, timers, variables } from "../../stores"
-import { newToast, triggerFunction } from "../../utils/common"
+import { activeDrawerTab, activeEdit, activePage, activeProject, activeShow, activeTimers, audioChannelsData, audioPlaylists, audioRouting, draw, drawSettings, drawTool, folders, groupNumbers, groups, media, openScripture, outLocked, outputs, overlays, pdfImports, playingAudio, playingMetronome, projects, refreshEditSlide, selected, shows, showsCache, sortedShowsList, special, sttTempDisabled, styles, timers, variables } from "../../stores"
+import { newToast } from "../../utils/common"
 import { send } from "../../utils/request"
 import { parseEngScriptureRefToNumbers, resolveScriptureReference } from "../drawer/bible/scripture"
 import { isOutputRecording, startOutputRecording, stopOutputRecording } from "../drawer/live/recorder"
@@ -241,6 +241,10 @@ export function selectSlideByName(name: string) {
 // WIP duplicate of Slides.svelte:57 (slideClick)
 function outputSlide(showRef, data: API_slide_index) {
     if (get(outLocked)) return
+
+    // don't output if already outputted
+    const outSlide = getFirstActiveOutput()?.out?.slide
+    if (outSlide?.id === data.showId && outSlide?.layout === data.layoutId && outSlide?.index === data.index) return
 
     const showId = data.showId || get(activeShow)?.id || ""
     updateOut(showId, data.index, showRef)
@@ -952,8 +956,9 @@ export function toggleSttListening(data: API_toggle_specific = {}) {
     if ((data.value as any) === "false") state = false
     else if ((data.value as any) === "true") state = true
 
-    const stateStr = state === true ? "on" : state === false ? "off" : "toggle"
-    triggerFunction(`toggle_stt_listening:${stateStr}`)
+    if (state === true) sttTempDisabled.set(false)
+    else if (state === false) sttTempDisabled.set(true)
+    else sttTempDisabled.set(!get(sttTempDisabled))
 }
 
 export function toggleLogSongUsage(data: API_toggle_specific) {

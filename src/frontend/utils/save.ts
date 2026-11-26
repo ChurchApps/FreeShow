@@ -121,12 +121,15 @@ import { newToast, setStatus, startAutosave } from "./common"
 import { syncDrive } from "./drive"
 import { autoDisableRemoteController, stopRemoteController } from "./remoteController"
 
+let savePromise: Promise<void> | null = null
+let resolveSave: (() => void) | null = null
+
 export function save(closeWhenFinished = false, customTriggers: SaveActions = {}) {
     updateSyncedOutputs()
     startAutosave() // reset auto save timer
 
     // don't save again while saving
-    if (get(statusIndicator) === "saving") return
+    if (get(statusIndicator) === "saving") return savePromise || Promise.resolve()
 
     console.info("SAVING...")
     if ((!customTriggers.autosave || !get(saved)) && !customTriggers.backup) {
@@ -248,8 +251,17 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
     renamedShows.set([])
 
     if (customTriggers.backup) newToast("settings.backup_started")
-    // trigger toast before saving
-    setTimeout(() => sendMain(Main.SAVE, saveData))
+
+    return (savePromise = new Promise<void>((resolve) => {
+        const timer = setTimeout(() => resolveSave?.(), 10000)
+        resolveSave = () => {
+            clearTimeout(timer)
+            resolveSave = savePromise = null
+            resolve()
+        }
+
+        sendMain(Main.SAVE, saveData)
+    }))
 }
 
 export function getSyncedSettings(): { [key in SaveListSyncedSettings]: any } {
@@ -291,6 +303,8 @@ export function getSyncedSettings(): { [key in SaveListSyncedSettings]: any } {
 }
 
 export async function saveComplete({ closeWhenFinished, customTriggers }: { closeWhenFinished: boolean; customTriggers?: SaveActions }) {
+    resolveSave?.()
+
     const alreadySaved = get(saved)
     if (!closeWhenFinished) {
         if ((!customTriggers?.autosave || !alreadySaved) && !customTriggers?.backup) setStatus("saved", 1)

@@ -20,7 +20,7 @@ const PCI_VENDOR_NAMES: { [id: number]: string } = {
 function vaPackagesFor(vendorName: string): string[] {
     if (vendorName === "Intel") return ["intel-media-va-driver-non-free"]
     if (vendorName === "AMD") return ["mesa-va-drivers"]
-    if (vendorName === "NVIDIA") return ["nvidia-vaapi-driver"]
+    if (vendorName === "NVIDIA") return [] // Chromium blocks VA-API on NVIDIA on Linux
     return ["intel-media-va-driver-non-free", "mesa-va-drivers"]
 }
 
@@ -74,6 +74,32 @@ export async function listGraphicsDevices(): Promise<GraphicsDeviceOption[]> {
     return [] // Windows: no reliable persistable mechanism (see header) — selector not shown
 }
 
+// When graphicsDevice is auto on multi-GPU Linux systems, prefer the GPU driving connected displays
+function getOptimalLinuxRenderNode(): string | null {
+    try {
+        const nodes = fs.readdirSync("/dev/dri").filter((n) => /^renderD\d+$/.test(n))
+        if (nodes.length < 2) return null
+
+        // Pick the render node whose physical device owns an active display connector
+        for (const n of nodes) {
+            const devPath = path.resolve("/sys/class/drm", n, "device")
+            const cardMatch = fs.readdirSync("/sys/class/drm").some((entry) => {
+                if (!entry.includes("-")) return false
+                try {
+                    const isConnected = fs.readFileSync(path.join("/sys/class/drm", entry, "status"), "utf8").trim() === "connected"
+                    return isConnected && path.resolve("/sys/class/drm", entry, "device") === devPath
+                } catch {
+                    return false
+                }
+            })
+            if (cardMatch) return "/dev/dri/" + n
+        }
+        return null
+    } catch {
+        return null
+    }
+}
+
 // ---- application (BEFORE app ready; switches must precede GPU process launch) ----
 
 export function applyGraphicsDeviceSelection() {
@@ -83,7 +109,8 @@ export function applyGraphicsDeviceSelection() {
 
     if (isLinux) {
         // env override kept as a no-rebuild debugging lever; the Settings value is the product mechanism
-        const node = process.env.FS_LINUX_RENDER_NODE || configured
+        const autoNode = !configured ? getOptimalLinuxRenderNode() : null
+        const node = process.env.FS_LINUX_RENDER_NODE || configured || autoNode
         if (!node) return
         if (!/^\/dev\/dri\/renderD\d+$/.test(node)) {
             console.warn(`[GPU] configured graphics device "${node}" is not a DRM render node path, using auto`)
@@ -318,7 +345,9 @@ async function runGpuHealthCheck() {
         const drivers = findVaDrivers()
         const configuredNode = config.get("graphicsDevice") || ""
         const candidateVendors = configuredNode ? [linuxNodeVendor(configuredNode) || vendorName] : allLinuxGpuVendors()
-        const missingVendors = (candidateVendors.length ? candidateVendors : [vendorName]).filter((v) => !vendorVaDriverPresent(v, drivers))
+        const missingVendors = (candidateVendors.length ? candidateVendors : [vendorName])
+            .filter((v) => v !== "NVIDIA") // Chromium blocks NVIDIA VA-API by default; avoid false missing-driver alarms
+            .filter((v) => !vendorVaDriverPresent(v, drivers))
         vaDriverMissing = missingVendors.length > 0
         packages = [...new Set(missingVendors.flatMap((v) => vaPackagesFor(v)))]
         console.info(`[GPU-HEALTH] VA drivers found: ${drivers.length ? drivers.join(", ") : "NONE"} (gpus=${candidateVendors.join("+") || "?"} missing=${missingVendors.join("+") || "none"}) permissionDenied=${permissionDenied}`)

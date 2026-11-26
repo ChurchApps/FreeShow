@@ -205,9 +205,22 @@ export function mergeCustomFonts(systemFontOptions: DropdownOptions, customFonts
 function filePathToURL(filePath: string) {
     if (!filePath || /^file:\/\//i.test(filePath)) return filePath
 
-    let fileUrl = filePath.replace(/\\/g, "/").replace(/\0/g, "")
-    if (/^[A-Za-z]:\//.test(fileUrl)) fileUrl = "/" + fileUrl
-    return "file://" + encodeURI(fileUrl)
+    // normalize all backslashes to forward slashes, and clear null bytes
+    let cleanPath = filePath.replace(/\\/g, "/").replace(/\0/g, "")
+
+    // don't encode the ":" in Windows drive letters ("C:/")
+    let drivePrefix = ""
+    const driveMatch = cleanPath.match(/^([A-Za-z]:)(\/|$)/)
+    if (driveMatch) {
+        drivePrefix = driveMatch[1] + "/"
+        cleanPath = cleanPath.substring(drivePrefix.length)
+    }
+
+    // encode each folder/file name
+    const encodedPath = cleanPath.split("/").map(encodeURIComponent).join("/")
+
+    const fullPath = drivePrefix + encodedPath
+    return "file:///" + fullPath.replace(/^\/+/, "")
 }
 
 export function loadCustomFonts(localFonts: CustomFont[]) {

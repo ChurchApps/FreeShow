@@ -419,7 +419,7 @@ export type Popups =
     | "manage_colors"
     | "manage_metadata"
     | "manage_dynamic_values"
-    | "player"
+    | "create_online"
     | "template_style_overrides"
     | "regex_manager"
     | "rename"

@@ -1,6 +1,6 @@
 import type { ICommonTagsResult } from "music-metadata"
 import type { ContentProviderId } from "../../electron/contentProviders/base/types"
-import type { RtmpStatus } from "../Output"
+import type { RtmpStatus, StreamStats } from "../Output"
 import type { TrimmedShows } from "../Show"
 
 export enum ToMain {
@@ -19,6 +19,7 @@ export enum ToMain {
     MEDIA_DOWNLOAD_PROGRESS = "MEDIA_DOWNLOAD_PROGRESS",
     PDF_IMPORT_PROGRESS = "PDF_IMPORT_PROGRESS",
     RTMP_STATUS = "RTMP_STATUS",
+    STREAM_STATS = "STREAM_STATS",
     ICECAST_STATUS = "ICECAST_STATUS",
     GPU_HEALTH = "GPU_HEALTH",
     // AI
@@ -58,6 +59,7 @@ export interface ToMainSendPayloads {
     [ToMain.MEDIA_DOWNLOAD_PROGRESS]: { url: string; progress: number; total: number; status: "downloading" | "complete" | "error"; name?: string }
     [ToMain.PDF_IMPORT_PROGRESS]: { filePath: string; name: string; progress: number; total: number; status: "importing" | "complete" | "error"; message?: string }
     [ToMain.RTMP_STATUS]: { outputId: string; destinations: RtmpStatus }
+    [ToMain.STREAM_STATS]: { outputId: string; stats: StreamStats | null }
     [ToMain.ICECAST_STATUS]: { connected: boolean; connecting?: boolean; error?: string }
     [ToMain.GPU_HEALTH]: { issue: "compositing" | "video-decode"; platform: string; vendorName: string; vaDriverMissing: boolean; packages: string[]; permissionDenied?: boolean }
     // Unified provider callbacks

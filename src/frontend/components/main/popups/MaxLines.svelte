@@ -1,5 +1,6 @@
 <script lang="ts">
     import { activePopup, popupData, styles } from "../../../stores"
+    import { GET_DEFAULT_STYLE } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
     import InputRow from "../../input/InputRow.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
@@ -24,9 +25,14 @@
     }
 
     let styleId = $popupData.styleId || ""
-    let style = $styles[styleId]
+    let style = $styles[styleId] || GET_DEFAULT_STYLE()
     function updateStyle(key: string, value: any) {
+        if (!styleId) styleId = "default"
+
         styles.update((a) => {
+            // create a style if nothing exists
+            if (!a[styleId]) a[styleId] = GET_DEFAULT_STYLE()
+
             a[styleId][key] = value
             return a
         })

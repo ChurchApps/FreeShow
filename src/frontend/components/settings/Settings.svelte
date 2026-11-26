@@ -1,11 +1,11 @@
 <script lang="ts">
-    import { resetAudioRouting } from "../../audio/routing/audioRoutingInit"
+    import SmartSettings from "../../ai/components/settings/SmartSettings.svelte"
     import { dictionary, settingsTab } from "../../stores"
     import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import Tip from "../main/Tip.svelte"
-    import SmartSettings from "../../ai/components/settings/SmartSettings.svelte"
+    import AudioGeneral from "./tabs/AudioGeneral.svelte"
     import AudioRouting from "./tabs/AudioRouting.svelte"
     import Connection from "./tabs/Connection.svelte"
     import Files from "./tabs/Files.svelte"
@@ -43,6 +43,7 @@
     }
 
     let showGlobalOutputOptions = false
+    let showGlobalAudioOptions = false
 </script>
 
 <main>
@@ -57,7 +58,9 @@
             {#if tabId === "styles"}
                 <StylesButtons />
             {:else if tabId === "audio"}
-                <MaterialButton title="actions.reset" icon="reset" on:click={resetAudioRouting} />
+                <MaterialButton title="create_show.more_options" on:click={() => (showGlobalAudioOptions = !showGlobalAudioOptions)}>
+                    <Icon id="options" white={!showGlobalAudioOptions} />
+                </MaterialButton>
             {:else if tabId === "profiles"}
                 <ProfilesButtons />
             {:else if tabId === "theme"}
@@ -70,7 +73,7 @@
         </div>
     </div>
 
-    <div class="scroll" style={tabId === "audio" ? "--padding: 20px;" : ""} on:scroll={scroll}>
+    <div class="scroll" style={tabId === "audio" && !showGlobalAudioOptions ? "--padding: 20px;" : ""} on:scroll={scroll}>
         {#if tabId === "general"}
             <General />
         {:else if tabId === "display_settings"}
@@ -82,7 +85,11 @@
         {:else if tabId === "styles"}
             <Styles />
         {:else if tabId === "audio"}
-            <AudioRouting />
+            {#if showGlobalAudioOptions}
+                <AudioGeneral />
+            {:else}
+                <AudioRouting />
+            {/if}
         {:else if tabId === "connection"}
             <Connection />
         {:else if tabId === "files"}

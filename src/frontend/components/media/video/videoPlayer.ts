@@ -295,7 +295,8 @@ export class VideoPlayer {
             if (audio.duration > 1 && audio.currentTime < audio.duration - 1) {
                 const duration = audio.duration
                 const currentTime = Math.min(audio.currentTime, duration)
-                const timeTick = new TimeInterpolator()
+                const speedVal = Number(this.getOptions(originalId, outputIds)?.speed) || 1
+                const timeTick = new TimeInterpolator(undefined, speedVal)
                 timeTick.update(currentTime)
                 timeTick.play()
 
@@ -795,6 +796,8 @@ export class VideoPlayer {
         if (audio instanceof HTMLAudioElement) {
             audio.playbackRate = value
             if ("preservesPitch" in audio) audio.preservesPitch = true
+        } else if ("timeTick" in audio) {
+            audio.timeTick.setSpeed(value)
         }
         AudioAnalyser.setTempo(path, 1, outputId)
     }

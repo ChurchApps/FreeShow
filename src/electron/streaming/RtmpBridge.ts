@@ -1,29 +1,19 @@
 import { execFile } from "child_process"
-import { SenderCapture } from "../capture/SenderCapture"
+import { ToMain } from "../../types/IPC/ToMain"
 import type { RtmpDestination, RtmpStatus } from "../../types/Output"
+import { SenderCapture } from "../capture/SenderCapture"
+import { sendToMain } from "../IPC/main"
 import { NdiSender } from "../ndi/NdiSender"
 import { resolveEncoder } from "./encoderDetection"
-import { resolveFfmpegPath } from "./ffmpegManager"
 import type { EncoderId } from "./encoderProfiles"
+import { resolveFfmpegPath } from "./ffmpegManager"
 import type { StreamConfig } from "./RtmpStreamer"
 
 // Main-side proxy for the RTMP engine in the capture worker: resolves ffmpeg and the encoder, mirrors status.
-type StatusListener = (outputId: string, destinations: RtmpStatus) => void
-type NoticeListener = (message: string) => void
-
 export class RtmpBridge {
     private static running = new Map<string, { config: StreamConfig; destinations: RtmpDestination[] }>()
     private static status = new Map<string, RtmpStatus>()
-    private static statusListener: StatusListener | null = null
-    private static noticeListener: NoticeListener | null = null
     private static hooked = false
-
-    static setStatusListener(listener: StatusListener) {
-        this.statusListener = listener
-    }
-    static setNoticeListener(listener: NoticeListener) {
-        this.noticeListener = listener
-    }
 
     static isRunning(outputId: string): boolean {
         return this.running.has(outputId)
@@ -54,16 +44,20 @@ export class RtmpBridge {
         switch (msg?.type) {
             case "rtmpStatus":
                 this.status.set(msg.outputId, msg.destinations || {})
-                this.statusListener?.(msg.outputId, msg.destinations || {})
+                sendToMain(ToMain.RTMP_STATUS, { outputId: msg.outputId, destinations: msg.destinations || {} })
+                break
+            case "rtmpStats":
+                sendToMain(ToMain.STREAM_STATS, { outputId: msg.outputId, stats: msg.stats || null })
                 break
             case "rtmpStopped":
                 // the engine stopped on its own (no destinations left, encoder gave up)
                 this.running.delete(msg.outputId)
                 this.status.delete(msg.outputId)
-                this.statusListener?.(msg.outputId, {})
+                sendToMain(ToMain.RTMP_STATUS, { outputId: msg.outputId, destinations: {} })
+                sendToMain(ToMain.STREAM_STATS, { outputId: msg.outputId, stats: null })
                 break
             case "rtmpNotice":
-                this.noticeListener?.(String(msg.message || ""))
+                sendToMain(ToMain.ALERT, String(msg.message || ""))
                 break
         }
     }
@@ -105,6 +99,7 @@ export class RtmpBridge {
         if (!this.running.has(outputId)) return
         this.running.delete(outputId)
         this.status.delete(outputId)
+        sendToMain(ToMain.STREAM_STATS, { outputId, stats: null })
         this.worker()?.postMessage({ type: "rtmpStop", outputId })
     }
 

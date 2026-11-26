@@ -13,7 +13,7 @@ import { AudioNoiseGate } from "../effects/audioNoiseGate"
 import { AudioReverb } from "../effects/audioReverb"
 import { AudioStereoShaper } from "../effects/audioStereoShaper"
 import { AudioInputCapture } from "./audioInputCapture"
-import { deduplicateConnections } from "./audioRoutingInit"
+import { deduplicateConnections, getConnectionFromChannel, getConnectionToChannel } from "./audioRoutingHelpers"
 
 interface SpeakerSink {
     ctx: AudioContext
@@ -39,6 +39,8 @@ interface Connection {
     from: string
     to: string
     channelIndex?: number
+    fromChannelIndex?: number
+    toChannelIndex?: number
     type?: "audio" | "sidechain"
 }
 
@@ -178,6 +180,13 @@ export class AudioRoutingManager {
 
             const sink = { ctx, element }
             this.speakerSinks.set(deviceId, sink)
+            if (sink.ctx.destination.maxChannelCount > 2) {
+                try {
+                    sink.ctx.destination.channelCount = sink.ctx.destination.maxChannelCount
+                    sink.ctx.destination.channelCountMode = "explicit"
+                    sink.ctx.destination.channelInterpretation = "discrete"
+                } catch {}
+            }
             return sink
         } catch (e) {
             console.error(`[AudioRoutingManager] Could not create sink for device ${deviceId}:`, e)
@@ -458,13 +467,12 @@ export class AudioRoutingManager {
     private buildSubSpeakers(connections: Connection[]): SubSpeakerMap {
         const subSpeakers: SubSpeakerMap = new Map()
 
-        for (let i = 0; i < connections.length; i++) {
-            const c = connections[i]
-            if (!c.to.startsWith("speaker_sub_")) continue
+        for (const c of connections) {
+            if (c.type === "sidechain" || !c.to.startsWith("speaker_sub_")) continue
 
-            const chIndex = c.channelIndex ?? 0
+            const toCh = getConnectionToChannel(c)
             const current = subSpeakers.get(c.to)
-            const count = Math.max(current?.maxChannels || 2, chIndex + 1)
+            const count = Math.max(current?.maxChannels || 2, (toCh ?? 1) + 1)
 
             if (!current || count > current.maxChannels) {
                 subSpeakers.set(c.to, {
@@ -475,6 +483,47 @@ export class AudioRoutingManager {
         }
 
         return subSpeakers
+    }
+
+    private routeSourceConnections(sourceNode: AudioNode, conns: Connection[], destNode: AudioNode, destChannels = 2) {
+        if (!this.audioCtx || !conns.length) return
+
+        const isMergerDest = destNode instanceof ChannelMergerNode
+        const hasFullStereo = conns.some((c) => getConnectionFromChannel(c) === undefined && getConnectionToChannel(c) === undefined)
+        if (hasFullStereo && !isMergerDest) {
+            this.connect(sourceNode, destNode)
+            return
+        }
+
+        let maxCh = 1
+        for (const c of conns) {
+            maxCh = Math.max(maxCh, getConnectionFromChannel(c) ?? 0, getConnectionToChannel(c) ?? 0)
+        }
+        const splitter = this.audioCtx.createChannelSplitter(Math.max(maxCh + 1, (sourceNode as any).channelCount || 2))
+        this.connect(sourceNode, splitter)
+
+        const merger = isMergerDest ? destNode : this.audioCtx.createChannelMerger(Math.max(2, destChannels))
+        const inLimit = merger.numberOfInputs
+        const outLimit = splitter.numberOfOutputs
+
+        for (const c of conns) {
+            const fromCh = getConnectionFromChannel(c)
+            const toCh = getConnectionToChannel(c)
+            if (fromCh === undefined && toCh === undefined) {
+                for (let ch = 0; ch < Math.min(2, outLimit, inLimit); ch++) {
+                    splitter.connect(merger, ch, ch)
+                }
+                continue
+            }
+
+            const srcIdx = fromCh ?? Math.min(toCh ?? 0, outLimit - 1)
+            const dstIdx = toCh ?? Math.min(fromCh ?? 0, inLimit - 1)
+            if (srcIdx >= 0 && srcIdx < outLimit && dstIdx >= 0 && dstIdx < inLimit) {
+                splitter.connect(merger, srcIdx, dstIdx)
+            }
+        }
+
+        if (!isMergerDest) this.connect(merger, destNode)
     }
 
     private routeOutputNodes(connectionsByFrom: Map<string, Connection[]>, subSpeakers: SubSpeakerMap) {
@@ -507,64 +556,53 @@ export class AudioRoutingManager {
             if (recDest) this.connect(outNode, recDest)
 
             const conns = connectionsByFrom.get(id) || []
-
-            // main speaker out
-            let hasSpeakerDefault = false
-            let hasIcecast = false
-            for (let i = 0; i < conns.length; i++) {
-                if (conns[i].to === "speaker_default") hasSpeakerDefault = true
-                if (conns[i].to === "icecast") hasIcecast = true
+            const connsByTarget = new Map<string, Connection[]>()
+            for (const c of conns) {
+                let list = connsByTarget.get(c.to)
+                if (!list) connsByTarget.set(c.to, (list = []))
+                list.push(c)
             }
 
-            if (hasSpeakerDefault) {
+            // main speaker out
+            const speakerConns = connsByTarget.get("speaker_default")
+            if (speakerConns) {
                 let speakerNode = this.destinationNodes.get("speaker_default")
                 if (!speakerNode) {
                     speakerNode = this.audioCtx!.createGain()
                     this.connect(speakerNode, this.audioCtx!.destination)
                     this.destinationNodes.set("speaker_default", speakerNode)
                 }
-                this.connect(outNode, speakerNode)
+                this.routeSourceConnections(outNode, speakerConns, speakerNode)
 
-                AudioInputCapture.getInstance().captureInput("speaker_default", outNode)
+                AudioInputCapture.getInstance().captureInput("speaker_default", speakerNode)
             }
 
             // sub-speaker out
             for (const [targetId, { speakerNode, maxChannels }] of subSpeakers.entries()) {
-                const subConns: Connection[] = []
-                for (let i = 0; i < conns.length; i++) {
-                    if (conns[i].to === targetId) subConns.push(conns[i])
-                }
+                const subConns = connsByTarget.get(targetId)
+                if (subConns) this.routeSourceConnections(outNode, subConns, speakerNode, maxChannels)
+            }
 
-                if (subConns.length === 1) {
-                    outNode.connect(speakerNode, 0, subConns[0].channelIndex ?? 0)
-                } else if (subConns.length > 1) {
-                    const splitter = this.audioCtx!.createChannelSplitter(maxChannels)
-                    outNode.connect(splitter)
-                    for (let i = 0; i < subConns.length; i++) {
-                        const chIdx = subConns[i].channelIndex ?? 0
-                        if (chIdx < maxChannels) splitter.connect(speakerNode, chIdx, chIdx)
+            // network destinations
+            for (const [targetId, targetConns] of connsByTarget.entries()) {
+                if (targetId.startsWith("network_sub_")) {
+                    const targetKey = targetId.replace("network_sub_", "")
+                    const destNode = this.destinationNodes.get(targetKey) || AudioAnalyser.getOrCreateDestinationNode(targetKey)
+                    if (destNode) {
+                        this.routeSourceConnections(outNode, targetConns, destNode, destNode.channelCount || 2)
+                        AudioInputCapture.getInstance().captureInput(targetId, destNode, 2)
                     }
                 }
             }
 
-            // network destinations
-            for (let i = 0; i < conns.length; i++) {
-                const c = conns[i]
-                if (c.to.startsWith("network_sub_")) {
-                    const targetKey = c.to.replace("network_sub_", "")
-                    const destNode = this.destinationNodes.get(targetKey) || AudioAnalyser.getOrCreateDestinationNode(targetKey)
-                    if (destNode) this.connect(outNode, destNode)
-
-                    AudioInputCapture.getInstance().captureInput(c.to, outNode)
-                }
-            }
-
             // Icecast
-            if (hasIcecast) {
+            const icecastConns = connsByTarget.get("icecast")
+            if (icecastConns) {
                 const icecastNode = this.destinationNodes.get("icecast") || AudioAnalyser.getOrCreateDestinationNode("icecast")
-                if (icecastNode) this.connect(outNode, icecastNode)
-
-                setTimeout(() => AudioInputCapture.getInstance().captureInput("icecast", outNode))
+                if (icecastNode) {
+                    this.routeSourceConnections(outNode, icecastConns, icecastNode, icecastNode.channelCount || 2)
+                    setTimeout(() => AudioInputCapture.getInstance().captureInput("icecast", icecastNode, 2))
+                }
             }
         }
     }
@@ -624,51 +662,17 @@ export class AudioRoutingManager {
             if (!allConns.length || !this.audioCtx) continue
 
             const connsByTo = new Map<string, Connection[]>()
-            let maxFromChannel = -1
-
-            for (let i = 0; i < allConns.length; i++) {
-                const c = allConns[i]
+            for (const c of allConns) {
                 let list = connsByTo.get(c.to)
                 if (!list) connsByTo.set(c.to, (list = []))
                 list.push(c)
-
-                const ch = c.channelIndex ?? (c as any).fromChannelIndex
-                if (ch !== undefined && ch > maxFromChannel) maxFromChannel = ch
-            }
-
-            let splitter: ChannelSplitterNode | null = null
-            if (maxFromChannel >= 0) {
-                const count = Math.max(maxFromChannel + 1, (node as any).channelCount || 2)
-                splitter = this.audioCtx.createChannelSplitter(count)
-                node.connect(splitter)
             }
 
             for (const [targetId, targetConns] of connsByTo.entries()) {
                 const gainNode = this.getGainNode(targetId)
                 if (!gainNode) continue
 
-                const specificConns = targetConns.filter((c) => (c.channelIndex ?? (c as any).fromChannelIndex) !== undefined)
-
-                if (specificConns.length > 0 && splitter) {
-                    const channels = specificConns.map((c) => (c.channelIndex ?? (c as any).fromChannelIndex)!)
-                    const destChannels = Math.max(2, gainNode.channelCount || 2)
-                    const merger = this.audioCtx.createChannelMerger(destChannels)
-
-                    if (channels.length === 1 && destChannels >= 2) {
-                        // Single input channel routed to stereo channel -> dual-mono (both L and R)
-                        const srcCh = channels[0]
-                        splitter.connect(merger, srcCh, 0)
-                        splitter.connect(merger, srcCh, 1)
-                    } else {
-                        // Multiple input channels -> map sequentially to destination channels (0 -> L, 1 -> R, etc.)
-                        for (let i = 0; i < channels.length && i < destChannels; i++) {
-                            splitter.connect(merger, channels[i], i)
-                        }
-                    }
-                    this.connect(merger, gainNode)
-                } else {
-                    this.connect(node, gainNode)
-                }
+                this.routeSourceConnections(node, targetConns, gainNode, gainNode.channelCount || 2)
             }
         }
     }

@@ -67,7 +67,7 @@ export async function processAudio(buffer: Buffer, sampleRate = 48000, targetId?
     // Only route to Icecast if targetId is "icecast" or not specified
     if (needsIcecast) {
         try {
-            const pcm48k = sr === 48000 ? int16Buffer : resamplePcmInt16Stereo(int16Buffer, sr, 48000)
+            const pcm48k = sr === 48000 ? int16Buffer : resamplePcmInt16Stereo(int16Buffer, sr, 48000, "icecast")
             const frameByteSize = 960 * 2 * 2 // 3840 bytes (20ms at 48kHz stereo 16-bit)
 
             // Fast-path: Skip accumulator if perfectly sized
@@ -99,7 +99,8 @@ export async function processAudio(buffer: Buffer, sampleRate = 48000, targetId?
         }
 
         if (RtmpStreamer.anyRunning()) {
-            RtmpStreamer.updateAudio(tid, int16Buffer, sr)
+            const pcm48k = sr === 48000 ? int16Buffer : resamplePcmInt16Stereo(int16Buffer, sr, 48000, `rtmp:${tid || "default"}`)
+            RtmpStreamer.updateAudio(tid, pcm48k, 48000)
         }
     }
 }
@@ -137,13 +138,15 @@ interface ResampleState {
     phase: number
     inSampleRate: number
 }
-let resampleState: ResampleState | null = null
+const resampleStates = new Map<string, ResampleState>()
 
-function resamplePcmInt16Stereo(input: Buffer, inSampleRate: number, outSampleRate = 48000): Buffer {
+function resamplePcmInt16Stereo(input: Buffer, inSampleRate: number, outSampleRate = 48000, stateKey = "default"): Buffer {
     if (inSampleRate === outSampleRate || !input || input.length === 0) return input
 
+    let resampleState = resampleStates.get(stateKey)
     if (!resampleState || resampleState.inSampleRate !== inSampleRate) {
         resampleState = { prevL: 0, prevR: 0, phase: 0, inSampleRate }
+        resampleStates.set(stateKey, resampleState)
     }
 
     const numInputFrames = Math.floor(input.length / 4)

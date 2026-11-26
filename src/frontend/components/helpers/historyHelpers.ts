@@ -4,6 +4,7 @@ import { REMOTE } from "../../../types/Channels"
 import { ShowObj } from "../../classes/Show"
 import { actions, activeDrawerTab, activeEdit, activeProject, activeRename, activeShow, activeStage, activeTagFilter, audioPlaylists, currentOutputSettings, dictionary, drawerTabsData, editingProjectTemplate, effects, events, focusMode, folders, globalTags, groups, interactions, notFound, openedFolders, overlays, playerVideos, profiles, projects, projectTemplates, projectView, scenes, shows, showsCache, special, stageShows, styles, theme, themes } from "../../stores"
 import { translateText } from "../../utils/language"
+import { preserveProviderPlaceholders } from "../../utils/providerItemLinks"
 import { updateThemeValues } from "../../utils/updateSettings"
 import { EMPTY_CATEGORY, EMPTY_EFFECT, EMPTY_EVENT, EMPTY_LAYOUT, EMPTY_PLAYER_VIDEO, EMPTY_PROJECT, EMPTY_PROJECT_FOLDER, EMPTY_SCENE, EMPTY_SECTION, EMPTY_SLIDE, EMPTY_STAGE, EMPTY_TAG } from "../../values/empty"
 import { getWeekNumber } from "../drawer/calendar/calendar"
@@ -199,7 +200,14 @@ export const _updaters = {
         timestamp: true
     },
 
-    project_key: { store: projects, timestamp: true },
+    project_key: {
+        store: projects,
+        timestamp: true,
+        select: (id: string, data: any) => {
+            // for provider project items only
+            preserveProviderPlaceholders(id, data)
+        }
+    },
     project_folder_key: { store: folders, timestamp: true },
 
     project_ref: { store: projects, timestamp: true },
@@ -381,7 +389,8 @@ export const _updaters = {
                 projects.update((p) => {
                     if (data.remember.index !== undefined && p[data.remember.project].shows.length > data.remember.index) {
                         if (data.remember.replacePlaceholder) {
-                            p[data.remember.project].shows[data.remember.index] = { id }
+                            const prev = p[data.remember.project].shows[data.remember.index]
+                            p[data.remember.project].shows[data.remember.index] = { id, ...(prev?.providerItemId ? { providerItemId: prev.providerItemId, providerHash: prev.providerHash } : {}) }
                             showRef.index = data.remember.index
                         } else {
                             p[data.remember.project].shows = addToPos(p[data.remember.project].shows, [{ id }], data.remember.index)

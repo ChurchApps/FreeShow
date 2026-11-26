@@ -32,16 +32,23 @@
 
     let thumbnailInterval: any = null
     let frameReceived = true
-    $: if (draw && !thumbnailInterval) thumbnailInterval = setInterval(requestThumbnail, 800)
-    else if (thumbnailInterval) {
-        clearInterval(thumbnailInterval)
-        thumbnailInterval = null
+    let lastFrameRequest = 0
+    $: {
+        if (thumbnailInterval) {
+            clearInterval(thumbnailInterval)
+            thumbnailInterval = null
+        }
+        if (draw) {
+            requestThumbnail()
+            thumbnailInterval = setInterval(requestThumbnail, mouseDown ? 150 : 800)
+        }
     }
 
     function requestThumbnail() {
-        if (!outputId || !frameReceived) return
+        if (!outputId || (!frameReceived && Date.now() - lastFrameRequest < 2000)) return
         frameReceived = false
-        socket.emit("CONTROLLER", { channel: "OUTPUT_FRAME", data: { outputId } })
+        lastFrameRequest = Date.now()
+        socket.emit("CONTROLLER", { channel: "OUTPUT_FRAME", data: { outputId, drawing: mouseDown } })
     }
 
     function sendAction(id: string) {
@@ -126,7 +133,7 @@
             {/each}
         </select>
 
-        <div bind:this={padElem} class="pad" style="aspect-ratio: {thumbnailBackground ? aspectRatio : 1};" on:mousedown={mousedown} on:touchstart={mousedown}>
+        <div bind:this={padElem} class="pad" style="--aspect-ratio: {thumbnailBackground ? aspectRatio : 1}; aspect-ratio: var(--aspect-ratio);" on:mousedown={mousedown} on:touchstart={mousedown}>
             {#if thumbnailBackground}
                 <div class="thumbnail">
                     <!-- object-fit: {thumbnailBackground.mediaStyle?.fit || 'contain'}; -->
@@ -295,7 +302,7 @@
     }
 
     .pad {
-        height: 55vw;
+        height: min(55vw, calc(90vw / var(--aspect-ratio, 1)));
         /* width: 80vw; */
         border-radius: 5px;
         background-color: var(--primary-darkest);
@@ -322,8 +329,8 @@
         transform: translate(-50%, -50%);
         /* transform: translate(-50%, -50%) rotate(45deg); */
 
-        height: 80vw;
-        width: 80vw;
+        height: min(80vw, 70vh);
+        width: min(80vw, 70vh);
         border-radius: 50%;
         overflow: hidden;
     }
@@ -394,13 +401,13 @@
 
     @media only screen and (min-width: 800px) {
         .controller {
-            height: 70vh;
-            width: 70vh;
+            height: min(80vw, 70vh);
+            width: min(80vw, 70vh);
         }
     }
     @media only screen and (min-width: 620px) {
         .pad {
-            height: 55vh;
+            height: min(55vh, calc(90vw / var(--aspect-ratio, 1)));
             /* width: 55vh; */
         }
     }
@@ -419,7 +426,7 @@
             top: 45%;
         }
         .pad {
-            height: 40vh;
+            height: min(40vh, calc(90vw / var(--aspect-ratio, 1)));
         }
         .toggles {
             bottom: 20px;
@@ -450,7 +457,7 @@
             min-width: 3.5rem !important;
         }
         .pad {
-            height: 45vh;
+            height: min(45vh, calc(90vw / var(--aspect-ratio, 1)));
         }
         .toggles {
             width: 60vw;
@@ -482,7 +489,7 @@
             top: 50%;
         }
         .pad {
-            height: 75vh;
+            height: min(75vh, calc(90vw / var(--aspect-ratio, 1)));
         }
     }
 </style>

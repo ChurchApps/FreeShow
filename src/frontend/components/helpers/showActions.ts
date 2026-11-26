@@ -28,6 +28,7 @@ import {
     activeInteractions,
     activePage,
     activeProject,
+    activeRecording,
     activeShow,
     allOutputs,
     audioChannelsData,
@@ -55,6 +56,7 @@ import {
     slideTimers,
     special,
     stageShows,
+    streamStats,
     styles,
     templates,
     timers,
@@ -573,6 +575,10 @@ export async function startShow(showId: string) {
     while (slideRef[index] && slideRef[index]?.data?.disabled) index++
     if (!slideRef[index]) return
 
+    // don't start if already started
+    const outSlide = getFirstActiveOutput()?.out?.slide
+    if (outSlide?.id === showId && outSlide?.layout === activeLayout && outSlide?.index === index) return
+
     const slideData = slideRef[index]?.data
     checkActionTrigger(slideData, index)
 
@@ -640,12 +646,17 @@ function playGroup(globalGroupIds: string[], { showRef, outSlide, currentShowId 
     const index = targetIndex ?? fallbackIndex ?? firstMatchingGroup
     if (index === undefined) return
 
+    const activeLayout = _show(currentShowId).get("settings.activeLayout")
+
+    // don't output if already outputted
+    if (outSlide?.id === currentShowId && outSlide?.layout === activeLayout && outSlide?.index === index) return
+
     // WIP duplicate of "slideClick" in Slides.svelte
     const data = showRef[index]?.data
     checkActionTrigger(data, index)
     // allow custom actions to trigger first
     setTimeout(() => {
-        setOutput("slide", { id: currentShowId, layout: _show(currentShowId).get("settings.activeLayout"), index, line: 0 })
+        setOutput("slide", { id: currentShowId, layout: activeLayout, index, line: 0 })
         updateOut(currentShowId, index, showRef, extra, "")
     })
 
@@ -755,7 +766,7 @@ export function sendMidi(data: any) {
 
 // DYNAMIC VALUES
 
-const commonOnly = ["time_str", "project_section_notes", "project_section_time", "project_item_number", "project_items_count", "show_name_next", "show_text_full", "slide_group_text", "slide_text_", "layout_notes", "slide_group_upcoming", "slide_notes_next", "exif_", "audio_subtitle", "audio_genre", "audio_year", "audio_volume"]
+const commonOnly = ["time_str", "project_section_notes", "project_section_time", "project_item_number", "project_items_count", "show_name_next", "show_text_full", "slide_group_text", "slide_text_", "layout_notes", "slide_group_upcoming", "slide_notes_next", "exif_", "audio_subtitle", "audio_genre", "audio_year", "audio_volume", "stream_"]
 const deprecatedDynamicValues = ["show_name_next", "project_section_next", "project_section_time_next", "slide_group_next", "slide_group_next_color", "slide_notes_next", "slide_text_previous", "slide_text_current", "slide_text_next"]
 
 function insertOffsetVariants(idList: string[]): string[] {
@@ -1242,49 +1253,53 @@ const dynamicValues = {
 
     slide_number: ({ slideIndex }) => (Number(slideIndex ?? -1) + 1).toString(),
     slide_group: ({ show, ref, slideIndex, outSlide, offset }) => {
-        const idx = slideIndex + offset
-        const parentIndex = ref[idx]?.parent?.layoutIndex ?? idx
-        const group = show?.slides?.[ref[parentIndex]?.id]?.group || ""
-        return getGroupName({ show, showId: outSlide?.id }, ref[parentIndex]?.id, group, parentIndex, false, false)
+        const parentRef = getRefSlide(ref, slideIndex, offset, true)
+        const group = show?.slides?.[parentRef?.id]?.group || ""
+        return getGroupName({ show, showId: outSlide?.id }, parentRef?.id, group, parentRef?.layoutIndex, false, false)
     },
     slide_group_color: ({ show, ref, slideIndex, offset }) => {
-        const idx = slideIndex + offset
-        const parentIndex = ref[idx]?.parent?.layoutIndex ?? idx
-        const groupColor = show?.slides?.[ref[parentIndex]?.id]?.color || ""
+        const parentRef = getRefSlide(ref, slideIndex, offset, true)
+        const groupColor = show?.slides?.[parentRef?.id]?.color || ""
         return groupColor
     },
     slide_group_next: ({ show, ref, slideIndex, outSlide }) => {
-        const parentIndex = ref[slideIndex + 1]?.parent?.layoutIndex ?? slideIndex + 1
-        const group = show?.slides?.[ref[parentIndex]?.id]?.group || ""
-        return getGroupName({ show, showId: outSlide?.id }, ref[parentIndex]?.id, group, parentIndex, false, false)
+        const parentRef = getRefSlide(ref, slideIndex, 1, true)
+        const group = show?.slides?.[parentRef?.id]?.group || ""
+        return getGroupName({ show, showId: outSlide?.id }, parentRef?.id, group, parentRef?.layoutIndex, false, false)
     }, // DEPRECATED
     slide_group_next_color: ({ show, ref, slideIndex }) => {
-        const parentIndex = ref[slideIndex + 1]?.parent?.layoutIndex ?? slideIndex + 1
-        const groupColor = show?.slides?.[ref[parentIndex]?.id]?.color || ""
+        const parentRef = getRefSlide(ref, slideIndex, 1, true)
+        const groupColor = show?.slides?.[parentRef?.id]?.color || ""
         return groupColor
     }, // DEPRECATED
     slide_group_upcoming: ({ show, ref, slideIndex, outSlide }) => {
         if (slideIndex < 0) return ""
-        let nextParentIndex = slideIndex + 1
-        while (ref[nextParentIndex]?.type !== "parent" && nextParentIndex < ref.length) nextParentIndex++
-        const group = show?.slides?.[ref[nextParentIndex]?.id]?.group || ""
-        return getGroupName({ show, showId: outSlide?.id }, ref[nextParentIndex]?.id, group, nextParentIndex, false, false)
+        let nextGroupIndex = slideIndex + 1
+        while ((ref[nextGroupIndex]?.type !== "parent" || isGroupSlidesDisabled(ref, nextGroupIndex)) && nextGroupIndex < ref.length) nextGroupIndex++
+        const group = show?.slides?.[ref[nextGroupIndex]?.id]?.group || ""
+        return getGroupName({ show, showId: outSlide?.id }, ref[nextGroupIndex]?.id, group, ref[nextGroupIndex]?.layoutIndex, false, false)
     },
     slide_group_upcoming_color: ({ show, ref, slideIndex }) => {
         if (slideIndex < 0) return ""
-        let nextParentIndex = slideIndex + 1
-        while (ref[nextParentIndex]?.type !== "parent" && nextParentIndex < ref.length) nextParentIndex++
-        const groupColor = show?.slides?.[ref[nextParentIndex]?.id]?.color || ""
+        let nextGroupIndex = slideIndex + 1
+        while ((ref[nextGroupIndex]?.type !== "parent" || isGroupSlidesDisabled(ref, nextGroupIndex)) && nextGroupIndex < ref.length) nextGroupIndex++
+        const groupColor = show?.slides?.[ref[nextGroupIndex]?.id]?.color || ""
         return groupColor
     },
-    slide_notes: ({ show, ref, slideIndex, offset }) => show?.slides?.[ref[slideIndex + offset]?.id]?.notes || "",
-    slide_notes_next: ({ show, ref, slideIndex }) => show?.slides?.[ref[slideIndex + 1]?.id]?.notes || "", // DEPRECATED
+    slide_notes: ({ show, ref, slideIndex, offset }) => {
+        const slideRef = getRefSlide(ref, slideIndex, offset)
+        return show?.slides?.[slideRef?.id]?.notes || ""
+    },
+    slide_notes_next: ({ show, ref, slideIndex }) => {
+        const nextSlideRef = getRefSlide(ref, slideIndex, 1)
+        return show?.slides?.[nextSlideRef?.id]?.notes || ""
+    }, // DEPRECATED
 
     // text
-    slide_text: ({ show, ref, slideIndex, outSlide, offset }) => getSlideText({ outSlide, show, ref }, slideIndex + offset),
-    slide_text_previous: ({ show, ref, slideIndex, outSlide }) => getSlideText({ outSlide, show, ref }, slideIndex - 1), // DEPRECATED
-    slide_text_current: ({ show, ref, slideIndex, outSlide }) => getSlideText({ outSlide, show, ref }, slideIndex), // DEPRECATED
-    slide_text_next: ({ show, ref, slideIndex, outSlide }) => getSlideText({ outSlide, show, ref }, slideIndex + 1), // DEPRECATED
+    slide_text: ({ show, ref, slideIndex, outSlide, offset }) => getSlideText({ outSlide, show, ref, slideIndex }, offset),
+    slide_text_previous: ({ show, ref, slideIndex, outSlide }) => getSlideText({ outSlide, show, ref, slideIndex }, -1), // DEPRECATED
+    slide_text_current: ({ show, ref, slideIndex, outSlide }) => getSlideText({ outSlide, show, ref, slideIndex }, 0), // DEPRECATED
+    slide_text_next: ({ show, ref, slideIndex, outSlide }) => getSlideText({ outSlide, show, ref, slideIndex }, 1), // DEPRECATED
     slide_group_text: ({ show, ref, slideIndex, outSlide, offset }) => getGroupText({ outSlide, show, ref, slideIndex }, offset),
     show_text_full: ({ show, ref }) => ref.map((a) => getTextLines(show?.slides?.[a.id]).join("<br>")).join("<br><br>"),
 
@@ -1325,6 +1340,13 @@ const dynamicValues = {
     audio_countdown: ({ audioTime, audioDuration }) => joinTime(secondsToTime(audioDuration > 0 ? audioDuration - Math.floor(audioTime) : 0)),
     audio_duration: ({ audioDuration }) => joinTime(secondsToTime(audioDuration)),
     audio_volume: () => Math.round((get(audioChannelsData).main?.volume ?? 1) * 100),
+
+    // streaming
+    stream_status: () => (getFirstStreamedOutput() ? "Live" : ""),
+    stream_duration: () => getStreamDuration(),
+    stream_fps: () => String(get(streamStats)[getFirstStreamedOutput()?.id || ""]?.fps ?? ""),
+    stream_bitrate: () => String(get(streamStats)[getFirstStreamedOutput()?.id || ""]?.bitrate ?? ""),
+    stream_recording_duration: () => getRecordingDuration(),
 
     // interaction
     interaction_players: ({ show }) => getInteractionPlayers(show),
@@ -1372,21 +1394,42 @@ function getOffsetDate(offset = 0, unit: "date" | "month" | "year" | "hours" | "
     return d
 }
 
+function getRefSlide(ref: any[], index: number, offset: number, parent: boolean = false) {
+    let idx = index + offset
+    while (offset !== 0 && idx >= 0 && idx < ref.length && ref[idx] && ref[idx].data?.disabled) {
+        idx += offset
+    }
+    if (parent) idx = ref[idx]?.parent?.layoutIndex ?? idx
+    return ref[idx] || null
+}
+
+function isGroupSlidesDisabled(ref: any[], index: number) {
+    const slideRef = ref[index]
+    const groupSlideCount = 1 + (slideRef?.children?.length || 0)
+    return Array(groupSlideCount)
+        .fill(null)
+        .every((_, i) => ref?.[index + i]?.data?.disabled)
+}
+
 export function getGroupText({ outSlide, show, ref, slideIndex }, groupOffset: number = 0) {
     if (!show) return ""
 
     // fallback to current slide text if scripture
-    if (outSlide?.id === "temp") return getSlideText({ outSlide, show, ref }, slideIndex + groupOffset)
+    if (outSlide?.id === "temp") return getSlideText({ outSlide, show, ref, slideIndex }, groupOffset)
 
     const outIndex = outSlide?.index ?? slideIndex
+    const parentIndex = ref?.[outIndex]?.parent?.layoutIndex ?? outIndex
 
-    const activeLayout = outSlide?.layout ?? show.settings?.activeLayout
-    const index = ref?.[outIndex]?.parent?.index ?? ref?.[outIndex]?.index
-    const layout = show.layouts[activeLayout]?.slides?.[index + groupOffset]
-    const currentSlideId = layout?.id
+    // remove all children slides, and any disabled groups (except for the outputted one)
+    ref = clone(ref).filter((a, i) => (i === parentIndex ? true : a.type === "parent" ? !isGroupSlidesDisabled(ref, i) : false))
 
-    const slideData = show.slides[currentSlideId]
-    const groupSlides = [currentSlideId, ...(slideData?.children || [])]
+    const newParentIndex = ref.findIndex((a) => a.layoutIndex === parentIndex)
+    const newLayoutRef = ref?.[newParentIndex + groupOffset]
+    const newSlideId = newLayoutRef?.id
+    if (!newSlideId) return ""
+
+    const slideData = show.slides[newSlideId]
+    const groupSlides = [newSlideId, ...(slideData?.children || [])]
 
     let slidesText: string[] = []
     groupSlides.forEach((slideId) => {
@@ -1410,14 +1453,15 @@ export function getGroupText({ outSlide, show, ref, slideIndex }, groupOffset: n
     return mergedText
 }
 
-function getSlideText({ outSlide, show, ref }, slideIndex: number = 0) {
+function getSlideText({ outSlide, show, ref, slideIndex }, offset: number = 0) {
     let slideItemLines: string[] = []
     if (outSlide?.id === "temp") {
         if (slideIndex < 0) slideItemLines = getTextLines({ items: outSlide?.previousSlides?.[0] }, true)
         else if (slideIndex > 0) slideItemLines = getTextLines({ items: outSlide?.nextSlides?.[0] }, true)
         else slideItemLines = getTextLines({ items: outSlide?.tempItems }, true)
     } else {
-        const slide = show?.slides?.[ref[slideIndex]?.id]
+        const slideRef = getRefSlide(ref, slideIndex, offset)
+        const slide = show?.slides?.[slideRef?.id]
         slideItemLines = getTextLines(slide, true)
     }
 
@@ -1530,6 +1574,28 @@ function getExif(path: string) {
     })
 
     return null
+}
+
+// STREAMING
+
+function getFirstStreamedOutput() {
+    const outputStores = isOutputWindow() ? get(allOutputs) : get(outputs)
+    return keysToID(outputStores).find((o) => (o.rtmp && o.rtmpData?.streaming) || (o.webrtc && o.webrtcData?.streaming)) || null
+}
+
+function getStreamDuration() {
+    const out = getFirstStreamedOutput()
+    return formatElapsed((out?.rtmp ? out.rtmpData?.startedAt : out?.webrtcData?.startedAt) || 0)
+}
+
+function getRecordingDuration() {
+    const rec = get(activeRecording)
+    const first: any = rec?.outputs ? Object.values(rec.outputs)[0] : null
+    return formatElapsed(first ? first.startedAt || rec?.startedAt || 0 : 0)
+}
+
+function formatElapsed(startedAt: number) {
+    return joinTime(secondsToTime(startedAt ? Math.max(0, Math.floor((Date.now() - startedAt) / 1000)) : 0))
 }
 
 // AUDIO METADATA

@@ -5,19 +5,7 @@ import { audioRouting, dictionary, outputs } from "../../stores"
 import { waitUntilValueIsDefined } from "../../utils/common"
 import { translateText } from "../../utils/language"
 import { confirmCustom } from "../../utils/popup"
-
-export function deduplicateConnections(connections: AudioRoutingConnection[]): AudioRoutingConnection[] {
-    const seen = new Set<string>()
-    return connections.filter((c) => {
-        const fromCh = c.fromChannelIndex ?? (c.from.startsWith("mic_sub_") ? (c.channelIndex ?? -1) : -1)
-        const toCh = c.toChannelIndex ?? (c.to.startsWith("speaker_sub_") ? (c.channelIndex ?? 0) : 0)
-        const connType = c.type || "audio"
-        const key = `${c.from}:${fromCh}->${c.to}:${toCh}:${connType}`
-        if (seen.has(key)) return false
-        seen.add(key)
-        return true
-    })
-}
+import { deduplicateConnections } from "./audioRoutingHelpers"
 
 export async function initAudioRouting(data: AudioRoutingConfig | null) {
     if (data && data.channels && data.connections && data.channels.length > 0) {
@@ -59,6 +47,8 @@ export async function initAudioRouting(data: AudioRoutingConfig | null) {
     const outputsList = getAllOutputs()
     let firstConnected = false
     outputsList.forEach((out) => {
+        if (out.stageOutput) return
+
         // any network outputs should have their own channel
         if (out.ndi || out.omt || out.webrtc || out.rtmp) {
             channels.push({ id: `channel_${out.id}`, name: out.name, color: out.color, outputLink: out.id })
@@ -67,7 +57,7 @@ export async function initAudioRouting(data: AudioRoutingConfig | null) {
         }
 
         // only connect first enabled physical output to audio output to prevent stacking audio
-        if (out.enabled && !out.stageOutput && !firstConnected) {
+        if (out.enabled && !firstConnected) {
             connections.push({ from: `output_win_sub_${out.id}`, to: "main" })
             firstConnected = true
         }
@@ -119,7 +109,7 @@ function createOutputConnections(outputId: string) {
 
 export function createOutputAudioChannel(outputId: string) {
     const output = get(outputs)[outputId]
-    if (!output) return
+    if (!output || output.stageOutput) return
 
     audioRouting.update((a) => {
         const channels = a?.channels || []

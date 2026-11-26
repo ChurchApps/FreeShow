@@ -41,6 +41,15 @@ function isStruggling(vid: HTMLVideoElement, now: number): boolean {
     return (droppedSample.get(vid)?.struggling ?? false) || vid.readyState < 4
 }
 
+export function clearVideoSyncState(vid: HTMLVideoElement | null | undefined): void {
+    if (!vid) return
+    lastSeekTimestamps.delete(vid)
+    lastSyncRecords.delete(vid)
+    pendingSeeks.delete(vid)
+    seekLatencyEMA.delete(vid)
+    droppedSample.delete(vid)
+}
+
 export function clampPlaybackRate(rate: number): number {
     return Math.min(16, Math.max(0.1, rate || 1))
 }

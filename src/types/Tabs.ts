@@ -8,7 +8,6 @@ export interface Category {
     icon?: null | string
     path?: string
     id?: string
-    type?: "youtube" | "vimeo"
     mediaType?: "background" | "foreground"
     url?: string
     default?: boolean
@@ -20,6 +19,15 @@ export interface Category {
     template?: string // set a custom template all shows within this category will use by default (if no other template is set)
     submenu?: { options: any[] } // open a submenu of options (tags)
     openTrigger?: Function // trigger a custom function
+}
+
+export interface PlayerVideos {
+    [key: string]: PlayerVideo
+}
+export interface PlayerVideo extends Category {
+    type?: "youtube" | "vimeo" | "website"
+    thumbnail?: string
+    thumbnailUpdated?: number
 }
 
 export interface BibleCategories extends Category {

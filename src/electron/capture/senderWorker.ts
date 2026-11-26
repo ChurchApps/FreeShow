@@ -1,7 +1,7 @@
 import { parentPort } from "worker_threads"
 import { BlackmagicSender } from "../blackmagic/BlackmagicSender"
 import { cardFrameBytes } from "../blackmagic/cardFormat"
-import { RtmpStreamer, setRtmpNoticeListener, setRtmpStatusListener } from "../streaming/RtmpStreamer"
+import { RtmpStreamer, setRtmpNoticeListener, setRtmpStatsListener, setRtmpStatusListener } from "../streaming/RtmpStreamer"
 import { ruleViolation } from "../utils/ruleCheck"
 import { FrameServer, type ServedFrame } from "./FrameServer"
 
@@ -1249,6 +1249,7 @@ export function runSenderWorker(adapters: SenderAdapter[]) {
 
     // RTMP engine (RtmpBridge on main proxies it)
     setRtmpStatusListener((outputId, destinations) => port.postMessage({ type: "rtmpStatus", outputId, destinations }))
+    setRtmpStatsListener((outputId, stats) => port.postMessage({ type: "rtmpStats", outputId, stats }))
     setRtmpNoticeListener((message) => port.postMessage({ type: "rtmpNotice", message }))
     const rtmpStopWatch = new Set<string>()
     setInterval(() => {

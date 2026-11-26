@@ -29,4 +29,5 @@ export interface AudioRoutingConfig {
     inputs?: AudioRoutingItem[]
     outputs?: AudioRoutingItem[]
     desktopAudioEnabled?: boolean
+    showMultichannel?: boolean
 }

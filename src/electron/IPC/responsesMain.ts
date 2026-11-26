@@ -30,6 +30,7 @@ import { captureSlide, doesMediaExist, getThumbnail, getThumbnailFolderPath, pdf
 import { OutputHelper } from "../output/OutputHelper"
 import { pptToPdf } from "../output/ppt/pptToPdf"
 import { getPresentationApplications, presentationControl, startSlideshow } from "../output/ppt/presentation"
+import { setWebsiteCapture } from "../output/websiteCapture"
 import { closeServers, startServers, updateServerData } from "../servers"
 import { detectEncoders, setRtmpEncoderSetting } from "../streaming/encoderDetection"
 import { downloadFfmpeg, resolveFfmpegPath } from "../streaming/ffmpegManager"
@@ -39,9 +40,9 @@ import { closeMain } from "../utils/close"
 import { addToMediaFolder, bundleMediaFiles, createFolder, getDataFolderPath, getDataFolderRoot, getFileInfo, getMediaCodec, getMediaSyncFolderPath, getMediaTracks, getPaths, getSimularPaths, loadFile, loadShowsAsync, locateMediaFile, openInSystem, readExifData, readFile, readFolder, readFolderContent, selectFiles, selectFilesDialog, selectFolder, setMediaSyncFolderPath, writeFile } from "../utils/files"
 import { listGraphicsDevices } from "../utils/gpu"
 import { getMachineId } from "../utils/helpers"
+import { getHidDevices, hidAwaitInput, hidClose } from "../utils/hid"
 import { LyricSearch } from "../utils/LyricSearch"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "../utils/midi"
-import { getHidDevices, hidAwaitInput, hidClose } from "../utils/hid"
 import { deleteShows, deleteShowsNotIndexed, getAllShows, getEmptyShows, refreshAllShows } from "../utils/shows"
 import { correctSpelling } from "../utils/spellcheck"
 import { executeSpotifyCommand, getSpotifyState } from "../utils/spotify"
@@ -130,6 +131,7 @@ export const mainResponses: MainResponses = {
     [Main.READ_EXIF]: (data) => readExifData(data),
     [Main.MEDIA_CODEC]: (data) => getMediaCodec(data),
     [Main.MEDIA_TRACKS]: (data) => getMediaTracks(data),
+    [Main.WEBSITE_CAPTURE]: (data) => setWebsiteCapture(data),
     [Main.DOWNLOAD_LESSONS_MEDIA]: (data) => downloadLessonsMedia(data),
     [Main.MEDIA_DOWNLOAD]: (data) => downloadMedia(data),
     [Main.MEDIA_IS_DOWNLOADED]: async (data) => await checkIfMediaDownloaded(data),

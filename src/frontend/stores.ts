@@ -19,10 +19,10 @@ import type { Dictionary, Styles, Themes } from "../types/Settings"
 import type { Action, CustomFont, Emitter, ID, Overlays, Scene, ShowGroups, ShowList, Shows, ShowType, SlideTimer, Tag, Templates, Timer, Transition, TrimmedShows } from "../types/Show"
 import type { ServerData } from "../types/Socket"
 import type { ActiveStage, StageLayouts } from "../types/Stage"
-import type { BibleCategories, Categories, DrawerTabs, EditMode, SettingsTabs, TopViews } from "../types/Tabs"
+import type { BibleCategories, Categories, DrawerTabs, EditMode, PlayerVideos, SettingsTabs, TopViews } from "../types/Tabs"
 import type { AiSuggestion } from "./../types/ai/Ai"
 import type { AiSettings } from "./../types/ai/AiSettings"
-import type { Outputs, RtmpStatus, SyncedOutputs } from "./../types/Output"
+import type { Outputs, RtmpStatus, StreamStats, SyncedOutputs } from "./../types/Output"
 import type { DrawerTabIds } from "./../types/Tabs"
 import type { AudioData } from "./audio/audioPlayer"
 import type { WebsiteAction } from "./components/helpers/websiteControls"
@@ -87,6 +87,7 @@ export const providerConnections: Writable<{ [key in ContentProviderId]?: boolea
 export const metronomeTimer: Writable<{ beat: number; timeToNext: number }> = writable({ beat: 0, timeToNext: 0 })
 export const mediaDownloads: Writable<Map<string, { progress: number; total: number; status: string; name?: string }>> = writable(new Map())
 export const rtmpStatus: Writable<{ [outputId: string]: RtmpStatus }> = writable({})
+export const streamStats: Writable<{ [outputId: string]: StreamStats }> = writable({})
 export const icecastStatus: Writable<{ connected: boolean; connecting?: boolean; error?: string }> = writable({ connected: false })
 export const pdfImports: Writable<Map<string, { name: string; progress: number; total: number; status: "importing" | "complete" | "error"; message?: string }>> = writable(new Map())
 export const showChangeProfileMenu: Writable<boolean> = writable(false)
@@ -305,8 +306,8 @@ export type AudioEffectPresets = {
 }
 export const audioEffectPresets: Writable<AudioEffectPresets> = writable({}) // {}
 
-// PLAYER
-export const playerVideos: Writable<Categories> = writable({}) // {default}
+// PLAYER (ONLINE, Website, YouTube, Vimeo)
+export const playerVideos: Writable<PlayerVideos> = writable({}) // {default}
 
 // TEMPLATES
 export const templateCategories: Writable<Categories> = writable({}) // {default}
@@ -409,7 +410,7 @@ export const disabledServers: Writable<any> = writable({ remote: false, stage: f
 export const serverData: Writable<{ [key: string]: ServerData }> = writable({}) // {}
 export const maxConnections: Writable<number> = writable(10) // 10
 export const contentProviderData: Writable<{ [key in ContentProviderId]?: any }> = writable({}) // {}
-export const providerItemLinks: Writable<{ [key: string]: { showId: string; mode: "online" | "local" | "manual" } }> = writable({}) // {}
+export const providerItemLinks: Writable<{ [key: string]: { showId: string; mode?: "online" | "local" | "manual"; hash?: string } }> = writable({}) // {}
 export const obsData: Writable<{ enabled?: boolean; connected?: boolean; ip?: string; port?: number; password?: string }> = writable({}) // {}
 
 // CLOUD

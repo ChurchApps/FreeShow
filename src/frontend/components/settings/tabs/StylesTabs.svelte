@@ -8,6 +8,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import { clone, keysToID, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
+    import { GET_DEFAULT_STYLE } from "../../helpers/output"
     import Tabs from "../../input/Tabs.svelte"
     import HiddenInput from "../../inputs/HiddenInput.svelte"
 
@@ -16,12 +17,8 @@
     // set id after deletion
     $: if (Object.keys($styles)?.length && !$styles[$activeStyle]) activeStyle.set($styles.default ? "default" : Object.keys($styles)[0])
 
-    const defaultStyle: Styles = {
-        name: translateText("example.default")
-    }
-
     $: styleId = $activeStyle || ""
-    $: currentStyle = $styles[styleId] || clone(defaultStyle)
+    $: currentStyle = $styles[styleId] || GET_DEFAULT_STYLE()
 
     function updateStyle(e: any, key: string, currentId = "") {
         let value = e?.detail ?? e?.target?.value ?? e
@@ -56,7 +53,7 @@
 
         if (type === "live") {
             const liveStyle: Styles = {
-                ...clone(defaultStyle),
+                ...GET_DEFAULT_STYLE(),
                 background: "#01FF70",
                 transition: { text: { duration: 500, easing: "sine", type: "fade", between: { type: "none", duration: 500, easing: "sine" } } },
                 fit: "blur",
@@ -69,7 +66,7 @@
             const name = translateText("tabs.live") // || currentStyle.name + " 2"
             history({ id: "UPDATE", newData: { data: liveStyle, replace: { name } }, oldData: { id: styleId }, location: { page: "settings", id: "settings_style" } })
         } else if (type === "normal") {
-            history({ id: "UPDATE", newData: { data: clone(defaultStyle), replace: { name: currentStyle.name + " 2" } }, oldData: { id: styleId }, location: { page: "settings", id: "settings_style" } })
+            history({ id: "UPDATE", newData: { data: GET_DEFAULT_STYLE(), replace: { name: currentStyle.name + " 2" } }, oldData: { id: styleId }, location: { page: "settings", id: "settings_style" } })
         }
 
         activeStyle.set(styleId)

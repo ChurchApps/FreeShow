@@ -28,9 +28,10 @@ function checkAndPublish(name: string, port: number, uniqueName: string, customD
 
     let found = false
     const browser = bonjour.find({ type: "freeshow", protocol: "udp" }, (service: any) => {
+        if (found) return
         if (service.name.startsWith(`freeshow-${name}-`)) {
             found = true
-            console.warn(`Bonjour: A service named 'freeshow-${name}-*' is already published on the network.`)
+            console.warn(`Bonjour: A service named '${service.name}' is already published on the network.`)
             browser.stop()
         }
     })

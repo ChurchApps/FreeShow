@@ -51,7 +51,7 @@
 
         let separatorId = ""
         // the ones that can have a custom name should be first (to prevent it from overwriting a category)
-        const separators = ["$", "timer_", "meta_", "rss_", "txt_", "project_", "time_", "show_", "slide_text", "exif_", "video_", "audio_", "scripture_", "interaction_"]
+        const separators = ["$", "timer_", "meta_", "rss_", "txt_", "project_", "time_", "show_", "slide_text", "exif_", "video_", "audio_", "stream_", "scripture_", "interaction_"]
 
         let newList: { [key: string]: typeof list } = {}
         list.forEach((value) => {
@@ -79,6 +79,7 @@
         if (id === "exif_") return "items.image (EXIF)"
         if (id === "video_") return "edit.video"
         if (id === "audio_") return "tools.audio"
+        if (id === "stream_") return "Streaming"
         if (id === "meta_") return "tools.metadata"
         if (id === "timer_") return "items.timer"
         if (id === "rss_") return "settings.rss"

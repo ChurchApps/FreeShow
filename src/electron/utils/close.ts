@@ -71,7 +71,7 @@ export async function exitApp() {
         // shouldn't need to use exit!
         setTimeout(() => {
             app.exit()
-        }, 500)
+        }, 1200)
     } catch (err) {
         console.error("Failed closing app:", err)
         isExiting = false

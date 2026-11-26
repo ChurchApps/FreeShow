@@ -13,6 +13,13 @@ export function applyCommandLineSwitches() {
     app.commandLine.appendSwitch("disable-background-media-suspend")
 
     if (process.platform === "linux") applyLinuxSwitches()
+    if (process.platform === "darwin") applyMacosSwitches()
+}
+
+function applyMacosSwitches() {
+    // Avoid Skia Graphite GPU rasterization pixelation
+    // (disabling SkiaGraphite via --disable-features=SkiaGraphite breaks HEVC playback)
+    app.commandLine.appendSwitch("disable-gpu-rasterization")
 }
 
 function applyLinuxSwitches() {

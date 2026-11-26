@@ -596,10 +596,16 @@ async function processSongItem(item: ProjectItem, itemsEndpoint: string, placeho
     let sections: SongSection[] = []
 
     // Get sections from API first
-    const apiSections: SongSection[] = (await pcoRequest({ scope: "services", endpoint: `${arrangementEndpoint}/sections` }))[0]?.attributes.sections || []
+    let apiSections: SongSection[] = (await pcoRequest({ scope: "services", endpoint: `${arrangementEndpoint}/sections` }))[0]?.attributes.sections || []
 
     // Parse sections from chord chart if available (contains repeat markers etc.)
     const chordChartSections = song.chord_chart ? parseChordChartIntoSections(song.chord_chart) : []
+
+    // Ignore Planning Center's fallback "General" section, if other sections already exist
+    const hasOtherSections = apiSections.some((s) => s.label.toLowerCase() !== "general") || chordChartSections.some((s) => s.label.toLowerCase() !== "general")
+    if (hasOtherSections) {
+        apiSections = apiSections.filter((s) => s.label.toLowerCase() !== "general")
+    }
 
     // Merge API sections with chord chart sections
     const mergedSections = apiSections.map((apiSec) => {
@@ -1020,7 +1026,8 @@ async function processMediaItem(item: ProjectItem, itemsEndpoint: string, servic
             name: media.attributes.title,
             scheduleLength: item.attributes.length,
             type: media.attributes.length ? "video" : "image",
-            id: filePath
+            id: filePath,
+            providerItemId: item.id
         },
         downloadableMedia: {
             name: serviceType.attributes.name,
@@ -1035,6 +1042,7 @@ function processHeaderItem(item: ProjectItem) {
         projectItem: {
             type: "section",
             id: uid(5),
+            providerItemId: item.id,
             name: item.attributes.title || "",
             scheduleLength: item.attributes.length,
             notes: item.attributes.description || ""

@@ -10,6 +10,7 @@
     import Player from "../../system/Player.svelte"
     import Camera from "../Camera.svelte"
     import OutputTransition from "../transitions/OutputTransition.svelte"
+    import WebsiteMirror from "../WebsiteMirror.svelte"
     import Window from "../Window.svelte"
     import Media from "./Media.svelte"
     import { mediaLayersEnabled } from "./mediaLayers"
@@ -55,6 +56,10 @@
         <BmdStream screen={{ id, name: "" }} background outputBackground {mirror} {outputId} on:loaded />
     {:else if type === "camera"}
         <Camera {id} groupId={data.cameraGroup || ""} class="media" style="width: 100%;height: 100%;" on:loaded />
+    {:else if type === "player" && $playerVideos[id]?.type === "website"}
+        {#key id}
+            <WebsiteMirror {id} fit={mediaStyle.fit} on:loaded />
+        {/key}
     {:else if type === "player"}
         <!-- prevent showing controls in output -->
         {#if $special.hideCursor || $playerVideos[id]?.type !== "youtube"}<div class="overlay" />{/if}

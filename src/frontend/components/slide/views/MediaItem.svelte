@@ -9,7 +9,7 @@
     import { defaultLayers } from "../../helpers/output"
     import { _show } from "../../helpers/shows"
     import { SoftLoopSync } from "../../media/video/softLoop"
-    import { syncVideoToAudio, videoSync } from "../../media/video/videoSync"
+    import { clearVideoSyncState, syncVideoToAudio, videoSync } from "../../media/video/videoSync"
 
     export let item: Item
     export let outputId = ""
@@ -54,6 +54,7 @@
 
         const cleanupVideo = (el: HTMLVideoElement | null | undefined) => {
             if (!el) return
+            clearVideoSyncState(el)
             try {
                 el.pause()
                 el.removeAttribute("src")
@@ -126,6 +127,10 @@
             unsubscriber()
             unsubscriber = null
         }
+        lastSyncedTime = null
+        clearVideoSyncState(videoElem)
+        clearVideoSyncState(videoBlurElem)
+        clearVideoSyncState(softLoopVideo)
 
         if (!path || !outputId) return
 
@@ -134,11 +139,16 @@
 
             const isSoftLoop = !!(data.softLoop && data.softLoop > 0)
             const rate = playbackRate
-            syncVideoToAudio(videoElem, data.currentTime, lastSyncedTime, isSoftLoop, rate, data.isFadingOut)
-            syncVideoToAudio(videoBlurElem, data.currentTime, lastSyncedTime, isSoftLoop, rate, data.isFadingOut)
-            if (data.currentTime !== undefined) {
-                lastSyncedTime = data.currentTime
-                videoTime = data.currentTime
+            let clockNow = data.currentTime
+            if (clockNow !== undefined && data.at && !data.paused) {
+                clockNow += (Math.max(0, Date.now() - data.at) / 1000) * rate
+                if (data.loop && data.duration > 0) clockNow %= data.duration
+            }
+            syncVideoToAudio(videoElem, clockNow, lastSyncedTime, isSoftLoop, rate, data.isFadingOut, data.paused)
+            syncVideoToAudio(videoBlurElem, clockNow, lastSyncedTime, isSoftLoop, rate, data.isFadingOut, data.paused)
+            if (clockNow !== undefined) {
+                lastSyncedTime = clockNow
+                videoTime = clockNow
             }
 
             if (data.softLoop !== undefined) softLoopValue = data.softLoop

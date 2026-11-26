@@ -4,7 +4,7 @@
     import MaterialButton from "../../../components/inputs/MaterialButton.svelte"
     import MaterialToggleSwitch from "../../../components/inputs/MaterialToggleSwitch.svelte"
     import Tabs from "../../../components/main/Tabs.svelte"
-    import { activePage, activeTriggerFunction, ai, aiSmartAction, aiSttStatus, language, mediaDownloads, settingsTab, sttTempDisabled, sttTranscript } from "../../../stores"
+    import { activePage, ai, aiSmartAction, aiSttStatus, language, mediaDownloads, settingsTab, sttTempDisabled, sttTranscript } from "../../../stores"
     import { audioLevelStore, resolveSttEngine, SpeechToText } from "../../stt/stt"
     import AiChat from "./AiChat.svelte"
     import AiRing from "./AiRing.svelte"
@@ -94,10 +94,10 @@
     }
 
     let sessionToken = 0
-    $: syncSession(isEnabled, micDeviceId, engineId)
-    async function syncSession(enabled: boolean | undefined, mic: string | undefined, engine: string) {
+    $: syncSession(isEnabled, micDeviceId, engineId, $sttTempDisabled)
+    async function syncSession(enabled: boolean | undefined, mic: string | undefined, engine: string, tempDisabled: boolean) {
         const currentLock = ++sessionToken
-        const shouldBeActive = Boolean(enabled && mic)
+        const shouldBeActive = Boolean(enabled && mic && !tempDisabled)
         const micChanged = (mic || "") !== lastMic
         const engineChanged = engine !== lastEngine
 
@@ -152,24 +152,14 @@
     })
 
     // LISTEN TOGGLE
-    $: if ($activeTriggerFunction.startsWith("toggle_stt_listening:")) {
-        const action = $activeTriggerFunction.split(":")[1]
-        if (action === "on") toggleListening(true)
-        else if (action === "off") toggleListening(false)
-        else toggleListening()
-    }
-
     function toggleListening(enable?: boolean) {
         const turnOn = enable === undefined ? !isListening : enable
         if (turnOn) {
             if (isListening) return
             sttTempDisabled.set(false)
-            enableListening()
         } else {
             if (!isListening && state === "inactive") return
             sttTempDisabled.set(true)
-            SpeechToText.stopCapture()
-            state = "inactive"
         }
     }
 
@@ -177,12 +167,12 @@
     $: isStarting = state === "processing"
 
     async function enableListening() {
-        if (isStarting || !isEnabled || !micDeviceId) return
+        if ($sttTempDisabled || isStarting || !isEnabled || !micDeviceId) return
         if (isListening) return
 
         const result = await SpeechToText.enable()
         if (result.aborted) return
-        if (isEnabled && micDeviceId) state = result.ok ? "listening" : "error"
+        if (isEnabled && micDeviceId && !$sttTempDisabled) state = result.ok ? "listening" : "error"
     }
 
     function openSettings() {

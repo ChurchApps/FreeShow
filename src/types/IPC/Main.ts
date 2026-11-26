@@ -99,6 +99,7 @@ export enum Main {
     READ_EXIF = "READ_EXIF",
     MEDIA_CODEC = "MEDIA_CODEC",
     MEDIA_TRACKS = "MEDIA_TRACKS",
+    WEBSITE_CAPTURE = "WEBSITE_CAPTURE",
     DOWNLOAD_LESSONS_MEDIA = "DOWNLOAD_LESSONS_MEDIA",
     MEDIA_DOWNLOAD = "MEDIA_DOWNLOAD",
     MEDIA_IS_DOWNLOADED = "MEDIA_IS_DOWNLOADED",
@@ -231,6 +232,7 @@ export interface MainSendPayloads {
     [Main.READ_EXIF]: { id: string }
     [Main.MEDIA_CODEC]: { path: string }
     [Main.MEDIA_TRACKS]: { path: string }
+    [Main.WEBSITE_CAPTURE]: { id: string; action: "start" | "stop" | "input" | "nav" | "zoom" | "thumbnail" | "sync"; url?: string; width?: number; height?: number; input?: any; nav?: "back" | "forward" | "reload" | "home"; zoom?: number }
     [Main.DOWNLOAD_LESSONS_MEDIA]: LessonsData[]
     [Main.MEDIA_DOWNLOAD]: { url: string; contentFile?: any }
     [Main.MEDIA_IS_DOWNLOADED]: { url: string; contentFile?: any }

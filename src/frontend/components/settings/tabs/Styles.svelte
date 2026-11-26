@@ -1,14 +1,13 @@
 <script lang="ts">
     import { uid } from "uid"
-    import type { AspectRatio, Resolution, Styles } from "../../../../types/Settings"
+    import type { AspectRatio, Resolution } from "../../../../types/Settings"
     import { activeDrawerTab, activeEdit, activePage, activeStyle, drawerTabsData, outputs, styles, templates } from "../../../stores"
-    import { translateText } from "../../../utils/language"
     import { transitionTypes } from "../../../utils/transitions"
     import { mediaExtensions } from "../../../values/extensions"
     import { mediaFitOptions } from "../../edit/values/boxes"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
-    import { defaultLayers } from "../../helpers/output"
+    import { GET_DEFAULT_STYLE, defaultLayers } from "../../helpers/output"
     import { metadataDisplayValues } from "../../helpers/show"
     import InputRow from "../../input/InputRow.svelte"
     import Title from "../../input/Title.svelte"
@@ -57,15 +56,11 @@
         })
     }
 
-    const defaultStyle: Styles = {
-        name: translateText("example.default")
-    }
-
     // set id after deletion
     $: if (Object.keys($styles)?.length && !$styles[styleId]) styleId = $styles.default ? "default" : Object.keys($styles)[0]
 
     $: styleId = $activeStyle || Object.keys($styles)[0] || ""
-    $: currentStyle = $styles[styleId] || clone(defaultStyle)
+    $: currentStyle = $styles[styleId] || GET_DEFAULT_STYLE()
 
     $: styleTemplate = $templates[currentStyle.template || ""] || {}
     $: styleTemplateScripture = $templates[currentStyle.templateScripture || ""] || {}

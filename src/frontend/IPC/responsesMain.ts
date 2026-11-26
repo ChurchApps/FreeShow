@@ -76,6 +76,7 @@ import {
     recentFiles,
     redoHistory,
     rtmpStatus,
+    streamStats,
     shows,
     showsCache,
     spellcheck,
@@ -95,7 +96,7 @@ import { newToast } from "../utils/common"
 import { translateText } from "../utils/language"
 import { startPcoPlanChangeWatcher } from "../utils/pcoPlanSync"
 import { confirmCustom } from "../utils/popup"
-import { getProviderItemLink, setProviderItemLink, syncProviderItemLinks } from "../utils/providerItemLinks"
+import { getProviderItemLink, hashProviderProjectItem, hashProviderShow, mergeProviderProjectItems, setProviderItemLink, syncProviderItemLinks } from "../utils/providerItemLinks"
 import { initializeClosing, saveComplete } from "../utils/save"
 import { invalidateSearchIndex } from "../utils/searchFast"
 import { updateSettings, updateSyncedSettings, updateThemeValues } from "../utils/updateSettings"
@@ -255,6 +256,12 @@ export const mainResponses: MainResponses = {
     [ToMain.LESSONS_DONE]: (data) => lessonsLoaded.set({ ...get(lessonsLoaded), [data.showId]: data.status }),
     [ToMain.IMAGES_TO_SHOW]: (data) => createImageShow(data),
     [ToMain.RTMP_STATUS]: (data) => rtmpStatus.update((a) => ({ ...a, [data.outputId]: data.destinations })),
+    [ToMain.STREAM_STATS]: (data) =>
+        streamStats.update((a) => {
+            if (!data.stats) delete a[data.outputId]
+            else a[data.outputId] = data.stats
+            return a
+        }),
     [ToMain.ICECAST_STATUS]: (data) => icecastStatus.set(data),
     [ToMain.MEDIA_DOWNLOAD_PROGRESS]: (data) => {
         mediaDownloads.update((downloads) => {
@@ -437,6 +444,7 @@ export const mainResponses: MainResponses = {
                 }
             }
 
+            const onlineHash = hashProviderShow(show)
             const providerName = data.providerId === "planningcenter" ? "Planning Center" : data.providerId === "churchApps" ? "ChurchApps" : data.providerId === "onstage" ? "OnStage" : "the cloud"
 
             // first find any shows linked to the id
@@ -450,6 +458,9 @@ export const mainResponses: MainResponses = {
                 // if linked manually, always keep the chosen show
                 if (link?.mode === "manual") continue
 
+                // if unchanged in the cloud, never replace (preserve local changes)
+                if (link?.hash && link.hash === onlineHash) continue
+
                 // no need to use local show if it doesn't have any slide content
                 // so if the name in provider changes, it will update (mostly for updating scripture references)
                 await loadShows([linkedShow.id])
@@ -459,7 +470,7 @@ export const mainResponses: MainResponses = {
                 // global song origin setting has priority, then the stored link mode, otherwise ask (and remember)
                 const mode = !hasSlides ? "online" : songOrigin || link?.mode
                 const useLocal = mode ? mode === "local" : await confirmCustom(`This show already exists: ${linkedShow.name}.<br><br>Would you like to use the local version instead of the one from ${providerName}?`)
-                if (!mode) setProviderItemLink(data.providerId, id, linkedShow.id, useLocal ? "local" : "online")
+                setProviderItemLink(data.providerId, id, linkedShow.id, mode || (useLocal ? "local" : "online"), onlineHash)
                 if (useLocal) continue
 
                 downloadShow(linkedShow.id)
@@ -473,7 +484,7 @@ export const mainResponses: MainResponses = {
             if (existingShow && songOrigin !== "online") {
                 const useLocal = songOrigin === "local" || (await confirmCustom(`There is an existing show with the same name: ${existingShow.name}.<br><br>Would you like to use the local version instead of the one from ${providerName}?`))
                 if (useLocal) {
-                    if (!songOrigin) setProviderItemLink(data.providerId, id, existingShow.id, "local")
+                    setProviderItemLink(data.providerId, id, existingShow.id, songOrigin ? undefined : "local", onlineHash)
                     replaceIds[id] = existingShow.id
                     updateExistingShow(existingShow.id)
                     continue
@@ -483,10 +494,9 @@ export const mainResponses: MainResponses = {
             const targetId = existingShow?.id || id
             replaceIds[id] = targetId
 
-            if ((existingShow && songOrigin !== "local") || songOrigin === "online") {
-                // set link so we will automatically update from the provider in the future
-                setProviderItemLink(data.providerId, id, targetId, "online")
-            }
+            // store link and cloud hash so unchanged items are never replaced on future syncs
+            const nextMode = (existingShow && songOrigin !== "local") || songOrigin === "online" ? "online" : undefined
+            setProviderItemLink(data.providerId, id, targetId, nextMode, onlineHash)
 
             downloadShow(targetId)
 
@@ -557,16 +567,21 @@ export const mainResponses: MainResponses = {
             }
 
             // CREATE PROJECT
+            const projectId = currentProject.id
+            const existingProject = allProjects[projectId] && !allProjects[projectId].deleted ? allProjects[projectId] : null
             const projectBase: Project = {
+                ...(existingProject || { created: currentProject.created }),
                 name: currentProject.name,
-                created: currentProject.created,
                 used: Date.now(), // show on top in last used list
                 parent: folderId || providerFolderId,
                 // the provider item stays known after its show is replaced, so links follow the item
-                shows: (currentProject.items || []).map((a) => ((a.type || "show") === "show" ? { ...a, providerItemId: a.id } : a)),
+                shows: (currentProject.items || []).map((a) => {
+                    const item = { ...a, providerItemId: a.providerItemId || a.id }
+                    return { ...item, providerHash: hashProviderProjectItem(item) }
+                }),
                 origin
             }
-            const project = createProviderProject(data.providerId, projectBase)
+            const project = existingProject ? projectBase : createProviderProject(data.providerId, projectBase)
 
             // REPLACE IDS
             project.shows = project.shows.map((a) => {
@@ -575,14 +590,14 @@ export const mainResponses: MainResponses = {
                 // in placeholder mode, unmatched provider shows become a show_placeholder item
                 if (placeholderMode && a.type === "show" && !get(shows)[mappedId]) {
                     const showName = a.name || data.shows?.find((s) => s.id === a.id)?.name || "—"
-                    return { type: "show_placeholder", id: uid(5), name: showName, scheduleLength: a.scheduleLength }
+                    return { type: "show_placeholder", id: uid(5), name: showName, scheduleLength: a.scheduleLength, providerItemId: a.providerItemId, providerHash: a.providerHash }
                 }
 
                 return { ...a, id: mappedId }
             })
 
-            const projectId = currentProject.id
-            if (!allProjects[projectId] || allProjects[projectId].deleted) createdProjectIds.push(projectId)
+            if (existingProject) project.shows = mergeProviderProjectItems(existingProject.shows || [], project.shows)
+            else createdProjectIds.push(projectId)
             history({ id: "UPDATE", newData: { data: project }, oldData: { id: projectId }, location: { page: "show", id: "project" } })
         })
 

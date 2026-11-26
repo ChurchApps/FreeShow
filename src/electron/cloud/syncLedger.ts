@@ -120,6 +120,7 @@ export class SyncLedger {
             if (this.isCreated(storeId, key) && this.isCreatedLocally(storeId, key)) {
                 // previously created here but now missing → it was deleted locally
                 this.markAsDeleted(storeId, key)
+                this.localMergedIn = true
                 return { action: "skip" }
             }
             if (this.isCreated(storeId, key)) {
@@ -132,6 +133,7 @@ export class SyncLedger {
             }
             // absence with no ledger mark → treat as deleted locally
             this.markAsDeleted(storeId, key)
+            this.localMergedIn = true
             return { action: "skip" }
         }
 

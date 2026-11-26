@@ -142,7 +142,7 @@ export async function syncWithCloud(initialize: boolean = false, isClosing: bool
     setStatus("syncing")
 
     // save any unsaved local changes before syncing with cloud
-    if (!get(saved)) save(false)
+    if (!get(saved)) await save(false)
 
     if (method === "replace") {
         // reset cached data

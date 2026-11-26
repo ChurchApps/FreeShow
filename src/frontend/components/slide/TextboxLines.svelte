@@ -2,7 +2,7 @@
     import { createEventDispatcher, onDestroy, onMount } from "svelte"
     import type { Styles } from "../../../types/Settings"
     import type { Item, TemplateStyleOverride } from "../../../types/Show"
-    import { createVirtualBreaks } from "../../show/slides"
+    import { formatTextLines } from "../../show/slides"
     import { outputs, slidesOptions, styles, variables } from "../../stores"
     import { getItemText } from "../edit/scripts/textStyle"
     import { clone } from "../helpers/array"
@@ -48,7 +48,7 @@
     export let normalWrap = false
     export let updateDynamicValues = true
 
-    $: lines = createVirtualBreaks(clone(item?.lines || []), outputStyle?.skipVirtualBreaks)
+    $: lines = formatTextLines(item?.lines || [], outputStyle?.skipVirtualBreaks)
     $: if (linesStart !== null && linesEnd !== null && lines.length) {
         lines = lines.filter((a) => Array.isArray(a.text) && a.text.filter((a) => a.value !== undefined)?.length)
 
@@ -65,6 +65,10 @@
     let renderedLines: any[] = []
     $: renderedLines = styleOverrides?.length ? applyStyleOverrides(lines, styleOverrides) : lines
 
+    function isLineCapitalize(line: any) {
+        return !!line?.text?.some((t: any) => t?.style?.includes("text-transform: capitalize-line") || t?.style?.includes("text-transform:capitalize-line"))
+    }
+
     $: shapeOutside = getStyles(item?.style)["shape-outside"]
     $: shapeFloatSide = getShapeFloatSide(shapeOutside)
 
@@ -78,6 +82,10 @@
         if (!style) return ""
 
         // text gradient
+
+        if (style.includes("text-transform: capitalize-line") || style.includes("text-transform:capitalize-line")) {
+            style = style.replace(/text-transform:\s*capitalize-line;?/gi, "")
+        }
 
         const gradientCount = (style.match(/-gradient/g) || []).length
         if (style.includes("-gradient") && (gradientCount > 1 || !style.includes("-webkit-mask-image: linear-gradient"))) {
@@ -396,6 +404,7 @@
                                 {#if !chordOnly}
                                     <div
                                         class="break"
+                                        class:capitalize={isLineCapitalize(line)}
                                         class:normalWrap={normalWrap || (isStage ? typeof stageItem?.style === "string" && (stageItem?.style.includes("justify") || stageItem?.style.includes("nowrap")) : line.align?.includes("justify") || line.align?.includes("left") || JSON.stringify(line).includes("nowrap"))}
                                         class:reveal={(centerPreview || isStage) && item?.lineReveal && revealed < i}
                                         class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")}
@@ -452,6 +461,7 @@
                     {#if !chordOnly}
                         <div
                             class="break"
+                            class:capitalize={isLineCapitalize(line)}
                             class:normalWrap={normalWrap || (isStage ? typeof stageItem?.style === "string" && (stageItem?.style.includes("justify") || stageItem?.style.includes("nowrap")) : line.align?.includes("justify") || line.align?.includes("left") || JSON.stringify(line).includes("nowrap"))}
                             class:reveal={(centerPreview || isStage) && item?.lineReveal && revealed < i}
                             class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")}
@@ -574,6 +584,11 @@
         opacity: 0.7;
         font-size: 0.8em;
         font-style: italic;
+    }
+    /* capitalize line-based */
+    .break.capitalize::first-letter,
+    .break.capitalize :global(span.textContainer:first-of-type::first-letter) {
+        text-transform: uppercase;
     }
     /* a block here would give the line's leading space its own line */
     .break :global(span.undertitle) {
