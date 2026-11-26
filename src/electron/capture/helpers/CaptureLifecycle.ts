@@ -175,7 +175,7 @@ export class CaptureLifecycle {
 
     static stopCapture(id: string) {
         this.captureLoopToken[id] = (this.captureLoopToken[id] || 0) + 1
-        this.activeCaptures.delete(id)
+        const wasActive = this.activeCaptures.delete(id)
 
         const output = OutputHelper.getOutput(id)
         const capture = output?.captureOptions
@@ -189,7 +189,7 @@ export class CaptureLifecycle {
         const channels = ["ndi", "omt", "blackmagic", "server", "stage", "webrtc", "rtmp", "recorder"]
         channels.forEach((channel) => CaptureHelper.Transmitter.stopChannel(id, channel))
 
-        console.info("Capture - stopping: " + id)
+        if (wasActive) console.info("Capture - stopping: " + id)
 
         // a displayed output that shares a render keeps its surface: that is its page
         if (!OutputHelper.Lifecycle.sharesThroughSurface(id)) OutputHelper.Lifecycle.destroyCaptureSurface(id)
