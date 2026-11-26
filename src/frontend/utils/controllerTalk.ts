@@ -1,4 +1,5 @@
 import { get } from "svelte/store"
+import { ensureDrawSettings } from "../components/draw/drawSettings"
 import { getFirstActiveOutput, getFirstOutput, getOutputResolution } from "../components/helpers/output"
 import { OutputHelper } from "../components/helpers/OutputHelper"
 import { clearAll, clearSlide } from "../components/output/clear"
@@ -45,8 +46,9 @@ export const receiveCONTROLLER = {
         data.offset.y *= resolution.height
 
         const tool = data.tool || "focus"
+        ensureDrawSettings(tool)
         const settings = get(drawSettings)[tool]
-        if (settings) {
+        if (settings && (tool === "pointer" || tool === "focus")) {
             data.offset.x -= settings.size / 2
             data.offset.y -= settings.size / 2
         }
