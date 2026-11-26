@@ -3,7 +3,7 @@ import { uid } from "uid"
 import type { ContentProviderId } from "../../electron/contentProviders/base/types"
 import type { ToMainSendPayloads } from "../../types/IPC/ToMain"
 import { ToMain } from "../../types/IPC/ToMain"
-import type { Project } from "../../types/Projects"
+import type { Project, ProjectShowRef } from "../../types/Projects"
 import type { Show, Slide } from "../../types/Show"
 import { Transcript } from "../ai/stt/transcript"
 import { API_ACTIONS, triggerAction } from "../components/actions/api"
@@ -97,6 +97,7 @@ import { translateText } from "../utils/language"
 import { startPcoPlanChangeWatcher } from "../utils/pcoPlanSync"
 import { confirmCustom } from "../utils/popup"
 import { getProviderItemLink, setProviderItemLink, syncProviderItemLinks } from "../utils/providerItemLinks"
+import { getProviderItemId, mergeProviderProjectItems } from "../utils/providerProjectItems"
 import { initializeClosing, saveComplete } from "../utils/save"
 import { invalidateSearchIndex } from "../utils/searchFast"
 import { updateSettings, updateSyncedSettings, updateThemeValues } from "../utils/updateSettings"
@@ -413,6 +414,9 @@ export const mainResponses: MainResponses = {
             })
         }
 
+        // collected up front, as the ids are removed from imported shows
+        const providerNames: { [key: string]: string } = Object.fromEntries((data.shows || []).map((a) => [a.id, a.name]))
+
         // CREATE SHOWS
         const tempShows: { id: string; show: Show }[] = []
         for (const show of data.shows) {
@@ -521,7 +525,8 @@ export const mainResponses: MainResponses = {
             const templateId = get(contentProviderData)[providerId]?.projectTemplate || ""
             if (!templateId) return projectBase
 
-            let templateItems = clone(get(projectTemplates)[templateId]?.shows || [])
+            // a template saved from a synced project must not bring its provider items along as such
+            let templateItems = clone(get(projectTemplates)[templateId]?.shows || []).map(({ providerItemId: _, ...item }) => item as ProjectShowRef)
             let pcoItems = clone(projectBase.shows || [])
 
             // project template first, then append the synced items (first to any placeholders, then to the end)
@@ -570,10 +575,14 @@ export const mainResponses: MainResponses = {
                 used: Date.now(), // show on top in last used list
                 parent: folderId || providerFolderId,
                 // the provider item stays known after its show is replaced, so links follow the item
-                shows: (currentProject.items || []).map((a) => ((a.type || "show") === "show" ? { ...a, providerItemId: a.id } : a)),
+                // (this also separates provider items from the ones added by the user)
+                shows: (currentProject.items || []).map((a) => ({ ...a, providerItemId: getProviderItemId(a) })),
                 origin
             }
-            const project = createProviderProject(data.providerId, projectBase)
+            const projectId = currentProject.id
+            const existingProject = allProjects[projectId]?.deleted ? undefined : allProjects[projectId]
+            // the template is only applied to new projects, later syncs keep its items like any other added item
+            const project = existingProject ? projectBase : createProviderProject(data.providerId, projectBase)
 
             // REPLACE IDS
             project.shows = project.shows.map((a) => {
@@ -582,15 +591,17 @@ export const mainResponses: MainResponses = {
                 // in placeholder mode, unmatched provider shows become a show_placeholder item
                 if (placeholderMode && a.type === "show" && !get(shows)[mappedId]) {
                     const showName = a.name || data.shows?.find((s) => s.id === a.id)?.name || "—"
-                    return { type: "show_placeholder", id: uid(5), name: showName, scheduleLength: a.scheduleLength }
+                    return { type: "show_placeholder", id: uid(5), name: showName, scheduleLength: a.scheduleLength, providerItemId: a.providerItemId }
                 }
 
                 return { ...a, id: mappedId }
             })
 
-            const projectId = currentProject.id
-            if (!allProjects[projectId] || allProjects[projectId].deleted) createdProjectIds.push(projectId)
-            history({ id: "UPDATE", newData: { data: project }, oldData: { id: projectId }, location: { page: "show", id: "project" } })
+            // keep what the user added or changed since the last sync
+            if (existingProject) project.shows = mergeProviderProjectItems(existingProject.shows || [], project.shows, { providerNames, showExists: (id) => !!get(shows)[id] })
+
+            if (!existingProject) createdProjectIds.push(projectId)
+            history({ id: "UPDATE", newData: { data: { ...existingProject, ...project } }, oldData: { id: projectId }, location: { page: "show", id: "project" } })
         })
 
         // open closest to today (if newly created)

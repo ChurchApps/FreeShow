@@ -1041,6 +1041,7 @@ function processHeaderItem(item: ProjectItem) {
         projectItem: {
             type: "section",
             id: uid(5),
+            providerItemId: `pcoheader_${item.id}`, // stays the same between syncs
             name: item.attributes.title || "",
             scheduleLength: item.attributes.length,
             notes: item.attributes.description || ""

@@ -11,6 +11,7 @@ import { changeLayout, changeSlideGroups } from "../../show/slides"
 import { activeDrawerTab, activeEdit, activePage, activePopup, activeProject, activeShow, alertMessage, audioFolders, audioPlaylists, audioStreams, drawerTabsData, editingProjectTemplate, effectsLibrary, media, mediaFolders, overlays, playerVideos, projects, projectTemplates, refreshEditSlide, scenes, scriptureSettings, shows, showsCache, slidesOptions, templates, timers } from "../../stores"
 import { newToast } from "../../utils/common"
 import { getAccess } from "../../utils/profile"
+import { fillProviderPlaceholder } from "../../utils/providerItemLinks"
 import { audioExtensions, imageExtensions, mediaExtensions, presentationExtensions, videoExtensions } from "../../values/extensions"
 import { actionData } from "../actions/actionData"
 import { addSlideAction, getActionTriggerId, isMatchingSlideAction } from "../actions/actions"
@@ -250,7 +251,8 @@ export const dropActions = {
         if (isReplacing) {
             const replaceIndex = drop.data?.index !== undefined ? drop.data.index : activeShowObj?.index
             const indexes = drag.id === "show" ? getIndexes(data) : []
-            const itemsToInsert = drag.id === "show" ? indexes.map((i) => projectShows[i]).filter(Boolean) : data
+            const itemsToInsert = drag.id === "show" ? indexes.map((i) => projectShows[i]).filter(Boolean) : [...data]
+            if (itemsToInsert[0] && replaceIndex !== undefined) itemsToInsert[0] = fillProviderPlaceholder(currentProject, projectShows[replaceIndex], itemsToInsert[0])
             h.newData.data = projectShows
                 .map((show, i) => (i === replaceIndex ? itemsToInsert : indexes.includes(i) ? null : show))
                 .flat()

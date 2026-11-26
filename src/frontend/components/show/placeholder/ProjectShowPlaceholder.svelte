@@ -1,6 +1,7 @@
 <script lang="ts">
     import { activePopup, activeProject, activeShow, editingProjectTemplate, popupData, projects, projectTemplates, shows } from "../../../stores"
     import { translateText } from "../../../utils/language"
+    import { fillProviderPlaceholder } from "../../../utils/providerItemLinks"
     import { history } from "../../helpers/history"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import Center from "../../system/Center.svelte"
@@ -35,7 +36,7 @@
                         location: { page: "show", id: "project_template" }
                     })
                 } else {
-                    newShows[showTemplateIndex] = { id: showId, type: "show" }
+                    newShows[showTemplateIndex] = fillProviderPlaceholder(project, newShows[showTemplateIndex], { id: showId, type: "show" })
                     history({
                         id: "UPDATE",
                         newData: { key: "shows", data: newShows },

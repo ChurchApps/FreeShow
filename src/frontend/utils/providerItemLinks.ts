@@ -4,6 +4,7 @@ import { history } from "../components/helpers/history"
 import { loadShows } from "../components/helpers/setShow"
 import type { Project, ProjectShowRef } from "../../types/Projects"
 import { activePopup, activeProject, activeShow, popupData, projects, providerItemLinks, shows, showsCache } from "../stores"
+import { fillPlaceholderItem } from "./providerProjectItems"
 
 export function getProviderItemLink(providerId: ContentProviderId, itemId: string) {
     const link = get(providerItemLinks)[`${providerId}:${itemId}`]
@@ -51,6 +52,16 @@ export function isProjectItemLinked(project: Project | null | undefined, item: P
     return !!links[getProjectItemLinkKey(project, item)]
 }
 
+// remember what the user put in a placeholder, so the next sync does not replace it
+export function fillProviderPlaceholder(project: Project | null | undefined, replaced: ProjectShowRef | undefined, item: ProjectShowRef) {
+    const providerId = getProviderFromOrigin(project?.origin)
+    if (!providerId) return item
+
+    const filled = fillPlaceholderItem(replaced, item)
+    if (filled !== item && filled.providerItemId && (filled.type || "show") === "show") setProviderItemLink(providerId, filled.providerItemId, filled.id, "manual")
+    return filled
+}
+
 export function openLinkProviderDialog(item: { id: string; index?: number }) {
     if (!item?.id) return
 
@@ -70,7 +81,16 @@ export function openLinkProviderDialog(item: { id: string; index?: number }) {
 
             if (itemIndex >= 0) {
                 const newShows = [...(currentProject.shows || [])]
-                newShows[itemIndex] = { ...newShows[itemIndex], id: chosenShowId }
+                const current = newShows[itemIndex]
+                let linked: ProjectShowRef = { ...current, id: chosenShowId }
+                // a linked placeholder becomes a show item
+                if (linked.type === "show_placeholder") {
+                    linked.type = "show"
+                    delete linked.name
+                    delete linked.data
+                    if (!linked.providerItemId) linked = fillPlaceholderItem(current, linked)
+                }
+                newShows[itemIndex] = linked
 
                 history({
                     id: "UPDATE",
