@@ -1,10 +1,11 @@
 import { get } from "svelte/store"
+import { uid } from "uid"
 import type { ContentProviderId } from "../../electron/contentProviders/base/types"
 import { history } from "../components/helpers/history"
 import { loadShows } from "../components/helpers/setShow"
 import type { Project, ProjectShowRef } from "../../types/Projects"
-import { activePopup, activeProject, activeShow, popupData, projects, providerItemLinks, shows, showsCache } from "../stores"
-import { fillPlaceholderItem } from "./providerProjectItems"
+import { activePopup, activeProject, activeShow, contentProviderData, popupData, projects, providerItemLinks, shows, showsCache } from "../stores"
+import { fillPlaceholderItem, restorePlaceholderItem } from "./providerProjectItems"
 
 export function getProviderItemLink(providerId: ContentProviderId, itemId: string) {
     const link = get(providerItemLinks)[`${providerId}:${itemId}`]
@@ -49,7 +50,8 @@ function getProjectItemLinkKey(project: Project | null | undefined, item: Projec
 }
 
 export function isProjectItemLinked(project: Project | null | undefined, item: ProjectShowRef | undefined, links = get(providerItemLinks)) {
-    return !!links[getProjectItemLinkKey(project, item)]
+    // a filled placeholder can always be unlinked, also without a stored link
+    return !!links[getProjectItemLinkKey(project, item)] || item?.replacedPlaceholder !== undefined
 }
 
 // remember what the user put in a placeholder, so the next sync does not replace it
@@ -88,7 +90,7 @@ export function openLinkProviderDialog(item: { id: string; index?: number }) {
                     linked.type = "show"
                     delete linked.name
                     delete linked.data
-                    if (!linked.providerItemId) linked = fillPlaceholderItem(current, linked)
+                    linked = fillPlaceholderItem(current, linked)
                 }
                 newShows[itemIndex] = linked
 
@@ -109,14 +111,43 @@ export function openLinkProviderDialog(item: { id: string; index?: number }) {
 export function unlinkProjectItems(items: { id: string; index?: number }[]) {
     const projectId = get(activeProject)
     const currentProject = projectId ? get(projects)[projectId] : null
-    if (!currentProject) return
+    if (!projectId || !currentProject) return
+
+    const providerId = getProviderFromOrigin(currentProject.origin)
+    const placeholderMode = !!providerId && get(contentProviderData)[providerId]?.songOrigin === "placeholder"
+    const newShows = [...(currentProject.shows || [])]
+    const restored: number[] = []
+    const keys: string[] = []
+
+    items.forEach((item) => {
+        const index = item.index ?? newShows.findIndex((s) => s.id === item.id)
+        const projectItem = newShows[index]
+        const key = getProjectItemLinkKey(currentProject, projectItem)
+        if (!projectItem || !key) return
+        keys.push(key)
+
+        // what was put in a placeholder is removed again
+        const filled = projectItem.replacedPlaceholder !== undefined || (placeholderMode && get(providerItemLinks)[key]?.mode === "manual")
+        if (!filled || projectItem.type === "show_placeholder") return
+
+        newShows[index] = restorePlaceholderItem(projectItem, uid(5), projectItem.name || get(shows)[projectItem.id]?.name || "—")
+        restored.push(index)
+    })
 
     providerItemLinks.update((a) => {
-        items.forEach((item) => {
-            const index = item.index ?? currentProject.shows?.findIndex((s) => s.id === item.id) ?? -1
-            const key = getProjectItemLinkKey(currentProject, currentProject.shows?.[index])
-            if (key) delete a[key]
-        })
+        keys.forEach((key) => delete a[key])
         return a
     })
+
+    if (!restored.length) return
+
+    history({
+        id: "UPDATE",
+        newData: { key: "shows", data: newShows },
+        oldData: { id: projectId },
+        location: { page: "show", id: "project_key" }
+    })
+
+    const activeIndex = get(activeShow)?.index
+    if (activeIndex !== undefined && restored.includes(activeIndex)) activeShow.set({ id: newShows[activeIndex].id, type: "show_placeholder", index: activeIndex })
 }

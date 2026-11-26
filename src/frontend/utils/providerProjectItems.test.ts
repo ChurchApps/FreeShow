@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import type { ProjectShowRef } from "../../types/Projects"
-import { fillPlaceholderItem, getProviderItemId, mergeProviderProjectItems } from "./providerProjectItems"
+import { fillPlaceholderItem, getProviderItemId, mergeProviderProjectItems, restorePlaceholderItem } from "./providerProjectItems"
 
 const show = (id: string, providerItemId?: string, extra: Partial<ProjectShowRef> = {}): ProjectShowRef => ({ id, type: "show", ...(providerItemId ? { providerItemId } : {}), ...extra })
 const placeholder = (id: string, name: string, providerItemId?: string): ProjectShowRef => ({ id, type: "show_placeholder", name, ...(providerItemId ? { providerItemId } : {}) })
@@ -116,7 +116,7 @@ describe("fillPlaceholderItem", () => {
     it("takes over the provider item of the placeholder", () => {
         const result = fillPlaceholderItem({ ...placeholder("x1", "Song", "p1"), scheduleLength: 30 }, show("mine"))
 
-        expect(result).toEqual(show("mine", "p1", { scheduleLength: 30 }))
+        expect(result).toEqual(show("mine", "p1", { scheduleLength: 30, replacedPlaceholder: "Song" }))
     })
 
     it("leaves other replacements unchanged", () => {
@@ -135,7 +135,7 @@ describe("placeholder filled before it knew its provider item", () => {
         const once = merge([filled], [placeholder("x2", "Song", "p1")])
         const twice = merge(once, [placeholder("x3", "Song", "p1")])
 
-        expect(once).toEqual([show("mine", "p1")])
+        expect(once).toEqual([show("mine", "p1", { replacedPlaceholder: "Song" })])
         expect(twice).toEqual(once)
     })
 
@@ -143,6 +143,26 @@ describe("placeholder filled before it knew its provider item", () => {
         const result = merge([filled], [placeholder("x2", "Other", "p1")])
 
         expect(ids(result)).toEqual(["mine", "x2"])
+    })
+})
+
+describe("restorePlaceholderItem", () => {
+    const original = { ...placeholder("x1", "Song", "p1"), scheduleLength: 30 }
+    const filled = fillPlaceholderItem(original, show("mine", undefined, { color: "#ff0000", layout: "l1" }))
+
+    it("restores the placeholder which was filled", () => {
+        expect(restorePlaceholderItem(filled, "x2", "My show")).toEqual({ ...placeholder("x2", "Song", "p1"), scheduleLength: 30, color: "#ff0000" })
+    })
+
+    it("stays a placeholder on the next sync", () => {
+        const restored = restorePlaceholderItem(filled, "x2", "My show")
+        const result = merge([restored], [placeholder("x3", "Song", "p1")])
+
+        expect(result).toEqual([restored])
+    })
+
+    it("uses the fallback name if the placeholder name is not known", () => {
+        expect(restorePlaceholderItem(show("mine", "p1"), "x2", "My show").name).toBe("My show")
     })
 })
 

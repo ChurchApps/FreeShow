@@ -21,12 +21,25 @@ export function getProviderItemId(item: ProjectShowRef) {
 // a show put in the place of a placeholder takes over its provider item, so the next sync keeps it
 export function fillPlaceholderItem(replaced: ProjectShowRef | undefined, item: ProjectShowRef): ProjectShowRef {
     if (replaced?.type !== "show_placeholder" || item.type === "show_placeholder") return item
-    // placeholders synced by an earlier version don't know their provider item yet, the next sync finds it by name
-    if (!replaced.providerItemId) return replaced.name ? { ...item, replacedPlaceholder: replaced.name } : item
 
-    const filled: ProjectShowRef = { ...item, providerItemId: replaced.providerItemId }
+    // the name restores the placeholder when unlinked, and finds the provider item of a placeholder synced by an earlier version
+    const filled: ProjectShowRef = { ...item, replacedPlaceholder: replaced.name || "" }
+    if (!replaced.providerItemId) return filled
+
+    filled.providerItemId = replaced.providerItemId
     if (filled.scheduleLength === undefined && replaced.scheduleLength !== undefined) filled.scheduleLength = replaced.scheduleLength
     return filled
+}
+
+// turn a filled item back into a placeholder
+export function restorePlaceholderItem(item: ProjectShowRef, id: string, fallbackName: string): ProjectShowRef {
+    const placeholder: ProjectShowRef = { id, type: "show_placeholder", name: item.replacedPlaceholder || fallbackName }
+
+    if (item.providerItemId) placeholder.providerItemId = item.providerItemId
+    if (item.scheduleLength !== undefined) placeholder.scheduleLength = item.scheduleLength
+    if (item.color) placeholder.color = item.color
+    if (item.notes) placeholder.notes = item.notes
+    return placeholder
 }
 
 /**
@@ -94,7 +107,7 @@ function isSameLegacyItem(existing: ProjectShowRef, incoming: ProjectShowRef, pr
 
     // a placeholder, or what the user has put in its place
     const placeholderName = existing.type === "show_placeholder" ? existing.name : existing.replacedPlaceholder
-    if (placeholderName !== undefined) {
+    if (placeholderName) {
         if (!isShow(incoming) && incoming.type !== "show_placeholder") return false
         const incomingName = normalizeName(incoming.name || providerNames[incoming.providerItemId || ""])
         return !!incomingName && normalizeName(placeholderName) === incomingName
@@ -103,10 +116,7 @@ function isSameLegacyItem(existing: ProjectShowRef, incoming: ProjectShowRef, pr
     return (existing.type || "show") === (incoming.type || "show") && existing.id === incoming.id
 }
 
-function mergeItem(previous: ProjectShowRef, incoming: ProjectShowRef, showExists: MergeOptions["showExists"]): ProjectShowRef {
-    // the provider item is known from now on
-    const { replacedPlaceholder: _, ...existing } = previous
-
+function mergeItem(existing: ProjectShowRef, incoming: ProjectShowRef, showExists: MergeOptions["showExists"]): ProjectShowRef {
     // there is no local match for the provider item, but the user has chosen something for it
     if (incoming.type === "show_placeholder" && existing.type !== "show_placeholder" && (!isShow(existing) || showExists(existing.id))) {
         return { ...existing, providerItemId: incoming.providerItemId, scheduleLength: incoming.scheduleLength ?? existing.scheduleLength }

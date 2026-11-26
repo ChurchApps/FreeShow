@@ -33,7 +33,7 @@ export interface ProjectShowRef extends ShowRef {
     data?: any // section settings
     scheduleLength?: number // currently only from PCO import
     providerItemId?: string // the content provider item this was imported from
-    replacedPlaceholder?: string // name of a replaced placeholder which didn't know its provider item yet
+    replacedPlaceholder?: string // name of the placeholder this item was put in
     played?: boolean
 }
 
