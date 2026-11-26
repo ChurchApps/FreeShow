@@ -160,8 +160,10 @@
                 newToast("toast.output_capture_enabled")
             }
 
-            if (networkType) createOutputAudioChannel(outputId)
-            else checkPrimaryOutputRouting()
+            if (type !== "stage") {
+                if (networkType) createOutputAudioChannel(outputId)
+                else checkPrimaryOutputRouting()
+            }
         }
     }
 
