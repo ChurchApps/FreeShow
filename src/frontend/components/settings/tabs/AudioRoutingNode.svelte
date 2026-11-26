@@ -109,7 +109,7 @@
     style="{activeColor ? `--port-color: ${activeColor};` : ''}{maxPorts > 1 ? `min-height: ${maxPorts * 30 + (isChannel ? 18 : 0)}px;` : ''}"
 >
     {#if hasInPort}
-        <div class:ports-column-in={activeInChannels > 1}>
+        <div class={activeInChannels > 1 ? "ports-column-in" : "ports-single"}>
             {#if isChannel && activeInChannels === 1}
                 <div class="port port-sidechain" data-title={translateText("audio.sidechain")} on:mouseenter={(e) => enterPort(e, "sidechain")} on:mouseleave={leavePort} on:mousedown={(e) => onMouseDown(e, "sidechain")} on:contextmenu={(e) => onPortContextMenu(e, "sidechain")}></div>
             {/if}
@@ -206,7 +206,7 @@
     {/if}
 
     {#if hasOutPort}
-        <div class:ports-column-out={activeOutChannels > 1}>
+        <div class={activeOutChannels > 1 ? "ports-column-out" : "ports-single"}>
             {#each outPorts as chIdx}
                 <div class="port port-out" class:port-multi={chIdx !== undefined} data-ch-index={chIdx} data-port-type="out" data-title={getChannelPortTitle(chIdx)} on:mouseenter={(e) => enterPort(e, "out", chIdx)} on:mouseleave={leavePort} on:mousedown={(e) => onMouseDown(e, "out", chIdx)} on:contextmenu={(e) => onPortContextMenu(e, "out", chIdx)}></div>
             {/each}
@@ -340,6 +340,10 @@
     .port-out {
         right: -7px;
         top: calc(50% - 6px);
+    }
+
+    .ports-single {
+        display: contents;
     }
 
     .ports-column-in {
