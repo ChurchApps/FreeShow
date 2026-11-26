@@ -32,16 +32,23 @@
 
     let thumbnailInterval: any = null
     let frameReceived = true
-    $: if (draw && !thumbnailInterval) thumbnailInterval = setInterval(requestThumbnail, 800)
-    else if (thumbnailInterval) {
-        clearInterval(thumbnailInterval)
-        thumbnailInterval = null
+    let lastFrameRequest = 0
+    $: {
+        if (thumbnailInterval) {
+            clearInterval(thumbnailInterval)
+            thumbnailInterval = null
+        }
+        if (draw) {
+            requestThumbnail()
+            thumbnailInterval = setInterval(requestThumbnail, mouseDown ? 150 : 800)
+        }
     }
 
     function requestThumbnail() {
-        if (!outputId || !frameReceived) return
+        if (!outputId || (!frameReceived && Date.now() - lastFrameRequest < 2000)) return
         frameReceived = false
-        socket.emit("CONTROLLER", { channel: "OUTPUT_FRAME", data: { outputId } })
+        lastFrameRequest = Date.now()
+        socket.emit("CONTROLLER", { channel: "OUTPUT_FRAME", data: { outputId, drawing: mouseDown } })
     }
 
     function sendAction(id: string) {
