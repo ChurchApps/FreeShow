@@ -6,6 +6,7 @@
     import { sendMain } from "../../IPC/main"
     import { activePopup, activeProject, activeRename, contentProviderData, dictionary, drawer, editingProjectTemplate, focusMode, folders, openedFolders, pcoPlansWithUpdates, projects, projectTemplates, projectView, providerConnections, showRecentlyUsedProjects, sorted, special } from "../../stores"
     import { translateText } from "../../utils/language"
+    import { promptPcoSyncMode } from "../../utils/pcoConnect"
     import { getAccess } from "../../utils/profile"
     import { exportProject } from "../export/project"
     import { shareProjectLink } from "../export/projectLink"
@@ -346,6 +347,7 @@
 
     function openPcoPicker() {
         addMenuOpen = false
+        if (promptPcoSyncMode()) return
         activePopup.set("pco_picker")
     }
 

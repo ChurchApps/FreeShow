@@ -198,6 +198,12 @@ export const mainResponses: MainResponses = {
     [Main.SEND_SOCKET_MESSAGE]: (data) => sendSocketMessage(data),
     // Provider-based routing
     [Main.PROVIDER_LOAD_SERVICES]: async (data) => {
+        // only authorize, the sync is requested separately when the user is ready
+        if (data.connectScope) {
+            await ContentProviderRegistry.connect(data.providerId, data.connectScope)
+            return
+        }
+
         if (data.cloudOnly) markAsNewSync()
         await ContentProviderRegistry.loadServices(data.providerId, data.cloudOnly || false, data.data)
     },

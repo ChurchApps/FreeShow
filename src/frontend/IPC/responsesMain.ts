@@ -94,6 +94,7 @@ import {
 import { setupCloudSync } from "../utils/cloudSync"
 import { newToast } from "../utils/common"
 import { translateText } from "../utils/language"
+import { promptPcoSyncMode } from "../utils/pcoConnect"
 import { startPcoPlanChangeWatcher } from "../utils/pcoPlanSync"
 import { confirmCustom } from "../utils/popup"
 import { getProviderItemLink, setProviderItemLink, syncProviderItemLinks } from "../utils/providerItemLinks"
@@ -364,6 +365,8 @@ export const mainResponses: MainResponses = {
             c[data.providerId] = true
             return c
         })
+
+        if (data.providerId === "planningcenter") promptPcoSyncMode()
 
         if (data.isFirstConnection) {
             newToast("main.finished")

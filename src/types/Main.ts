@@ -486,6 +486,7 @@ export type Popups =
     | "template_info"
     | "cleaning_utility"
     | "pco_picker"
+    | "pco_sync_mode"
     | "sync_folders"
     | "node_options"
     | "ai_model_manager"

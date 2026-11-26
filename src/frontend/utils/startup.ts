@@ -14,6 +14,7 @@ import { wait, waitUntilValueIsDefined } from "./common"
 import { getDefaultElements } from "./createData"
 import { setLanguage } from "./language"
 import { storeSubscriber } from "./listeners"
+import { isPcoSyncModePending, promptPcoSyncMode } from "./pcoConnect"
 import { autoOpenLastUsedProfile, openProfileByName } from "./profile"
 import { receiveOUTPUTasOUTPUT, remoteListen, setupMainReceivers } from "./receivers"
 import { renderSignatureHook } from "./renderSignature"
@@ -174,6 +175,12 @@ export async function contentProviderSync(startup = false, remainingOnly = false
 
     providers.forEach(({ providerId, scope, data, autoSync }) => {
         if (startup && autoSync === false) return
+
+        // nothing is synced before a sync mode has been chosen, ask for it on a manual sync
+        if (providerId === "planningcenter" && isPcoSyncModePending()) {
+            if (!startup && get(providerConnections).planningcenter) promptPcoSyncMode()
+            return
+        }
 
         // make sure the same provider does not run multiple times at once
         const now = Date.now()

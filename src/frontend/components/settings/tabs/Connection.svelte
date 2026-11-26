@@ -20,6 +20,8 @@
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
     import Tip from "../../main/Tip.svelte"
     import { stopPcoPlanChangeWatcher } from "../../../utils/pcoPlanSync"
+    import { connectPlanningCenter } from "../../../utils/pcoConnect"
+    import { getProviderOriginOptions } from "../../../utils/providerOriginOptions"
 
     let ip = "localhost"
 
@@ -122,8 +124,10 @@
                 }
             }
 
-            const data = providerId === "planningcenter" ? { syncFolderIds: $contentProviderData.planningcenter?.syncFolderIds || [], songOrigin: $contentProviderData.planningcenter?.songOrigin || "" } : undefined
-            sendMain(Main.PROVIDER_LOAD_SERVICES, { providerId, cloudOnly: cloudOnly[providerId] || false, data })
+            // Planning Center asks for the sync mode before the first sync
+            if (providerId === "planningcenter") return connectPlanningCenter()
+
+            sendMain(Main.PROVIDER_LOAD_SERVICES, { providerId, cloudOnly: cloudOnly[providerId] || false })
         } else {
             if ($cloudSyncData.enabled && providerId === $cloudSyncData.id) {
                 // should remain connected to cloud
@@ -165,13 +169,7 @@
 
     $: projectTemplateOptions = [{ value: "", label: translateText("main.none") }, ...sortByName(keysToID($projectTemplates)).map(({ id, name }) => ({ value: id, label: name }))]
 
-    $: providerOriginOptions = [
-        { value: "", label: "Ask when existing show is found", data: "Ask to use online or local, if existing both places, first time" },
-        { value: "local", label: "Prioritize local instance", data: "Use local if existing, download if not" },
-        // currently for Planning Center only
-        ...($providerConnections.planningcenter ? [{ value: "placeholder", label: "Always use local instance", data: "Creates placeholders for unmatched shows" }] : []),
-        { value: "online", label: "Always use online instance", data: "Online instance will always be used" }
-    ]
+    $: providerOriginOptions = getProviderOriginOptions(!!$providerConnections.planningcenter)
 
     // OnStage
 
