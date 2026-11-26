@@ -85,7 +85,6 @@ export function openLinkProviderDialog(item: { id: string; index?: number }) {
                 const newShows = [...(currentProject.shows || [])]
                 const current = newShows[itemIndex]
                 let linked: ProjectShowRef = { ...current, id: chosenShowId }
-                // a linked placeholder becomes a show item
                 if (linked.type === "show_placeholder") {
                     linked.type = "show"
                     delete linked.name

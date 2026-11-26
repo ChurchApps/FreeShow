@@ -574,8 +574,7 @@ export const mainResponses: MainResponses = {
                 created: currentProject.created,
                 used: Date.now(), // show on top in last used list
                 parent: folderId || providerFolderId,
-                // the provider item stays known after its show is replaced, so links follow the item
-                // (this also separates provider items from the ones added by the user)
+                // the provider item stays known after its show is replaced (items without one are added by the user)
                 shows: (currentProject.items || []).map((a) => ({ ...a, providerItemId: getProviderItemId(a) })),
                 origin
             }
@@ -597,7 +596,6 @@ export const mainResponses: MainResponses = {
                 return { ...a, id: mappedId }
             })
 
-            // keep what the user added or changed since the last sync
             if (existingProject) project.shows = mergeProviderProjectItems(existingProject.shows || [], project.shows, { providerNames, showExists: (id) => !!get(shows)[id] })
 
             if (!existingProject) createdProjectIds.push(projectId)

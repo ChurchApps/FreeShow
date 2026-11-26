@@ -31,7 +31,6 @@ export function fillPlaceholderItem(replaced: ProjectShowRef | undefined, item: 
     return filled
 }
 
-// turn a filled item back into a placeholder
 export function restorePlaceholderItem(item: ProjectShowRef, id: string, fallbackName: string): ProjectShowRef {
     const placeholder: ProjectShowRef = { id, type: "show_placeholder", name: item.replacedPlaceholder || fallbackName }
 
