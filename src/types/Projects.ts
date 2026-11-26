@@ -33,6 +33,7 @@ export interface ProjectShowRef extends ShowRef {
     data?: any // section settings
     scheduleLength?: number // currently only from PCO import
     providerItemId?: string // the content provider item this was imported from
+    providerHash?: string // hash of the cloud provider item when last synced
     played?: boolean
 }
 

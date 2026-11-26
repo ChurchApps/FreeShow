@@ -12,6 +12,7 @@ import { onStageActiveTeam, onStageApiRequest, onStageConnect } from "./connect"
 import { addSongArrangement, createSongBuild, finalizeSongBuild, type OnStageSong, type SongBuild } from "./songBuilder"
 
 type OnStageServiceItem = {
+    id?: string
     type: "song" | "moment"
     name: string | null
     notes: string | null
@@ -20,7 +21,7 @@ type OnStageServiceItem = {
     song: OnStageSong | null
 }
 type OnStageServiceOverview = { id: string; name: string | null; dateTime: string; location: string | null; itemCount: number; updatedAt: string | null }
-type ProviderProjectItem = { type: "show" | "section"; id: string; scheduleLength: number; layout?: string; name?: string; notes?: string }
+type ProviderProjectItem = { type: "show" | "section"; id: string; providerItemId?: string; scheduleLength: number; layout?: string; name?: string; notes?: string }
 type ProviderProject = { id: string; name: string; scheduledTo: number; created: number; folderId: string; folderName: string; items: ProviderProjectItem[] }
 type OnStageServiceDetail = { id: string; name: string | null; dateTime: string; location: string | null; updatedAt: string | null; items: OnStageServiceItem[] }
 
@@ -90,6 +91,7 @@ export async function onStageLoadServices(providerData?: any): Promise<void> {
                 projectItems.push({
                     type: "section",
                     id: uid(5),
+                    providerItemId: item.id || `section_${item.name || ""}`,
                     name: item.name || "",
                     scheduleLength: Math.round(item.durationMs / 1000),
                     notes: item.notes || ""

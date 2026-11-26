@@ -60,6 +60,7 @@ export class ChurchAppsImport {
                 projectItems.push({
                     type: "section",
                     id: uid(5),
+                    providerItemId: pi.id || `section_${pi.label || ""}`,
                     name: pi.label || "",
                     scheduleLength: pi.seconds,
                     notes: [pi.description, pi.assignees].filter(Boolean).join("\n")
@@ -80,6 +81,7 @@ export class ChurchAppsImport {
                     projectItems.push({
                         type: "section",
                         id: uid(5),
+                        providerItemId: section.id || `section_${section.name || ""}`,
                         name: section.name || "",
                         scheduleLength: 0,
                         notes: ""

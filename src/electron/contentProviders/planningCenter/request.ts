@@ -1026,7 +1026,8 @@ async function processMediaItem(item: ProjectItem, itemsEndpoint: string, servic
             name: media.attributes.title,
             scheduleLength: item.attributes.length,
             type: media.attributes.length ? "video" : "image",
-            id: filePath
+            id: filePath,
+            providerItemId: item.id
         },
         downloadableMedia: {
             name: serviceType.attributes.name,
@@ -1041,6 +1042,7 @@ function processHeaderItem(item: ProjectItem) {
         projectItem: {
             type: "section",
             id: uid(5),
+            providerItemId: item.id,
             name: item.attributes.title || "",
             scheduleLength: item.attributes.length,
             notes: item.attributes.description || ""
