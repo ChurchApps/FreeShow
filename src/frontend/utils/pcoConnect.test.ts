@@ -6,7 +6,7 @@ const h = vi.hoisted(() => {
         return {
             set: (v: any) => (value = v),
             update: (fn: (v: any) => any) => (value = fn(value)),
-            subscribe: (fn: (v: any) => void) => (fn(value), () => {})
+            subscribe: (fn: (v: any) => void) => (fn(value), () => undefined)
         }
     }
     return { activePopup: makeStore(null), contentProviderData: makeStore({}), saved: makeStore(true), sendMain: vi.fn() }
@@ -50,7 +50,7 @@ describe("Planning Center first sync", () => {
 
         expect(h.sendMain).toHaveBeenCalledWith(Main.PROVIDER_LOAD_SERVICES, { providerId: "planningcenter", data: { syncFolderIds: ["f1"], songOrigin: "placeholder" } })
         expect(isPcoSyncModePending()).toBe(false)
-        expect((get(h.contentProviderData as any) as any).planningcenter.songOrigin).toBe("placeholder")
+        expect(get(h.contentProviderData as any)).toMatchObject({ planningcenter: { songOrigin: "placeholder" } })
         expect(get(h.activePopup as any)).toBe(null)
     })
 })

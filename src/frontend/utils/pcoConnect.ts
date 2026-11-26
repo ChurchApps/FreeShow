@@ -15,7 +15,7 @@ export function connectPlanningCenter() {
     sendMain(Main.PROVIDER_LOAD_SERVICES, { providerId: "planningcenter", connectScope: "services" })
 }
 
-/** asks for the sync mode if none has been chosen since connecting */
+// asks for the sync mode if none has been chosen since connecting
 export function promptPcoSyncMode() {
     if (!isPcoSyncModePending()) return false
 
