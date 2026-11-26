@@ -18,11 +18,15 @@
 
     function handleMouseEnter() {
         clearTimeout(hoverTimer)
-        isHovering = true
+        if (isHovering) return
+
+        hoverTimer = setTimeout(() => (isHovering = true), isMinimized ? 200 : 120)
     }
 
     function handleMouseLeave() {
         clearTimeout(hoverTimer)
+        if (!isHovering) return
+
         hoverTimer = setTimeout(() => {
             isHovering = false
         }, 500) // Delay of 0.5 seconds before collapsing/hiding controls
@@ -145,7 +149,7 @@
 
         <div class="progress" class:disabled={$spotifyIsFading}>
             <span class="time">{formatTime(isDragging && $spotifyState ? dragPercentage * $spotifyState.durationSec : $spotifyState.positionSec)}</span>
-            <div class="bar" bind:this={barEl} on:pointerdown={handleBarPointerDown} on:click={handleSeek} style="touch-action: none;">
+            <div class="bar" class:dragging={isDragging} bind:this={barEl} on:pointerdown={handleBarPointerDown} on:click={handleSeek} style="touch-action: none;">
                 <!-- transition: {isDragging ? 'none' : 'width 0.1s linear'}; -->
                 <div class="fill" style="width: {isDragging && $spotifyState ? Math.min(dragPercentage * 100, 100) : Math.min(($spotifyState.positionSec / Math.max($spotifyState.durationSec, 1)) * 100, 100)}%;"></div>
             </div>
@@ -330,19 +334,39 @@
         height: 4px;
         background: var(--bg-3, #333);
         border-radius: 2px;
-        overflow: hidden;
         position: relative;
         cursor: pointer;
     }
 
-    .bar:hover {
-        height: 6px;
-        margin: -1px 0;
+    .bar::before {
+        content: "";
+        position: absolute;
+        inset: -4px 0;
     }
 
     .fill {
         height: 100%;
         background: #1db954; /* Spotify green */
         border-radius: 2px;
+        position: relative;
+    }
+
+    .fill::after {
+        content: "";
+        position: absolute;
+        right: -5px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #fff;
+        opacity: 0;
+        transition: opacity 0.15s ease;
+    }
+
+    .bar:hover .fill::after,
+    .bar.dragging .fill::after {
+        opacity: 1;
     }
 </style>
