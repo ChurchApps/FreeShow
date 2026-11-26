@@ -22,7 +22,7 @@ import type { ActiveStage, StageLayouts } from "../types/Stage"
 import type { BibleCategories, Categories, DrawerTabs, EditMode, PlayerVideos, SettingsTabs, TopViews } from "../types/Tabs"
 import type { AiSuggestion } from "./../types/ai/Ai"
 import type { AiSettings } from "./../types/ai/AiSettings"
-import type { Outputs, RtmpStatus, SyncedOutputs } from "./../types/Output"
+import type { Outputs, RtmpStatus, StreamStats, SyncedOutputs } from "./../types/Output"
 import type { DrawerTabIds } from "./../types/Tabs"
 import type { AudioData } from "./audio/audioPlayer"
 import type { WebsiteAction } from "./components/helpers/websiteControls"
@@ -87,6 +87,7 @@ export const providerConnections: Writable<{ [key in ContentProviderId]?: boolea
 export const metronomeTimer: Writable<{ beat: number; timeToNext: number }> = writable({ beat: 0, timeToNext: 0 })
 export const mediaDownloads: Writable<Map<string, { progress: number; total: number; status: string; name?: string }>> = writable(new Map())
 export const rtmpStatus: Writable<{ [outputId: string]: RtmpStatus }> = writable({})
+export const streamStats: Writable<{ [outputId: string]: StreamStats }> = writable({})
 export const icecastStatus: Writable<{ connected: boolean; connecting?: boolean; error?: string }> = writable({ connected: false })
 export const pdfImports: Writable<Map<string, { name: string; progress: number; total: number; status: "importing" | "complete" | "error"; message?: string }>> = writable(new Map())
 export const showChangeProfileMenu: Writable<boolean> = writable(false)

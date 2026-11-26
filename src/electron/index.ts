@@ -5,7 +5,6 @@ import type { Rectangle } from "electron"
 import { BrowserWindow, Menu, app, ipcMain, powerSaveBlocker, protocol, screen } from "electron"
 import { AUDIO, BLACKMAGIC, CLOUD, EXPORT, MAIN, NDI, OMT, OUTPUT, STARTUP } from "../types/Channels"
 import { Main } from "../types/IPC/Main"
-import { ToMain } from "../types/IPC/ToMain"
 import type { Dictionary } from "../types/Settings"
 import { receiveAudio } from "./audio/receiveAudio"
 import { receiveBM } from "./blackmagic/bmdTalk"
@@ -13,13 +12,12 @@ import { cloudConnect } from "./cloud/cloud"
 import { startExport } from "./data/export"
 import { cleanupProtectedCache, registerProtectedProtocol } from "./data/protected"
 import { config, setupStores } from "./data/store"
-import { receiveMain, sendMain, sendToMain } from "./IPC/main"
+import { receiveMain, sendMain } from "./IPC/main"
 import { autoErrorReport } from "./IPC/responsesMain"
 import { receiveNDI } from "./ndi/talk"
 import { receiveOMT } from "./omt/talk"
-import { OutputHelper } from "./output/OutputHelper"
 import { RenderGroups } from "./output/helpers/RenderGroups"
-import { RtmpBridge } from "./streaming/RtmpBridge"
+import { OutputHelper } from "./output/OutputHelper"
 import { callClose, exitApp, saveAndClose } from "./utils/close"
 import { applyCommandLineSwitches } from "./utils/commandLineSwitches"
 import { applyGraphicsDeviceSelection, scheduleGpuHealthCheck } from "./utils/gpu"
@@ -151,9 +149,6 @@ async function startApp() {
     if (RECORD_STARTUP_TIME) console.time("Initial")
 
     setTimeout(createLoading)
-
-    RtmpBridge.setStatusListener((outputId, destinations) => sendToMain(ToMain.RTMP_STATUS, { outputId, destinations }))
-    RtmpBridge.setNoticeListener((message) => sendToMain(ToMain.ALERT, message))
 
     await setupStores()
 

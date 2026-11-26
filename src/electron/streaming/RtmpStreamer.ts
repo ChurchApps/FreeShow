@@ -1,5 +1,5 @@
 import { spawn, type ChildProcess } from "child_process"
-import type { RtmpDestination, RtmpDestinationState, RtmpStatus } from "../../types/Output"
+import type { RtmpDestination, RtmpDestinationState, RtmpStatus, StreamStats } from "../../types/Output"
 import { buildEncoderCommand, buildFileRelayCommand, buildRelayCommand, getProfile, SAMPLE_RATE, type EncoderId } from "./encoderProfiles"
 
 // RTMP engine for the capture worker thread: no Electron imports, ffmpeg and encoder are resolved by the host
@@ -13,12 +13,18 @@ export function setRtmpResolvers(r: Resolvers) {
 // status and notices are pushed through registered listeners rather than importing the IPC layer
 // directly, which would create an import cycle back through responsesMain
 type RtmpStatusListener = (outputId: string, destinations: RtmpStatus) => void
+type RtmpStatsListener = (outputId: string, stats: StreamStats | null) => void
 type RtmpNoticeListener = (message: string) => void
 let statusListener: RtmpStatusListener | null = null
+let statsListener: RtmpStatsListener | null = null
 let noticeListener: RtmpNoticeListener | null = null
 
 export function setRtmpStatusListener(listener: RtmpStatusListener) {
     statusListener = listener
+}
+
+export function setRtmpStatsListener(listener: RtmpStatsListener) {
+    statsListener = listener
 }
 
 export function setRtmpNoticeListener(listener: RtmpNoticeListener) {
@@ -99,6 +105,8 @@ interface StreamInstance {
         lastLog: number
     }
     videoFrameCount?: number
+    encodedBytes?: number
+    statsInterval?: NodeJS.Timeout
     hasReceivedFirstAudio?: boolean
     frameWriting?: boolean
     pendingRelease?: () => void
@@ -250,6 +258,7 @@ export class RtmpStreamer {
         }
 
         statusListener?.(outputId, {})
+        statsListener?.(outputId, null)
     }
 
     static stopAll() {
@@ -304,7 +313,10 @@ export class RtmpStreamer {
         encoder.stdin?.on("error", () => {}) // suppress writes racing teardown
         ;(encoder.stdio[3] as any)?.on("error", () => {})
 
-        encoder.stdout?.on("data", (chunk: Buffer) => this.fanOut(streamer, chunk))
+        encoder.stdout?.on("data", (chunk: Buffer) => {
+            streamer.encodedBytes = (streamer.encodedBytes || 0) + chunk.length
+            this.fanOut(streamer, chunk)
+        })
         encoder.stderr?.on("data", (chunk: Buffer) => console.warn(`[RtmpStreamer:encoder ${streamer.outputId}] ${chunk.toString().trim()}`))
 
         // spawn failures (ENOENT, EAGAIN) surface asynchronously and emit no "exit"
@@ -320,6 +332,27 @@ export class RtmpStreamer {
 
         let isWriting = false
         streamer.videoFrameCount = 0
+        streamer.encodedBytes = 0
+
+        let lastStatsTime = performance.now()
+        let lastStatsFrames = 0
+        let lastStatsBytes = 0
+        streamer.statsInterval = setInterval(() => {
+            const now = performance.now()
+            const elapsedSec = (now - lastStatsTime) / 1000
+            if (elapsedSec <= 0) return
+
+            const frames = streamer.videoFrameCount || 0
+            const bytes = streamer.encodedBytes || 0
+            const fps = Math.round((frames - lastStatsFrames) / elapsedSec)
+            const bitrate = Math.round(((bytes - lastStatsBytes) * 8) / 1000 / elapsedSec)
+
+            lastStatsTime = now
+            lastStatsFrames = frames
+            lastStatsBytes = bytes
+
+            statsListener?.(streamer.outputId, { fps, bitrate })
+        }, 1000)
 
         const sendVideoFrame = () => {
             const frameInterval = 1000 / config.fps
@@ -372,8 +405,10 @@ export class RtmpStreamer {
     private static stopEncoder(streamer: StreamInstance) {
         if (streamer.videoTimeout) clearTimeout(streamer.videoTimeout)
         if (streamer.audioInterval) clearInterval(streamer.audioInterval)
+        if (streamer.statsInterval) clearInterval(streamer.statsInterval)
         streamer.videoTimeout = undefined
         streamer.audioInterval = undefined
+        streamer.statsInterval = undefined
         streamer.flvHeader = null
 
         const encoder = streamer.encoder

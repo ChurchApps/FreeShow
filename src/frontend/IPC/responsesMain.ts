@@ -76,6 +76,7 @@ import {
     recentFiles,
     redoHistory,
     rtmpStatus,
+    streamStats,
     shows,
     showsCache,
     spellcheck,
@@ -255,6 +256,12 @@ export const mainResponses: MainResponses = {
     [ToMain.LESSONS_DONE]: (data) => lessonsLoaded.set({ ...get(lessonsLoaded), [data.showId]: data.status }),
     [ToMain.IMAGES_TO_SHOW]: (data) => createImageShow(data),
     [ToMain.RTMP_STATUS]: (data) => rtmpStatus.update((a) => ({ ...a, [data.outputId]: data.destinations })),
+    [ToMain.STREAM_STATS]: (data) =>
+        streamStats.update((a) => {
+            if (!data.stats) delete a[data.outputId]
+            else a[data.outputId] = data.stats
+            return a
+        }),
     [ToMain.ICECAST_STATUS]: (data) => icecastStatus.set(data),
     [ToMain.MEDIA_DOWNLOAD_PROGRESS]: (data) => {
         mediaDownloads.update((downloads) => {

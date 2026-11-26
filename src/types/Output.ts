@@ -70,6 +70,10 @@ export interface RtmpStatus {
      */
     [destinationId: string]: { state: RtmpDestinationState; error?: string; restarts?: number; lastIssue?: string }
 }
+export interface StreamStats {
+    fps: number
+    bitrate: number
+}
 
 export interface OutData {
     refresh?: number

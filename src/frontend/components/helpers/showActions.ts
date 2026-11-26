@@ -28,6 +28,7 @@ import {
     activeInteractions,
     activePage,
     activeProject,
+    activeRecording,
     activeShow,
     allOutputs,
     audioChannelsData,
@@ -55,6 +56,7 @@ import {
     slideTimers,
     special,
     stageShows,
+    streamStats,
     styles,
     templates,
     timers,
@@ -764,7 +766,7 @@ export function sendMidi(data: any) {
 
 // DYNAMIC VALUES
 
-const commonOnly = ["time_str", "project_section_notes", "project_section_time", "project_item_number", "project_items_count", "show_name_next", "show_text_full", "slide_group_text", "slide_text_", "layout_notes", "slide_group_upcoming", "slide_notes_next", "exif_", "audio_subtitle", "audio_genre", "audio_year", "audio_volume"]
+const commonOnly = ["time_str", "project_section_notes", "project_section_time", "project_item_number", "project_items_count", "show_name_next", "show_text_full", "slide_group_text", "slide_text_", "layout_notes", "slide_group_upcoming", "slide_notes_next", "exif_", "audio_subtitle", "audio_genre", "audio_year", "audio_volume", "stream_"]
 const deprecatedDynamicValues = ["show_name_next", "project_section_next", "project_section_time_next", "slide_group_next", "slide_group_next_color", "slide_notes_next", "slide_text_previous", "slide_text_current", "slide_text_next"]
 
 function insertOffsetVariants(idList: string[]): string[] {
@@ -1339,6 +1341,13 @@ const dynamicValues = {
     audio_duration: ({ audioDuration }) => joinTime(secondsToTime(audioDuration)),
     audio_volume: () => Math.round((get(audioChannelsData).main?.volume ?? 1) * 100),
 
+    // streaming
+    stream_status: () => (getFirstStreamedOutput() ? "Live" : ""),
+    stream_duration: () => getStreamDuration(),
+    stream_fps: () => String(get(streamStats)[getFirstStreamedOutput()?.id || ""]?.fps ?? ""),
+    stream_bitrate: () => String(get(streamStats)[getFirstStreamedOutput()?.id || ""]?.bitrate ?? ""),
+    stream_recording_duration: () => getRecordingDuration(),
+
     // interaction
     interaction_players: ({ show }) => getInteractionPlayers(show),
     interaction_players_count: ({ show }) => getInteractionPlayersCount(show),
@@ -1565,6 +1574,28 @@ function getExif(path: string) {
     })
 
     return null
+}
+
+// STREAMING
+
+function getFirstStreamedOutput() {
+    const outputStores = isOutputWindow() ? get(allOutputs) : get(outputs)
+    return keysToID(outputStores).find((o) => (o.rtmp && o.rtmpData?.streaming) || (o.webrtc && o.webrtcData?.streaming)) || null
+}
+
+function getStreamDuration() {
+    const out = getFirstStreamedOutput()
+    return formatElapsed((out?.rtmp ? out.rtmpData?.startedAt : out?.webrtcData?.startedAt) || 0)
+}
+
+function getRecordingDuration() {
+    const rec = get(activeRecording)
+    const first: any = rec?.outputs ? Object.values(rec.outputs)[0] : null
+    return formatElapsed(first ? first.startedAt || rec?.startedAt || 0 : 0)
+}
+
+function formatElapsed(startedAt: number) {
+    return joinTime(secondsToTime(startedAt ? Math.max(0, Math.floor((Date.now() - startedAt) / 1000)) : 0))
 }
 
 // AUDIO METADATA

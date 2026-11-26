@@ -1,9 +1,9 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
-    import { activePage, activeRecording, activeStyle, audioChannelsData, dictionary, outputs, rtmpStatus, selected, settingsTab, special, styles, templates, toggleOutputEnabled } from "../../../stores"
+    import { activePage, activeRecording, activeStyle, audioChannelsData, dictionary, outputs, rtmpStatus, selected, settingsTab, special, streamStats, styles, templates, toggleOutputEnabled } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import AudioMeter from "../../drawer/audio/AudioMeter.svelte"
-    import { isOutputRecording, stopMediaRecorder } from "../../drawer/live/recorder"
+    import { stopMediaRecorder } from "../../drawer/live/recorder"
     import { openDrawer } from "../../edit/scripts/edit"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -186,6 +186,7 @@
     $: isLive = fullscreenOut?.rtmp ? fullscreenOut?.rtmpData?.streaming : fullscreenOut?.webrtcData?.streaming
     $: liveStartedAt = (fullscreenOut?.rtmp ? fullscreenOut?.rtmpData?.startedAt : fullscreenOut?.webrtcData?.startedAt) || 0
     $: liveUnhealthy = fullscreenOut?.rtmp && isLive && getUnhealthyDestinations(fullscreenOut?.rtmpData, $rtmpStatus[fullscreenId])?.length
+    $: liveStats = isLive ? $streamStats[fullscreenId] : null
 
     $: isRec = !!$activeRecording?.outputs?.[fullscreenId]
     $: recStartedAt = $activeRecording?.outputs?.[fullscreenId]?.startedAt || $activeRecording?.startedAt || 0
@@ -212,6 +213,14 @@ aria-label={fullscreen ? "Exit fullscreen preview" : "Toggle fullscreen preview"
                             <span class="stat-time">{formatDuration(now - liveStartedAt)}</span>
                         {/if}
                     </div>
+
+                    {#if liveStats}
+                        <div class="stat-badge stat-details">
+                            <span>{liveStats.fps} fps</span>
+                            <span class="stat-sep">·</span>
+                            <span>{liveStats.bitrate} kbps</span>
+                        </div>
+                    {/if}
                 {/if}
 
                 {#if isRec}
@@ -412,6 +421,16 @@ aria-label={fullscreen ? "Exit fullscreen preview" : "Toggle fullscreen preview"
         font-family: monospace;
         font-size: 1.1em;
         letter-spacing: 0.5px;
+    }
+    .stat-details {
+        background-color: rgba(0, 0, 0, 0.72);
+        border: 1px solid var(--primary-lighter);
+        font-family: monospace;
+        font-weight: 500;
+        color: rgba(255, 255, 255, 0.9);
+    }
+    .stat-sep {
+        opacity: 0.45;
     }
 
     .resolution {
