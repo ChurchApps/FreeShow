@@ -1,7 +1,6 @@
 import Database from "better-sqlite3"
 import path, { join } from "path"
 import protobufjs from "protobufjs"
-import upath from "upath"
 // @ts-ignore (strange Rollup TS build problem, suddenly not realizing that the decleration exists)
 import MDBReader from "mdb-reader"
 // @ts-ignore
@@ -9,7 +8,7 @@ import WordExtractor from "word-extractor"
 import { ToMain } from "../../types/IPC/ToMain"
 import { sendToMain } from "../IPC/main"
 import { pptToShow } from "../output/ppt/pptToShow"
-import { asyncPool, doesPathExist, getDataFolderPath, getExtension, readFileAsync, readFileBufferAsync } from "../utils/files"
+import { asyncPool, doesPathExist, getDataFolderPath, getExtension, readFileAsync, readFileBufferAsync, toUnix } from "../utils/files"
 import { detectFileType } from "./bibleDetecter"
 import { filePathHashCode } from "./thumbnails"
 import { decompressZip, decompressZipStream, isZip } from "./zip"
@@ -283,15 +282,16 @@ async function extractZipDataAndMedia(filePath: string, importFolder: string) {
         // check if path already exists on the system
         if (doesPathExist(rawPath)) return
 
-        const extension = upath.extname(rawPath)
-        const fileName = upath.basename(rawPath)
-        const hashedFileName = `${upath.basename(rawPath, extension)}__${filePathHashCode(rawPath)}${extension}`
+        const unixPath = toUnix(rawPath)
+        const extension = path.posix.extname(unixPath)
+        const fileName = path.posix.basename(unixPath)
+        const hashedFileName = `${path.posix.basename(unixPath, extension)}__${filePathHashCode(rawPath)}${extension}`
 
         // get file path hash to prevent the same file importing multiple times
         // this also ensures files with the same name don't get overwritten
-        const ext = upath.extname(fileName)
-        const pathHash = `${upath.basename(rawPath, ext)}_${filePathHashCode(upath.toUnix(rawPath))}${ext}`
-        const newMediaPath = upath.join(importFolder, pathHash)
+        const ext = path.posix.extname(fileName)
+        const pathHash = `${path.posix.basename(unixPath, ext)}_${filePathHashCode(unixPath)}${ext}`
+        const newMediaPath = path.posix.join(toUnix(importFolder), pathHash)
 
         replacedMedia[rawPath] = newMediaPath
 

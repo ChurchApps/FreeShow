@@ -7,7 +7,6 @@ import { ExifImage } from "exif"
 import fs, { type Stats } from "fs"
 import path, { join, parse } from "path"
 import { uid } from "uid"
-import upath from "upath"
 import { fileURLToPath } from "url"
 import { Main } from "../../types/IPC/Main"
 import { ToMain } from "../../types/IPC/ToMain"
@@ -33,6 +32,8 @@ function isPermissionDeniedError(err: unknown): boolean {
 }
 
 // GENERAL
+
+export const toUnix = (p: string) => p.replace(/\\/g, "/")
 
 export function doesPathExist(filePath: string): boolean {
     if (!filePath) return false
@@ -854,7 +855,7 @@ export async function locateMediaFile({ filePath, folders }: { filePath: string;
     // Media Sync Folder
     const mediaFolder = getMediaSyncFolderPath()
     const folderId = getFileParentFolderId(normalizedOriginalPath)
-    const fileName = upath.basename(normalizedOriginalPath)
+    const fileName = path.posix.basename(toUnix(normalizedOriginalPath))
     const mediaFilePath = path.join(mediaFolder, folderId, fileName)
     if ((await doesMediaExist({ path: mediaFilePath })).exists) return { path: mediaFilePath, hasChanged: true }
     const searchFolders = [mediaFolder, ...folders].map(normalizeLocalPath).filter((folderPath) => folderPath)
@@ -869,7 +870,7 @@ export async function locateMediaFile({ filePath, folders }: { filePath: string;
         return { path: cachedPath, hasChanged: false }
     }
 
-    const parentFolderName = upath.basename(upath.dirname(normalizedOriginalPath))
+    const parentFolderName = path.posix.basename(path.posix.dirname(toUnix(normalizedOriginalPath)))
 
     const newPath = await findMatches()
     if (!newPath) return null
@@ -1182,8 +1183,8 @@ export async function addToMediaFolder(mediaPaths: string[], outputFolder?: stri
 }
 
 function getFileParentFolderId(filePath: string) {
-    const fileFolderPath = upath.dirname(filePath)
-    const parentFolderName = upath.basename(fileFolderPath)
+    const fileFolderPath = path.posix.dirname(toUnix(filePath))
+    const parentFolderName = path.posix.basename(fileFolderPath)
     const uniqueName = parentFolderName + "_" + filePathHashCode(fileFolderPath)
     return uniqueName
 }
@@ -1419,7 +1420,7 @@ export function getShowsFromIds(showIds: string[], projectItems?: any[]) {
                 } as any)
             } else if (type === "image" || type === "video" || type === "audio") {
                 // Synthetic show for media slide
-                const filename = upath.basename(id)
+                const filename = path.posix.basename(toUnix(id))
                 shows.push({
                     id,
                     name: projectItem.name || filename,

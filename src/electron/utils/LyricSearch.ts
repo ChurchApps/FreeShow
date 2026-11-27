@@ -24,61 +24,80 @@ export class LyricSearch {
     }
 
     // GENIUS
-    private static getGeniusClient = () => {
-        const Genius = require("genius-lyrics")
-        const client = new Genius.Client()
-        if (client.request?.get) {
-            client.request.get = async (route: string) => {
-                const url = route.startsWith("http") ? route : `https://genius.com${route}`
-                const res = await net.fetch(url, { headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" } })
-                return res.text()
-            }
-        }
-        return client
+    private static geniusUrls = new Map<string, string>()
+
+    private static fetchGenius = async (url: string) => {
+        const res = await net.fetch(url, { headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" } })
+        return res.text()
     }
 
     private static searchGenius = async (artist: string, title: string) => {
         try {
-            const client = this.getGeniusClient()
             const query = artist ? `${title} ${artist}` : title
-            const songs = await client.songs.search(query)
-            if (songs.length > 3) songs.splice(3, songs.length - 3)
-            return songs.map((song: any) => LyricSearch.convertGenuisToResult(song, query))
+            const text = await this.fetchGenius(`https://genius.com/api/search/multi?per_page=5&q=${encodeURIComponent(query)}`)
+            const json = JSON.parse(text)
+            const section = json?.response?.sections?.find((s: any) => s.type === "song")
+            const hits = (section?.hits || []).slice(0, 3)
+            return hits.map((hit: any) => {
+                const song = hit.result
+                const key = String(song.id)
+                if (song.url) this.geniusUrls.set(key, song.url)
+                return { source: "Genius", key, artist: song.primary_artist?.name || "", title: song.title || "", originalQuery: query } as LyricSearchResult
+            })
         } catch (err) {
             console.error(err)
             return []
         }
     }
 
-    // Would greatly prefer to just load via url or id, but the api fails often with these methods (malformed json)
     private static getGenius = async (song: LyricSearchResult) => {
         try {
-            const client = this.getGeniusClient()
-            const searchedSongs = await client.songs.search(song.originalQuery || `${song.title} ${song.artist}`.trim())
-            let result = ""
-            for (const searchedSong of searchedSongs) {
-                if (searchedSong.id.toString() === song.key || searchedSong.title.toLowerCase() === song.title.toLowerCase()) {
-                    result = await searchedSong.lyrics()
-                    // remove extra song info
-                    result = result.replace(/^[\s\S]*(?:\d*\s*Contributors?|Read More|Lyrics)\s*/i, "").trim()
-                    break
-                }
+            let url = this.geniusUrls.get(song.key)
+            if (!url) {
+                await this.searchGenius("", song.originalQuery || `${song.title} ${song.artist}`.trim())
+                url = this.geniusUrls.get(song.key)
             }
-            return result
+            if (!url) return ""
+
+            const html = await this.fetchGenius(url)
+            const raw = this.matchBalancedDivs(html, 'data-lyrics-container="true"')
+                .map(({ inner }) => this.matchBalancedDivs(inner, 'data-exclude-from-selection="true"').reduce((s, m) => s.replace(m.full, ""), inner))
+                .join("\n")
+            return raw
+                .replace(/<br\s*\/?>/gi, "\n")
+                .replace(/<[^>]+>/g, "")
+                .replace(/&amp;/g, "&")
+                .replace(/&lt;/g, "<")
+                .replace(/&gt;/g, ">")
+                .replace(/&quot;/g, '"')
+                .replace(/&#x27;|&#39;/g, "'")
+                .replace(/^[\s\S]*(?:\d*\s*Contributors?|Read More|Lyrics)\s*/i, "")
+                .trim()
         } catch (err) {
             console.error(err)
             return ""
         }
     }
 
-    private static convertGenuisToResult = (geniusResult: any, originalQuery: string) => {
-        return {
-            source: "Genius",
-            key: geniusResult.id.toString(),
-            artist: geniusResult.artist.name,
-            title: geniusResult.title,
-            originalQuery
-        } as LyricSearchResult
+    private static matchBalancedDivs(html: string, attr: string): { full: string; inner: string }[] {
+        const results: { full: string; inner: string }[] = []
+        const openRe = new RegExp(`<div\\b[^>]*${attr}[^>]*>`, "gi")
+        const tagRe = /<\/?div\b[^>]*>/gi
+        let m: RegExpExecArray | null
+        while ((m = openRe.exec(html))) {
+            const innerStart = m.index + m[0].length
+            tagRe.lastIndex = innerStart
+            let depth = 1
+            let tag: RegExpExecArray | null
+            while ((tag = tagRe.exec(html))) {
+                depth += tag[0].startsWith("</") ? -1 : 1
+                if (depth === 0) {
+                    results.push({ full: html.slice(m.index, tag.index + 6), inner: html.slice(innerStart, tag.index) })
+                    break
+                }
+            }
+        }
+        return results
     }
 
     // HYMNARY
