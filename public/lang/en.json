@@ -15,7 +15,12 @@
         "open": "Open",
         "system_open": "Open in system",
         "yes": "Yes",
-        "no": "No"
+        "no": "No",
+        "unsaved": "Unsaved changes",
+        "standby": "Standby",
+        "on_air": "On air",
+        "tagline": "Songs, media and scripture, ready to present.",
+        "search_hint": "Find shows, media and settings."
     },
     "formats": {
         "show": "Show",
@@ -1503,7 +1508,12 @@
         "auto": "Auto",
         "section_trigger_action": "Trigger action when navigating presentation to a section",
         "rss": "RSS",
-        "txt": "TXT"
+        "txt": "TXT",
+        "interface_style": "Interface style",
+        "interface_classic": "Classic",
+        "interface_modern": "Modern",
+        "ui_style_classic": "Switch to the classic interface",
+        "ui_style_modern": "Switch to the modern interface"
     },
     "gpu": {
         "no_acceleration": "Graphics acceleration is unavailable",

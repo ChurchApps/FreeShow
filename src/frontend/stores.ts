@@ -27,6 +27,7 @@ import type { DrawerTabIds } from "./../types/Tabs"
 import type { AudioData } from "./audio/audioPlayer"
 import type { WebsiteAction } from "./components/helpers/websiteControls"
 import type { PlayingVideoState, VideoAudioData } from "./components/media/video/videoPlayer"
+import type { UIStyle } from "./utils/interfaceStyle"
 
 // ----- TEMPORARY VARIABLES -----
 
@@ -44,6 +45,7 @@ export const isDev: Writable<boolean> = writable(false)
 export const windowState: Writable<any> = writable({})
 export const dataPath: Writable<string> = writable("")
 export const isOptimizedMode: Writable<boolean> = writable(false)
+export const uiStyle: Writable<UIStyle> = writable("classic")
 
 // ACTIVE
 export const selected: Writable<Selected> = writable({ id: null, data: [] })

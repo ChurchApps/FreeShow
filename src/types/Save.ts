@@ -60,6 +60,7 @@ export type SaveListSettings =
     | "fullColors"
     | "formatNewShow"
     | "labelsDisabled"
+    | "uiStyle"
     | "language"
     | "customFonts"
     | "maxConnections"

@@ -1,0 +1,563 @@
+/* ----- FreeShow modern interface -----
+   Loaded for every theme, but only active while <html data-ui="modern">.
+   The classic layout is intentionally left untouched. */
+
+html[data-ui="modern"] {
+    /* Every surface, border, text and accent token below derives from the active
+       theme, so Settings > Theme updates the modern layout without a reload.
+       Live, standby and success colors are semantic and stay fixed. */
+    --ui-rail: color-mix(in srgb, var(--primary-darkest) 62%, var(--primary-darker));
+    --ui-panel: var(--primary);
+    --ui-panel-deep: var(--primary-darker);
+    --ui-panel-raised: color-mix(in srgb, var(--primary) 45%, var(--primary-darkest));
+
+    --ui-text: var(--text);
+    --ui-muted: color-mix(in srgb, var(--text) 64%, transparent);
+    --ui-subtle: color-mix(in srgb, var(--text) 42%, transparent);
+
+    --ui-border: color-mix(in srgb, var(--text) 9%, transparent);
+    --ui-border-strong: color-mix(in srgb, var(--text) 16%, transparent);
+    --ui-hover: color-mix(in srgb, var(--text) 6%, transparent);
+    --ui-active: color-mix(in srgb, var(--text) 10%, transparent);
+
+    --ui-accent: var(--secondary);
+    --ui-accent-soft: color-mix(in srgb, var(--secondary) 11%, transparent);
+    --ui-accent-border: color-mix(in srgb, var(--secondary) 45%, transparent);
+    --ui-selection: color-mix(in srgb, var(--secondary) 22%, var(--primary));
+
+    --ui-font: var(--font-family), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    --ui-radius: 10px;
+    --ui-radius-sm: 7px;
+    --ui-shadow: 0 22px 50px -24px rgb(0 0 0 / 0.65);
+    --ui-shadow-sm: 0 6px 18px -12px rgb(0 0 0 / 0.5);
+}
+
+/* ---------- base ---------- */
+
+html[data-ui="modern"] body {
+    letter-spacing: 0.002em;
+    -webkit-font-smoothing: antialiased;
+}
+
+html[data-ui="modern"] h1,
+html[data-ui="modern"] h2,
+html[data-ui="modern"] h3,
+html[data-ui="modern"] h4,
+html[data-ui="modern"] h5,
+html[data-ui="modern"] h6 {
+    color: var(--ui-text);
+    font-family: var(--ui-font);
+    letter-spacing: -0.005em;
+}
+
+html[data-ui="modern"] h3 {
+    font-weight: 600;
+    letter-spacing: 0.07em;
+}
+
+html[data-ui="modern"] ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+html[data-ui="modern"] ::-webkit-scrollbar-track,
+html[data-ui="modern"] ::-webkit-scrollbar-corner {
+    background: transparent;
+}
+html[data-ui="modern"] ::-webkit-scrollbar-thumb {
+    background-color: color-mix(in srgb, var(--text) 18%, transparent);
+    border: 3px solid transparent;
+    background-clip: content-box;
+    border-radius: 999px;
+}
+html[data-ui="modern"] ::-webkit-scrollbar-thumb:hover {
+    background-color: color-mix(in srgb, var(--text) 32%, transparent);
+}
+
+html[data-ui="modern"] ::selection {
+    background: var(--ui-accent-soft);
+}
+
+/* the panel resize handles: a hairline that lights up on hover */
+html[data-ui="modern"] .panel::after {
+    background-color: var(--ui-border) !important;
+}
+
+/* ---------- buttons ---------- */
+
+html[data-ui="modern"] button {
+    letter-spacing: 0.01em;
+}
+
+html[data-ui="modern"] button:not(.contained) {
+    border-radius: var(--ui-radius-sm);
+}
+
+html[data-ui="modern"] button.isActive {
+    background-color: var(--ui-selection) !important;
+    border-block-end-color: transparent !important;
+    color: var(--ui-text) !important;
+}
+
+html[data-ui="modern"] button:not(.contained):not(.isActive):not(:disabled):hover {
+    background-color: var(--ui-hover) !important;
+}
+
+html[data-ui="modern"] button.contained:not(:disabled) {
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.2);
+}
+
+html[data-ui="modern"] button.tab:not(.outlined) {
+    border-radius: var(--ui-radius-sm) !important;
+    border-inline-start-width: 0 !important;
+}
+
+/* ---------- input fields ---------- */
+
+html[data-ui="modern"] .textfield {
+    margin: 3px 0;
+    background: var(--ui-panel-deep);
+    border: 1px solid var(--ui-border);
+    border-radius: 9px;
+    overflow: hidden;
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
+}
+html[data-ui="modern"] .textfield:focus-within {
+    border-color: var(--ui-accent-border);
+    box-shadow: 0 0 0 3px var(--ui-accent-soft);
+}
+html[data-ui="modern"] .textfield .background {
+    background: transparent;
+    border-radius: 0;
+}
+html[data-ui="modern"] .textfield .underline {
+    display: none;
+}
+html[data-ui="modern"] .textfield .input {
+    color: var(--ui-text);
+}
+html[data-ui="modern"] .textfield:not(:has(.input:focus)):not(:has(.remove:hover)) .input:not(:disabled):hover {
+    background-color: transparent;
+}
+html[data-ui="modern"] .textfield.inline {
+    height: auto;
+    background: transparent;
+    border: none;
+}
+html[data-ui="modern"] .textfield.onlyArrow {
+    border: 1px solid var(--ui-border);
+}
+
+html[data-ui="modern"] .togglefield {
+    border-bottom: 1px solid var(--ui-border);
+}
+html[data-ui="modern"] .togglefield .background {
+    background: transparent;
+    border-radius: 0;
+}
+html[data-ui="modern"] .togglefield .label-text,
+html[data-ui="modern"] .togglefield label {
+    color: var(--ui-text);
+}
+
+/* ---------- popups ---------- */
+
+html[data-ui="modern"] .popup {
+    background-color: rgb(0 0 0 / 0.5);
+    backdrop-filter: blur(9px);
+}
+html[data-ui="modern"] .popup .card {
+    background: var(--ui-panel);
+    border: 1px solid var(--ui-border-strong);
+    border-radius: 15px;
+    box-shadow: var(--ui-shadow);
+}
+html[data-ui="modern"] .popup .card h2 {
+    color: var(--ui-text);
+    letter-spacing: -0.01em;
+}
+
+/* ---------- context menus & tooltips ---------- */
+
+html[data-ui="modern"] .contextMenu {
+    background-color: color-mix(in srgb, var(--primary) 92%, var(--primary-darkest)) !important;
+    border: 1px solid var(--ui-border-strong);
+    border-radius: 11px;
+    box-shadow: var(--ui-shadow);
+    padding: 6px 0;
+}
+html[data-ui="modern"] .contextMenu hr {
+    background-color: var(--ui-border);
+}
+
+html[data-ui="modern"] .tooltip {
+    background-color: color-mix(in srgb, var(--primary) 94%, var(--primary-darkest));
+    border: 1px solid var(--ui-border-strong);
+    border-radius: 8px;
+    box-shadow: var(--ui-shadow-sm);
+    padding: 7px 10px;
+}
+
+/* ---------- quick search ---------- */
+
+html[data-ui="modern"] .quicksearch .box {
+    background-color: color-mix(in srgb, var(--primary) 82%, transparent) !important;
+    border: 1px solid var(--ui-border-strong);
+    border-radius: 16px;
+    box-shadow: var(--ui-shadow);
+    padding: 10px;
+}
+
+/* ---------- bottom drawer ---------- */
+
+html[data-ui="modern"] section.drawer {
+    background: var(--ui-panel);
+    border-top: 1px solid var(--ui-border);
+}
+html[data-ui="modern"] section.drawer .top {
+    box-shadow: none;
+    padding-top: 0;
+}
+html[data-ui="modern"] section.drawer .top::after {
+    height: 3px;
+    background-color: var(--ui-border);
+}
+
+html[data-ui="modern"] section.drawer .top .tabs button {
+    position: relative;
+    height: 40px;
+    margin: 0;
+    padding: 0 12px !important;
+    border: none !important;
+    border-radius: 0 !important;
+    color: var(--ui-muted) !important;
+    font-family: var(--ui-font);
+    letter-spacing: 0.015em;
+}
+html[data-ui="modern"] section.drawer .top .tabs button.isActive {
+    color: var(--ui-text) !important;
+    background-color: var(--ui-accent-soft) !important;
+}
+html[data-ui="modern"] section.drawer .top .tabs button.isActive::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    height: 2px;
+    background: var(--ui-accent);
+}
+
+html[data-ui="modern"] section.drawer .search {
+    height: 32px;
+    border: 1px solid var(--ui-border) !important;
+    border-radius: 8px;
+    background-color: var(--ui-panel-deep);
+    border-inline-start-width: 1px !important;
+}
+html[data-ui="modern"] section.drawer .search:focus {
+    outline: none;
+    border-color: var(--ui-accent-border) !important;
+    box-shadow: 0 0 0 3px var(--ui-accent-soft);
+}
+
+/* ---------- projects & show lists ---------- */
+
+html[data-ui="modern"] .projects .listSection {
+    margin: 6px 8px;
+    background-color: var(--ui-panel);
+    border: 1px solid var(--ui-border);
+    border-radius: 10px;
+}
+
+html[data-ui="modern"] .projects button,
+html[data-ui="modern"] .list button,
+html[data-ui="modern"] #projectArea button {
+    border-radius: var(--ui-radius-sm) !important;
+}
+
+html[data-ui="modern"] .projects .header,
+html[data-ui="modern"] .showHeader .header,
+html[data-ui="modern"] .header.sticky {
+    background-color: color-mix(in srgb, var(--primary-darker) 78%, transparent);
+    border-radius: 0;
+}
+
+/* ---------- slide grid ---------- */
+
+html[data-ui="modern"] .slide {
+    border-radius: 7px;
+    overflow: hidden;
+}
+html[data-ui="modern"] .slide + .label {
+    border-radius: 0 0 7px 7px;
+}
+
+/* ---------- settings & draw navigation ---------- */
+
+html[data-ui="modern"] .main > button#button {
+    margin: 1px 0;
+    padding: 8px 12px !important;
+    background-color: transparent !important;
+    border-radius: 0;
+}
+html[data-ui="modern"] .main > button#button.active {
+    background-color: var(--ui-selection) !important;
+    box-shadow: inset 3px 0 0 var(--ui-accent);
+}
+
+/* ---------- workspace surface ---------- */
+
+html[data-ui="modern"] .workspace > .body > .center {
+    background-color: var(--ui-panel-deep);
+}
+
+/* ---------- panel headers ---------- */
+
+html[data-ui="modern"] #showArea .header {
+    height: 36px;
+    padding: 0 6px 0 14px;
+    justify-content: flex-start;
+    background-color: color-mix(in srgb, var(--primary-darker) 80%, transparent);
+    border-radius: 0;
+    box-shadow: none !important;
+}
+html[data-ui="modern"] .topbar .context {
+    font-family: var(--ui-font);
+    letter-spacing: 0.01em;
+}
+html[data-ui="modern"] #showArea .header .title,
+html[data-ui="modern"] #showArea .header .name {
+    font-family: var(--ui-font);
+    font-size: 0.9em;
+    font-weight: 600;
+    letter-spacing: 0.005em;
+    color: var(--ui-text);
+}
+html[data-ui="modern"] .projects .header {
+    height: 34px;
+    justify-content: flex-start;
+    padding: 0 8px 0 14px;
+    background-color: var(--ui-panel);
+    border-radius: 0;
+    box-shadow: none !important;
+}
+html[data-ui="modern"] .projects .header p {
+    font-size: 0.7em !important;
+    font-weight: 650;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ui-muted);
+}
+html[data-ui="modern"] .projects .header .left,
+html[data-ui="modern"] .projects .header .right {
+    opacity: 0.75;
+}
+
+/* project list rows */
+
+html[data-ui="modern"] #projectArea .listSection {
+    margin: 6px 8px;
+    background-color: var(--ui-panel);
+    border: 1px solid var(--ui-border);
+    border-radius: 10px;
+    overflow: hidden;
+}
+html[data-ui="modern"] #projectArea .listSection button.tab {
+    width: 100% !important;
+    margin: 1px 0;
+    border-radius: 0 !important;
+}
+html[data-ui="modern"] #projectArea .listSection button.tab.isActive {
+    box-shadow: inset 3px 0 0 var(--ui-accent);
+}
+html[data-ui="modern"] #projectArea .listSection button.section {
+    margin: 0;
+    width: 100% !important;
+    border-radius: 0 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    font-size: 0.68em !important;
+    background-color: transparent !important;
+    border-top: 1px solid var(--ui-border) !important;
+    border-bottom: 1px solid var(--ui-border) !important;
+    color: var(--ui-subtle) !important;
+}
+
+/* drawer category rows */
+
+html[data-ui="modern"] .categories .selectElem button {
+    width: 100% !important;
+    margin: 1px 0;
+    border-radius: 0 !important;
+    border-inline-start: 0 !important;
+}
+html[data-ui="modern"] .categories .selectElem button.isActive {
+    background-color: var(--ui-selection) !important;
+    box-shadow: inset 3px 0 0 var(--ui-accent);
+}
+html[data-ui="modern"] .categories .title {
+    font-size: 0.65em;
+    font-weight: 650;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    opacity: 0.5;
+    padding: 10px 14px 4px;
+}
+
+/* ---------- slide thumbnails ---------- */
+
+html[data-ui="modern"] #showArea .grid {
+    padding: 6px 6px 60px;
+}
+html[data-ui="modern"] #showArea .grid > .main {
+    padding: 4px;
+    transition: transform 0.14s ease;
+}
+html[data-ui="modern"] #showArea .grid > .main:hover {
+    transform: translateY(-1px);
+}
+html[data-ui="modern"] #showArea .slide {
+    border: 1px solid var(--ui-border);
+    border-radius: 8px;
+    overflow: hidden;
+}
+html[data-ui="modern"] #showArea .main.active .slide {
+    border-color: var(--ui-accent-border);
+}
+html[data-ui="modern"] #showArea .main.active {
+    outline: none !important;
+}
+
+/* left panel headers (projects list, project content) */
+
+html[data-ui="modern"] .panelCard .header {
+    height: 34px;
+    justify-content: flex-start;
+    padding: 0 8px 0 14px;
+    background-color: var(--ui-panel);
+    border-radius: 0;
+    box-shadow: none !important;
+}
+html[data-ui="modern"] .panelCard .header:has(.left) {
+    padding-inline-start: 46px;
+}
+html[data-ui="modern"] .panelCard .header p {
+    font-size: 0.7em !important;
+    font-family: var(--ui-font);
+    font-weight: 650;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ui-muted);
+    text-align: start;
+}
+html[data-ui="modern"] .panelCard .header .left,
+html[data-ui="modern"] .panelCard .header .right {
+    opacity: 0.8;
+}
+
+/* ---------- framed panels ---------- */
+
+html[data-ui="modern"] .panelCard,
+html[data-ui="modern"] .toolsCard {
+    box-shadow:
+        inset 0 1px 0 color-mix(in srgb, var(--text) 7%, transparent),
+        var(--ui-shadow-sm);
+}
+
+/* ---------- right panel tools ---------- */
+
+html[data-ui="modern"] .tools .section {
+    margin: 3px 6px;
+    background-color: var(--ui-panel-deep);
+    border: 1px solid var(--ui-border);
+    border-radius: 9px;
+    overflow: hidden;
+}
+html[data-ui="modern"] .tools .section .title {
+    border: none !important;
+}
+html[data-ui="modern"] .tools .section .title p {
+    font-family: var(--ui-font);
+    font-size: 0.85em;
+    font-weight: 500;
+    letter-spacing: 0.015em;
+}
+html[data-ui="modern"] .tools .section .title button {
+    padding: 8px 10px !important;
+}
+html[data-ui="modern"] .tools .section .row {
+    padding: 2px 3px;
+}
+html[data-ui="modern"] .tools .section .textfield {
+    margin: 3px 0;
+}
+
+/* ---------- settings content ---------- */
+
+html[data-ui="modern"] .center > main {
+    --padding: 34px !important;
+}
+html[data-ui="modern"] .center > main > .title {
+    padding-block: 12px;
+    border-bottom: 1px solid var(--ui-border);
+}
+html[data-ui="modern"] .center > main > .title h2 {
+    font-size: 1.1em;
+    font-weight: 650;
+    letter-spacing: -0.015em;
+    margin: 0;
+}
+html[data-ui="modern"] .center > main > .scroll {
+    padding-block: 14px;
+}
+
+/* ---------- slide / layout grids ---------- */
+
+html[data-ui="modern"] .grid > .main {
+    padding: 4px;
+}
+html[data-ui="modern"] .grid > .main .slide {
+    border: 1px solid var(--ui-border);
+    border-radius: 8px;
+    overflow: hidden;
+}
+html[data-ui="modern"] .grid > .main.active .slide {
+    border-color: var(--ui-accent-border);
+}
+html[data-ui="modern"] .grid > .main.active {
+    outline: none !important;
+}
+
+/* ---------- settings tool buttons ---------- */
+
+html[data-ui="modern"] .toolsCard .bottom {
+    gap: 4px;
+    padding: 8px;
+}
+html[data-ui="modern"] .toolsCard .bottom button {
+    justify-content: flex-start;
+    background-color: var(--ui-panel-deep) !important;
+    border: 1px solid var(--ui-border) !important;
+    border-radius: 8px !important;
+    box-shadow: none;
+}
+
+/* keep the workspace usable in narrower windows */
+@media (max-width: 1200px) {
+    html[data-ui="modern"] #leftPanel,
+    html[data-ui="modern"] #rightPanel {
+        max-width: 26vw;
+    }
+}
+
+/* preview controls: flat, square, full width */
+html[data-ui="modern"] #previewArea .section:not(.float) {
+    margin: 4px 0;
+    background-color: var(--ui-panel-deep);
+    border: none;
+    border-radius: 0;
+}
+html[data-ui="modern"] #previewArea .section button {
+    border-radius: 0 !important;
+}

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeProject, activeShow, autoOpenedTimeline, outLocked, projects, resized, showsCache, special, templateApplied } from "../../stores"
+    import { activeProject, activeShow, autoOpenedTimeline, outLocked, projects, resized, showsCache, special, templateApplied, uiStyle } from "../../stores"
     import { DEFAULT_WIDTH } from "../../utils/common"
     import Capture from "../drawer/live/Capture.svelte"
     import NdiStream from "../drawer/live/NDIStream.svelte"
@@ -7,6 +7,7 @@
     import { setOutput } from "../helpers/output"
     import HoverButton from "../inputs/HoverButton.svelte"
     import Splash from "../main/Splash.svelte"
+    import ModernSplash from "../../modern/components/ModernSplash.svelte"
     import Camera from "../output/Camera.svelte"
     import Layouts from "../slide/Layouts.svelte"
     import Resizeable from "../system/Resizeable.svelte"
@@ -125,6 +126,8 @@
             {:else}
                 <p style="text-align: center;text-transform: capitalize;opacity: 0.8;">{show.type}</p>
             {/if}
+        {:else if $uiStyle === "modern"}
+            <ModernSplash />
         {:else}
             <Splash />
         {/if}
