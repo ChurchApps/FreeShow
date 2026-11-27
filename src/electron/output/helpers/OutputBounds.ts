@@ -47,17 +47,12 @@ export class OutputBounds {
         }, 80)
     }
 
-    // Outputs are rendered in a real window and grabbed with capturePage(), which returns DEVICE
-    // pixels (logical size x display scaleFactor). On a HiDPI display a configured 1920x1080 output
-    // would otherwise be captured at e.g. 2880x1620. While an output is in capture/hidden mode (not
-    // shown on a physical display) we render it at bounds / scaleFactor so logical x scaleFactor ===
-    // the configured resolution, making the capture match the config regardless of monitor scaling.
-    // When the output IS shown on a display we return bounds unchanged so it fills that display
-    // (getSecondDisplay handles scaled displays) and to avoid double-scaling. No-op at scaleFactor 1.
+    // HiDPI scaling: Hidden/capture outputs are divided by display scaleFactor so logical * scaleFactor matches the actual configured resolution.
+    // Skipped for visible display outputs and macOS.
     static getRenderBounds(output: { invisible?: boolean; window?: BrowserWindow }, bounds: Rectangle): Rectangle {
         // shown on a physical display -> keep configured bounds (window created hidden has no window yet)
         const shownOnDisplay = !output?.invisible && !!output?.window && !output.window.isDestroyed() && output.window.isVisible()
-        if (shownOnDisplay) return bounds
+        if (shownOnDisplay || process.platform === "darwin") return bounds
 
         const scaleFactor = screen.getDisplayMatching(bounds).scaleFactor || 1
         if (scaleFactor === 1) return bounds
