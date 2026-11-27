@@ -16,8 +16,8 @@ files:
     - "!**/node_modules/**/prebuild/node-v*"
     - "!**/node_modules/grandiose/ndi/**"
     - "!**/node_modules/osr-capture/**/on12_harness.exe"
-    - "!**/node_modules/@img/sharp-wasm32/**"
     - "!**/node_modules/koffi/build/koffi/{freebsd_*,openbsd_*,linux_ia32,linux_armhf,linux_loong64,linux_riscv64d,musl_*}/**"
+    - "!**/node_modules/@julusian/jpeg-turbo/prebuilds/jpeg-turbo-{linux-arm,linux-x64-musl,win32-ia32}/**"
 
 extraResources:
     - from: node_modules/slideshow/
@@ -34,6 +34,7 @@ win:
         - "!**/node_modules/openmediatransport/lib/{macos,linux-*,win-arm64}/**"
         - "!**/node_modules/better-sqlite3/prebuilds/{darwin-*,linux*,win32-arm64}.node"
         - "!**/node_modules/koffi/build/koffi/{darwin_*,linux_*,win32_arm64}/**"
+        - "!**/node_modules/@julusian/jpeg-turbo/prebuilds/jpeg-turbo-{darwin-*,linux-*,win32-arm64}/**"
     asarUnpack:
         - "**/node_modules/macadam/**/*.node"
         - "**/node_modules/libspotifyctl/**/*"
@@ -54,7 +55,9 @@ linux:
         - "!**/node_modules/openmediatransport/lib/{macos,win-*}/**"
         - "!**/node_modules/better-sqlite3/prebuilds/{darwin-*,linuxmusl-*,win32-*}.node"
         - "!**/node_modules/koffi/build/koffi/{darwin_*,win32_*}/**"
+        - "!**/node_modules/@julusian/jpeg-turbo/prebuilds/jpeg-turbo-{darwin-*,win32-*}/**"
     asarUnpack:
+        - "**/node_modules/@julusian/jpeg-turbo/prebuilds/**"
         - "**/node_modules/grandiose/**"
         - "**/node_modules/openmediatransport/**"
         - "**/node_modules/macadam/**/*.node"
@@ -83,6 +86,7 @@ mac:
         - "!**/node_modules/openmediatransport/lib/{linux-*,win-*}/**"
         - "!**/node_modules/better-sqlite3/prebuilds/{linux*,win32-*}.node"
         - "!**/node_modules/koffi/build/koffi/{linux_*,win32_*}/**"
+        - "!**/node_modules/@julusian/jpeg-turbo/prebuilds/jpeg-turbo-{linux-*,win32-*}/**"
     asarUnpack:
         - "**/node_modules/macadam/**/*.node"
         - "**/node_modules/openmediatransport/**"

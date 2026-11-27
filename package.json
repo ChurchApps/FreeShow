@@ -127,6 +127,7 @@
     "dependencies": {
         "@discordjs/opus": "^0.10.0",
         "@googleapis/drive": "^8.16.0",
+        "@julusian/jpeg-turbo": "^2.3.0",
         "@sentry/electron": "^7.3.0",
         "axios": "^1.12.2",
         "better-sqlite3": "^13.0.3",
@@ -152,7 +153,6 @@
         "osc-js": "^2.4.1",
         "osr-capture": "github:meros-co/osr-capture#8fa41e45fb07c546a16569f631bc3f0a697ef488",
         "protobufjs": "^7.5.3",
-        "sharp": "^0.35.4",
         "slideshow": "github:vassbo/slideshow#58f8a1e",
         "socket.io": "^4.8.1",
         "uid": "^2.0.2",

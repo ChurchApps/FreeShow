@@ -437,30 +437,29 @@ function bgraToUyva(bgra: Buffer, width: number, height: number): Buffer {
     return out
 }
 
-function loadSharp() {
-    if (sharpModule === null) {
+function loadJpegTurbo() {
+    if (jpegTurboModule === null) {
         try {
-            sharpModule = require("sharp")
+            jpegTurboModule = require("@julusian/jpeg-turbo")
         } catch (err: any) {
-            sharpModule = false
+            jpegTurboModule = false
             console.error("stage JPEG encoder unavailable:", err.message)
         }
     }
-    return sharpModule || null
+    return jpegTurboModule || null
 }
 
 function encodeStageFrame(id: string, members: string[], rgba: Buffer, cfg: { width: number; height: number; quality: number; intervalMs: number }) {
-    const sharp = loadSharp()
-    if (!sharp || stageBusy.has(id)) return
+    const jpegTurbo = loadJpegTurbo()
+    if (!jpegTurbo || stageBusy.has(id)) return
     const now = Date.now()
     if (now - (stageLastAt[id] || 0) < cfg.intervalMs) return
     stageLastAt[id] = now
     stageBusy.add(id)
     // the frame buffer is recycled as soon as this returns, and the encode is asynchronous
     const owned = Buffer.from(rgba)
-    sharp(owned, { raw: { width: cfg.width, height: cfg.height, channels: 4 } })
-        .jpeg({ quality: cfg.quality })
-        .toBuffer()
+    jpegTurbo
+        .compress(owned, { format: jpegTurbo.FORMAT_RGBA, width: cfg.width, height: cfg.height, quality: cfg.quality })
         .then((jpeg: Buffer) => {
             port.postMessage({ type: "stageJpeg", id, members, jpeg, size: { width: cfg.width, height: cfg.height } })
         })
@@ -469,13 +468,12 @@ function encodeStageFrame(id: string, members: string[], rgba: Buffer, cfg: { wi
 }
 
 function encodeThumbFrame(id: string, rgba: Buffer, cfg: { width: number; height: number; quality: number }) {
-    const sharp = loadSharp()
-    if (!sharp || thumbBusy.has(id)) return
+    const jpegTurbo = loadJpegTurbo()
+    if (!jpegTurbo || thumbBusy.has(id)) return
     thumbBusy.add(id)
     const owned = Buffer.from(rgba)
-    sharp(owned, { raw: { width: cfg.width, height: cfg.height, channels: 4 } })
-        .jpeg({ quality: cfg.quality })
-        .toBuffer()
+    jpegTurbo
+        .compress(owned, { format: jpegTurbo.FORMAT_RGBA, width: cfg.width, height: cfg.height, quality: cfg.quality })
         .then((jpeg: Buffer) => {
             port.postMessage({ type: "thumbJpeg", id, jpeg, size: { width: cfg.width, height: cfg.height } })
         })
@@ -713,7 +711,7 @@ function bmdForget(outputId?: string) {
         bmdFeeds.delete(id)
     }
 }
-let sharpModule: any = null
+let jpegTurboModule: any = null
 let webrtcServer: FrameServer | null = null
 let previewServer: FrameServer | null = null
 let presentServer: FrameServer | null = null
