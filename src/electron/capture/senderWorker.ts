@@ -989,7 +989,8 @@ async function captureAndSend(id: string, source: any, opts: { pipe?: number; si
         }
 
         // RTMP: I420 or BGRA at the broadcast size; the engine holds one pacer ref until a newer frame replaces it
-        for (const m of rtmpMembers) {
+        // re-check isRunning() after the async readback in case rtmpUpdate arrived while readback was in flight
+        for (const m of Object.keys(opts.rtmpMembers || {}).filter((id) => RtmpStreamer.isRunning(id))) {
             const want = opts.rtmpMembers![m]
             const ti = targetBufs.findIndex((t) => t.width === want.width && t.height === want.height && (t.format === 4 || t.format === 0))
             const b = ti >= 0 ? targetBufs[ti] : main.format === 0 && main.width === want.width && main.height === want.height ? main : null
@@ -1332,6 +1333,7 @@ export function runSenderWorker(adapters: SenderAdapter[]) {
             case "rtmpUpdate":
                 rtmpStopWatch.add(msg.outputId)
                 RtmpStreamer.update(msg.outputId, msg.config, msg.destinations, { ffmpegPath: msg.ffmpegPath, encoderId: msg.encoderId })
+                if (RtmpStreamer.isRunning(msg.outputId)) port.postMessage({ type: "rtmpReady", outputId: msg.outputId })
                 break
             case "rtmpStop":
                 rtmpStopWatch.delete(msg.outputId)

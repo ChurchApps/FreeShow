@@ -7,7 +7,7 @@ import util from "../../ndi/vingester-util"
 import { OmtSender } from "../../omt/OmtSender"
 import { OutputHelper } from "../../output/OutputHelper"
 import { getConnections, getStageStreamSubscriberIds, toServer, toStageStreamSubscribers } from "../../servers"
-import { RtmpBridge as RtmpStreamer } from "../../streaming/RtmpBridge"
+import { EncoderBridge } from "../../streaming/RtmpBridge"
 import { WebRtcHost } from "../../streaming/WebRtcHost"
 import { CaptureHelper } from "../CaptureHelper"
 import { ruleViolation } from "../../utils/ruleCheck"
@@ -258,14 +258,14 @@ export class CaptureTransmitter {
                 this.sendRawToWebRtc(captureId, buffer, size, format)
                 break
             case "rtmp":
-                this.sendRawToRtmp(captureId, buffer, size)
+                this.sendRawToEncoder(captureId, buffer, size)
                 break
             case "blackmagic":
                 this.sendRawToBlackmagic(captureId, buffer, size, format)
                 break
             case "recorder":
-                // the recording is a destination of the output's RTMP encode; feed it once
-                if (!this.channels[`${captureId}-rtmp`]) this.sendRawToRtmp(captureId, buffer, size)
+                // RTMP and recorder share one encoder; feed it once
+                if (!this.channels[`${captureId}-rtmp`]) this.sendRawToEncoder(captureId, buffer, size)
                 break
         }
     }
@@ -317,9 +317,9 @@ export class CaptureTransmitter {
         WebRtcHost.sendFrame(captureId, owned, size)
     }
 
-    private static sendRawToRtmp(captureId: string, buffer: Buffer, size: Size) {
-        if (!RtmpStreamer.isRunning(captureId)) return
-        RtmpStreamer.updateFrame(captureId, Buffer.from(buffer), size)
+    private static sendRawToEncoder(captureId: string, buffer: Buffer, size: Size) {
+        if (!EncoderBridge.isRunning(captureId)) return
+        EncoderBridge.updateFrame(captureId, Buffer.from(buffer), size)
     }
 
     // Ensure frames match configured output size (resampling if display scaling altered dimensions)
@@ -369,7 +369,11 @@ export class CaptureTransmitter {
                 this.sendBufferToWebRtcHost(captureId, image)
                 break
             case "rtmp":
-                this.sendBufferToRtmpStreamer(captureId, image)
+                this.sendBufferToEncoder(captureId, image)
+                break
+            case "recorder":
+                // RTMP and recorder share one encoder; feed it once
+                if (!this.channels[`${captureId}-rtmp`]) this.sendBufferToEncoder(captureId, image)
                 break
         }
     }
@@ -597,15 +601,15 @@ export class CaptureTransmitter {
         WebRtcHost.sendFrame(outputId, buffer, size)
     }
 
-    // RTMP
-    static sendBufferToRtmpStreamer(outputId: string, image: NativeImage) {
-        if (!image || !RtmpStreamer.isRunning(outputId)) return
+    // SHARED ENCODER (RTMP + output recording)
+    static sendBufferToEncoder(outputId: string, image: NativeImage) {
+        if (!image || !EncoderBridge.isRunning(outputId)) return
 
         ruleViolation("main-frame", "toBitmap")
         const buffer = image.toBitmap()
         const size = image.getSize()
 
-        RtmpStreamer.updateFrame(outputId, buffer, size)
+        EncoderBridge.updateFrame(outputId, buffer, size)
     }
 
     static removeAllChannels(captureId: string) {

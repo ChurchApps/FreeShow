@@ -56,6 +56,8 @@ const STATUS_PUSH_INTERVAL_MS = 1000
 interface RelayInstance {
     /** recording relays only: how many files this destination has written */
     fileParts?: number
+    /** true until the relay has received the FLV header + sequence headers + its first keyframe */
+    waitingForKeyframe?: boolean
     destination: RtmpDestination
     process: ChildProcess | null
     state: RtmpDestinationState
@@ -80,7 +82,7 @@ interface StreamInstance {
     encoderId: EncoderId
     ffmpegPath: string
     encoder: ChildProcess | null
-    flvHeader: Buffer | null
+    flv: FlvFramer
     /** actual size of the raw frames, learned from the first captured frame */
     inputSize: { width: number; height: number } | null
     /** pixel format the encoder input is declared with */
@@ -195,7 +197,7 @@ export class RtmpStreamer {
                 encoderId,
                 ffmpegPath,
                 encoder: null,
-                flvHeader: null,
+                flv: new FlvFramer(),
                 inputSize: null,
                 encoderStartedAt: 0,
                 encoderBackoffMs: BACKOFF_START_MS,
@@ -409,7 +411,7 @@ export class RtmpStreamer {
         streamer.videoTimeout = undefined
         streamer.audioInterval = undefined
         streamer.statsInterval = undefined
-        streamer.flvHeader = null
+        streamer.flv.reset()
 
         const encoder = streamer.encoder
         streamer.encoder = null
@@ -532,6 +534,7 @@ export class RtmpStreamer {
 
         relay.process = child
         relay.startedAt = Date.now()
+        relay.waitingForKeyframe = true
         this.setRelayState(streamer, relay, "connecting")
 
         child.stdin?.on("error", () => {})
@@ -543,12 +546,6 @@ export class RtmpStreamer {
             relay.lastStderr = message.split("\n").pop()!.slice(0, 200)
             console.warn(`[RtmpStreamer:relay ${relay.destination.url}] ${message}`)
         })
-
-        if (streamer.flvHeader && child.stdin && !child.stdin.destroyed) {
-            try {
-                child.stdin.write(streamer.flvHeader)
-            } catch {}
-        }
 
         relay.liveTimer = setTimeout(() => {
             if (relay.process !== child || relay.stopped) return
@@ -634,7 +631,8 @@ export class RtmpStreamer {
     }
 
     private static fanOut(streamer: StreamInstance, chunk: Buffer) {
-        if (!streamer.flvHeader) streamer.flvHeader = chunk
+        const tags = streamer.flv.push(chunk)
+        if (!tags.length) return
 
         const maxBitrate = streamer.config.rateControl === "vbr" ? Math.round(streamer.config.bitrate * 1.5) : streamer.config.bitrate
         const bufferCap = getRelayBufferCap(maxBitrate)
@@ -650,7 +648,14 @@ export class RtmpStreamer {
                 continue
             }
 
-            stdin.write(chunk)
+            for (const { buf, isKeyframe } of tags) {
+                if (relay.waitingForKeyframe) {
+                    if (!isKeyframe) continue
+                    stdin.write(streamer.flv.header())
+                    relay.waitingForKeyframe = false
+                }
+                stdin.write(buf)
+            }
         }
     }
 
@@ -775,6 +780,57 @@ export class RtmpStreamer {
 }
 
 // HELPERS
+
+/** Splits an FLV byte stream into whole tags and caches the header/sequence tags so relays can join mid-stream. */
+class FlvFramer {
+    private buf: Buffer = Buffer.alloc(0)
+    private init: { file?: Buffer; meta?: Buffer; video?: Buffer; audio?: Buffer } = {}
+
+    reset() {
+        this.buf = Buffer.alloc(0)
+        this.init = {}
+    }
+
+    header(): Buffer {
+        return Buffer.concat([this.init.file, this.init.meta, this.init.video, this.init.audio].filter((b): b is Buffer => !!b))
+    }
+
+    push(chunk: Buffer): { buf: Buffer; isKeyframe: boolean }[] {
+        this.buf = this.buf.length ? Buffer.concat([this.buf, chunk]) : chunk
+        let offset = 0
+
+        if (!this.init.file) {
+            if (this.buf.length < 13) return []
+            this.init.file = Buffer.from(this.buf.subarray(0, 13))
+            offset = 13
+        }
+
+        const tags: { buf: Buffer; isKeyframe: boolean }[] = []
+        while (offset + 11 <= this.buf.length) {
+            const type = this.buf[offset]
+            const size = (this.buf[offset + 1] << 16) | (this.buf[offset + 2] << 8) | this.buf[offset + 3]
+            const len = 11 + size + 4
+            if (offset + len > this.buf.length) break
+
+            const tag = Buffer.from(this.buf.subarray(offset, offset + len))
+            offset += len
+
+            let isKeyframe = false
+            if (type === 18) this.init.meta = tag
+            else if (type === 9 && size >= 2) {
+                if ((tag[11] & 0x0f) === 7 && tag[12] === 0) this.init.video = tag
+                else if ((tag[11] >> 4) === 1) isKeyframe = true
+            } else if (type === 8 && size >= 2 && (tag[11] >> 4) === 10 && tag[12] === 0) {
+                this.init.audio = tag
+            }
+
+            tags.push({ buf: tag, isKeyframe })
+        }
+
+        if (offset > 0) this.buf = offset < this.buf.length ? Buffer.from(this.buf.subarray(offset)) : Buffer.alloc(0)
+        return tags
+    }
+}
 
 /** Destination changes are relay-only; anything here means the encoder has to be respawned. */
 function configRequiresRestart(prev: StreamConfig, next: StreamConfig): boolean {

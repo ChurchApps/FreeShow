@@ -4,6 +4,7 @@ import type { RtmpDestination, RtmpStatus } from "../../types/Output"
 import { SenderCapture } from "../capture/SenderCapture"
 import { sendToMain } from "../IPC/main"
 import { NdiSender } from "../ndi/NdiSender"
+import { OutputHelper } from "../output/OutputHelper"
 import { resolveEncoder } from "./encoderDetection"
 import type { EncoderId } from "./encoderProfiles"
 import { resolveFfmpegPath } from "./ffmpegManager"
@@ -58,6 +59,9 @@ export class RtmpBridge {
                 break
             case "rtmpNotice":
                 sendToMain(ToMain.ALERT, String(msg.message || ""))
+                break
+            case "rtmpReady":
+                OutputHelper.Lifecycle.requestRepaint(msg.outputId)
                 break
         }
     }
@@ -124,3 +128,6 @@ export class RtmpBridge {
         this.worker()?.postMessage({ type: "rtmpFrame", outputId, buffer: copy.buffer, byteOffset: 0, byteLength: copy.byteLength, size }, [copy.buffer])
     }
 }
+
+/** Shared output encoder bridge used by both RTMP streaming and local file recording. */
+export const EncoderBridge = RtmpBridge

@@ -3,7 +3,7 @@ import { BlackmagicBridge as BlackmagicSender } from "../../blackmagic/Blackmagi
 import { OutputHelper } from "../../output/OutputHelper"
 import { getRtmpEncoderSetting } from "../../streaming/encoderDetection"
 import { OutputRecording } from "../../streaming/OutputRecording"
-import { RtmpBridge as RtmpStreamer } from "../../streaming/RtmpBridge"
+import { EncoderBridge } from "../../streaming/RtmpBridge"
 import { WebRtcHost } from "../../streaming/WebRtcHost"
 import { CaptureHelper } from "../CaptureHelper"
 import { CaptureTransmitter } from "./CaptureTransmitter"
@@ -59,7 +59,7 @@ export class CaptureLifecycle {
         }
 
         this.updateWebRtcHostState()
-        this.updateRtmpState()
+        this.updateEncoderState()
 
         // OSR outputs are driven by paint events; non-OSR runs the capture loop if not already running
         if (!output.osr && !captureOptions.frameSubscription) {
@@ -195,7 +195,7 @@ export class CaptureLifecycle {
         if (!OutputHelper.Lifecycle.sharesThroughSurface(id)) OutputHelper.Lifecycle.destroyCaptureSurface(id)
         delete output.captureOptions
         this.updateWebRtcHostState()
-        this.updateRtmpState()
+        this.updateEncoderState()
     }
 
     private static updateWebRtcHostState() {
@@ -237,8 +237,8 @@ export class CaptureLifecycle {
     // recording-only H.264 bitrate, in bits per pixel per frame
     private static readonly RECORDING_BITS_PER_PIXEL = 0.1
 
-    /** Public so a settings change (e.g. the encoder) can be applied without waiting for a capture event. */
-    static updateRtmpState() {
+    /** Syncs the shared H.264/AAC encoder (used by RTMP streaming and local output recording). */
+    static updateEncoderState() {
         const allOutputs = OutputHelper.getAllOutputs()
         allOutputs.forEach((o) => {
             if (!o.id) return
@@ -249,7 +249,7 @@ export class CaptureLifecycle {
             const recording = OutputRecording.destination(o.id)
             if (recording) destinations.push(recording)
             if (!destinations.length) {
-                RtmpStreamer.stop(o.id)
+                EncoderBridge.stop(o.id)
                 return
             }
 
@@ -262,10 +262,10 @@ export class CaptureLifecycle {
             const bitrate = streaming && o.rtmpData!.bitrate ? Number(o.rtmpData!.bitrate) : streaming ? 4000 : Math.round((bounds.width * bounds.height * fps * this.RECORDING_BITS_PER_PIXEL) / 1000)
             if (o.captureOptions?.framerates) o.captureOptions.framerates.rtmp = fps
 
-            const starting = !RtmpStreamer.isRunning(o.id)
+            const starting = !EncoderBridge.isRunning(o.id)
             // destination changes only touch relays; the encode keeps running
             // an encoder starting on a still page needs one repaint
-            void RtmpStreamer.update(o.id, { width: bounds.width, height: bounds.height, fps, bitrate, rateControl: o.rtmpData?.rateControl, enableAudio: isAudioEnabled(), encoder: getRtmpEncoderSetting(o.id) }, destinations).then(() => {
+            void EncoderBridge.update(o.id, { width: bounds.width, height: bounds.height, fps, bitrate, rateControl: o.rtmpData?.rateControl, enableAudio: isAudioEnabled(), encoder: getRtmpEncoderSetting(o.id) }, destinations).then(() => {
                 if (starting) OutputHelper.Lifecycle.requestRepaint(o.id)
             })
         })

@@ -273,7 +273,7 @@ export const mainResponses: MainResponses = {
     [Main.SET_RTMP_ENCODER]: (data) => {
         setRtmpEncoderSetting(data.outputId, data.encoder)
         // apply now rather than lying dormant until some unrelated capture event restarts the encode
-        CaptureHelper.Lifecycle.updateRtmpState()
+        CaptureHelper.Lifecycle.updateEncoderState()
     },
     [Main.FFMPEG_DOWNLOAD]: async () => {
         try {

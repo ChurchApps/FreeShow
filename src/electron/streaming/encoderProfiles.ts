@@ -185,9 +185,9 @@ export function buildRelayCommand(url: string): string[] {
     return ["-hide_banner", "-loglevel", "warning", "-f", "flv", "-i", "pipe:0", "-c", "copy", "-f", "flv", "-flvflags", "no_sequence_end", url]
 }
 
-/** copy the encoded stream into a file; fragmented MP4 stays playable if the recording is cut off */
+/** copy the encoded stream into a standard MP4 with duration (no faststart rewrite on exit) */
 export function buildFileRelayCommand(filePath: string): string[] {
-    return ["-hide_banner", "-loglevel", "warning", "-f", "flv", "-i", "pipe:0", "-c", "copy", "-movflags", "+frag_keyframe+empty_moov+default_base_moof", "-f", "mp4", "-y", filePath]
+    return ["-hide_banner", "-loglevel", "warning", "-f", "flv", "-i", "pipe:0", "-c", "copy", "-f", "mp4", "-y", filePath]
 }
 
 /** Short throwaway encode used to prove the encoder actually works on this machine. */
