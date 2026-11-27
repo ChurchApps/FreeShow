@@ -14,8 +14,8 @@
         white-space: nowrap;
         flex-shrink: 0;
 
-        font-family: var(--ui-font-mono);
-        font-size: 10px;
+        font-family: inherit;
+        font-size: 0.7em;
         font-weight: 500;
         color: var(--ui-subtle);
 

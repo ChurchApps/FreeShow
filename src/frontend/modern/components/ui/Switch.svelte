@@ -30,7 +30,7 @@
 
         padding: 0;
         font-family: inherit;
-        font-size: 13px;
+        font-size: 0.85em;
         color: var(--ui-text);
 
         background: none;

@@ -113,8 +113,8 @@
 
     h1 {
         margin: 0;
-        font-family: var(--ui-font-display);
-        font-size: clamp(2.6rem, 5vw, 3.6rem);
+        font-family: var(--ui-font);
+        font-size: clamp(2.6em, 5vw, 3.6em);
         font-weight: 700;
         letter-spacing: -0.02em;
         line-height: 1;
@@ -124,7 +124,7 @@
     .tagline {
         margin: 12px 0 0;
         max-width: 44ch;
-        font-size: 0.95rem;
+        font-size: 0.95em;
         line-height: 1.5;
         color: var(--ui-muted);
         white-space: normal;
@@ -140,8 +140,8 @@
     .version {
         padding: 3px 8px;
 
-        font-family: var(--ui-font-mono);
-        font-size: 10.5px;
+        font-family: var(--ui-font);
+        font-size: 0.7em;
         color: var(--ui-subtle);
 
         background: var(--ui-panel-raised);
@@ -212,14 +212,14 @@
     }
 
     .tileLabel {
-        font-family: var(--ui-font-display);
-        font-size: 14px;
+        font-family: var(--ui-font);
+        font-size: 0.9em;
         font-weight: 600;
         letter-spacing: 0.01em;
     }
 
     .tileMeta {
-        font-size: 12px;
+        font-size: 0.8em;
         line-height: 1.45;
         color: var(--ui-muted);
     }

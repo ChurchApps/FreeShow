@@ -149,7 +149,7 @@
         height: 100%;
         overflow: hidden;
         background: var(--ui-panel-deep);
-        font-size: 0.95em;
+        font-family: var(--ui-font);
     }
 
     .workspace {
@@ -179,12 +179,9 @@
 
     .side.left {
         background: var(--ui-panel-deep);
-        padding: 8px 0 0 8px;
-        border-inline-end: 1px solid var(--ui-border);
     }
     .side.right {
         background: var(--ui-panel);
-        border-inline-start: 1px solid var(--ui-border);
         overflow-y: auto;
     }
     .side.right.row {
@@ -198,10 +195,6 @@
         min-height: 0;
         overflow: hidden;
         background: var(--ui-panel-deep);
-        border: 1px solid var(--ui-border);
-        border-block-end: none;
-        border-start-start-radius: 12px;
-        border-start-end-radius: 12px;
     }
 
     .center {
@@ -217,12 +210,6 @@
         display: flex;
         flex-direction: column;
         flex-shrink: 0;
-        margin: 6px;
-        background: var(--ui-panel);
-        border: 1px solid var(--ui-border);
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: inset 0 1px 0 color-mix(in srgb, var(--text) 7%, transparent);
     }
 
     .previewBar {
@@ -233,14 +220,12 @@
         height: 27px;
         padding: 0 10px;
 
-        font-family: var(--ui-font-display);
-        font-size: 9.5px;
+        font-family: var(--ui-font);
+        font-size: 0.65em;
         font-weight: 600;
         letter-spacing: 0.15em;
         text-transform: uppercase;
         color: var(--ui-muted);
-
-        border-bottom: 1px solid var(--ui-border);
     }
 
     .led {
@@ -274,10 +259,8 @@
         flex-direction: column;
         flex: 1;
         min-height: 0;
-        margin: 6px;
-        border: 1px solid var(--ui-border);
-        border-radius: 12px;
         overflow: hidden;
+        border-top: 1px solid var(--ui-border);
         background: var(--ui-panel);
     }
 </style>

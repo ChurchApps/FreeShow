@@ -33,7 +33,7 @@
         padding: 0 13px;
 
         font-family: inherit;
-        font-size: 13px;
+        font-size: 0.85em;
         font-weight: 500;
         line-height: 1;
         letter-spacing: 0.01em;
@@ -59,7 +59,7 @@
         height: 28px;
         padding: 0 9px;
         gap: 5px;
-        font-size: 12px;
+        font-size: 0.8em;
     }
 
     .ui-button.icon {

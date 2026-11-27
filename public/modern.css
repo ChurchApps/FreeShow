@@ -25,13 +25,11 @@ html[data-ui="modern"] {
     --ui-accent-border: color-mix(in srgb, var(--secondary) 45%, transparent);
     --ui-selection: color-mix(in srgb, var(--secondary) 22%, var(--primary));
 
+    --ui-font: var(--font-family), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
     --ui-radius: 10px;
     --ui-radius-sm: 7px;
     --ui-shadow: 0 22px 50px -24px rgb(0 0 0 / 0.65);
     --ui-shadow-sm: 0 6px 18px -12px rgb(0 0 0 / 0.5);
-
-    --ui-font-display: "CMGSans", var(--font-family);
-    --ui-font-mono: ui-monospace, "SFMono-Regular", "Cascadia Mono", Menlo, Consolas, monospace;
 }
 
 /* ---------- base ---------- */
@@ -48,7 +46,7 @@ html[data-ui="modern"] h4,
 html[data-ui="modern"] h5,
 html[data-ui="modern"] h6 {
     color: var(--ui-text);
-    font-family: var(--ui-font-display);
+    font-family: var(--ui-font);
     letter-spacing: -0.005em;
 }
 
@@ -234,7 +232,7 @@ html[data-ui="modern"] section.drawer .top .tabs button {
     border: none !important;
     border-radius: 0 !important;
     color: var(--ui-muted) !important;
-    font-family: var(--ui-font-display);
+    font-family: var(--ui-font);
     letter-spacing: 0.015em;
 }
 html[data-ui="modern"] section.drawer .top .tabs button.isActive {
@@ -282,7 +280,6 @@ html[data-ui="modern"] .projects .header,
 html[data-ui="modern"] .showHeader .header,
 html[data-ui="modern"] .header.sticky {
     background-color: color-mix(in srgb, var(--primary-darker) 78%, transparent);
-    border-bottom: 1px solid var(--ui-border);
     border-radius: 0;
 }
 
@@ -322,18 +319,17 @@ html[data-ui="modern"] #showArea .header {
     padding: 0 6px 0 14px;
     justify-content: flex-start;
     background-color: color-mix(in srgb, var(--primary-darker) 80%, transparent);
-    border-bottom: 1px solid var(--ui-border);
     border-radius: 0;
     box-shadow: none !important;
 }
 html[data-ui="modern"] .topbar .context {
-    font-family: var(--ui-font-display);
+    font-family: var(--ui-font);
     letter-spacing: 0.01em;
 }
 html[data-ui="modern"] #showArea .header .title,
 html[data-ui="modern"] #showArea .header .name {
-    font-family: var(--ui-font-display);
-    font-size: 0.9rem;
+    font-family: var(--ui-font);
+    font-size: 0.9em;
     font-weight: 600;
     letter-spacing: 0.005em;
     color: var(--ui-text);
@@ -343,12 +339,11 @@ html[data-ui="modern"] .projects .header {
     justify-content: flex-start;
     padding: 0 8px 0 14px;
     background-color: var(--ui-panel);
-    border-bottom: 1px solid var(--ui-border);
     border-radius: 0;
     box-shadow: none !important;
 }
 html[data-ui="modern"] .projects .header p {
-    font-size: 10.5px !important;
+    font-size: 0.7em !important;
     font-weight: 650;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -382,7 +377,7 @@ html[data-ui="modern"] #projectArea .listSection button.section {
     border-radius: 0 !important;
     text-transform: uppercase;
     letter-spacing: 0.07em;
-    font-size: 0.68rem !important;
+    font-size: 0.68em !important;
     background-color: transparent !important;
     border-top: 1px solid var(--ui-border) !important;
     border-bottom: 1px solid var(--ui-border) !important;
@@ -402,37 +397,12 @@ html[data-ui="modern"] .categories .selectElem button.isActive {
     box-shadow: inset 3px 0 0 var(--ui-accent);
 }
 html[data-ui="modern"] .categories .title {
-    font-size: 9.5px;
+    font-size: 0.65em;
     font-weight: 650;
     letter-spacing: 0.09em;
     text-transform: uppercase;
     opacity: 0.5;
     padding: 10px 14px 4px;
-}
-
-/* ---------- preview panel ---------- */
-
-html[data-ui="modern"] #previewArea .top {
-    margin: 6px;
-    border: 1px solid var(--ui-border);
-    border-radius: 10px;
-    overflow: hidden;
-    background-color: #000;
-}
-html[data-ui="modern"] #previewArea .section {
-    margin: 4px 6px;
-    background-color: var(--ui-panel);
-    border: 1px solid var(--ui-border);
-    border-radius: 10px;
-}
-html[data-ui="modern"] #previewArea .section.clear-btns {
-    background-color: transparent;
-    border: none;
-}
-html[data-ui="modern"] #previewArea .section.clear-btns button {
-    border: 1px solid var(--ui-border) !important;
-    border-radius: 8px !important;
-    margin: 0 1px;
 }
 
 /* ---------- slide thumbnails ---------- */
@@ -466,7 +436,6 @@ html[data-ui="modern"] .panelCard .header {
     justify-content: flex-start;
     padding: 0 8px 0 14px;
     background-color: var(--ui-panel);
-    border-bottom: 1px solid var(--ui-border);
     border-radius: 0;
     box-shadow: none !important;
 }
@@ -474,8 +443,8 @@ html[data-ui="modern"] .panelCard .header:has(.left) {
     padding-inline-start: 46px;
 }
 html[data-ui="modern"] .panelCard .header p {
-    font-size: 10.5px !important;
-    font-family: var(--ui-font-display);
+    font-size: 0.7em !important;
+    font-family: var(--ui-font);
     font-weight: 650;
     letter-spacing: 0.09em;
     text-transform: uppercase;
@@ -509,8 +478,8 @@ html[data-ui="modern"] .tools .section .title {
     border: none !important;
 }
 html[data-ui="modern"] .tools .section .title p {
-    font-family: var(--ui-font-display);
-    font-size: 0.85rem;
+    font-family: var(--ui-font);
+    font-size: 0.85em;
     font-weight: 500;
     letter-spacing: 0.015em;
 }
@@ -534,7 +503,7 @@ html[data-ui="modern"] .center > main > .title {
     border-bottom: 1px solid var(--ui-border);
 }
 html[data-ui="modern"] .center > main > .title h2 {
-    font-size: 17px;
+    font-size: 1.1em;
     font-weight: 650;
     letter-spacing: -0.015em;
     margin: 0;

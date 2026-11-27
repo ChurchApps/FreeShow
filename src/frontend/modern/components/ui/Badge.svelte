@@ -15,7 +15,7 @@
         height: 20px;
         padding: 0 7px;
 
-        font-size: 11px;
+        font-size: 0.7em;
         font-weight: 600;
         letter-spacing: 0.03em;
         text-transform: uppercase;

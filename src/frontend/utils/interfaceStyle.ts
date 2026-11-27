@@ -2,7 +2,6 @@
 // The interface style is a local (non-synced) setting, so every device can pick
 // between the classic layout and the modern one.
 
-import { get } from "svelte/store"
 import { uiStyle } from "../stores"
 
 export type UIStyle = "classic" | "modern"
@@ -13,12 +12,4 @@ export function applyUIStyle(style: UIStyle | string | null | undefined = "class
     const value: UIStyle = style === "modern" ? "modern" : "classic"
     uiStyle.set(value)
     document.documentElement.setAttribute(ATTRIBUTE, value)
-}
-
-export function setUIStyle(style: UIStyle) {
-    applyUIStyle(style)
-}
-
-export function toggleUIStyle() {
-    applyUIStyle(get(uiStyle) === "modern" ? "classic" : "modern")
 }

@@ -1,7 +1,6 @@
 <script lang="ts">
     import { activeEdit, activePage, activeProfile, activeProject, activeShow, activeStage, dictionary, os, outputDisplay, outputs, profiles, projects, quickSearchActive, saved, settingsTab, shows, showsCache, special, stageShows } from "../../stores"
     import { translateText } from "../../utils/language"
-    import { toggleUIStyle } from "../../utils/interfaceStyle"
     import { toggleOutputs } from "../../components/helpers/output"
     import { getEditDisabled, openPage } from "../../components/main/navigation"
     import Icon from "../../components/helpers/Icon.svelte"
@@ -131,10 +130,6 @@
                 {profileInitial}
             {/if}
         </button>
-
-        <Button class="styleToggle" variant="ghost" size="icon" title={translateText("settings.ui_style_classic", $dictionary)} on:click={toggleUIStyle}>
-            <Icon id="stars" size={1.05} white />
-        </Button>
     </div>
 </header>
 
@@ -190,8 +185,8 @@
     .wordmark {
         margin-inline-end: 6px;
 
-        font-family: var(--ui-font-display);
-        font-size: 16px;
+        font-family: var(--ui-font);
+        font-size: 1em;
         font-weight: 700;
         letter-spacing: 0.005em;
         color: var(--ui-text);
@@ -216,8 +211,8 @@
         border-radius: 7px;
         color: var(--ui-muted);
         gap: 6px;
-        font-family: var(--ui-font-display);
-        font-size: 13px;
+        font-family: var(--ui-font);
+        font-size: 0.85em;
         font-weight: 500;
         letter-spacing: 0.015em;
     }
@@ -236,7 +231,7 @@
     .context {
         margin-inline-start: 6px;
         padding-inline-start: 12px;
-        font-size: 12.5px;
+        font-size: 0.82em;
         font-weight: 500;
         color: var(--ui-muted);
         border-inline-start: 1px solid var(--ui-border);
@@ -266,7 +261,7 @@
         padding: 0 6px 0 10px;
 
         font-family: inherit;
-        font-size: 12.5px;
+        font-size: 0.82em;
         color: var(--ui-muted);
 
         background: var(--ui-panel-deep);
@@ -302,8 +297,8 @@
         height: 26px;
         padding: 0 10px;
 
-        font-family: var(--ui-font-display);
-        font-size: 10.5px;
+        font-family: var(--ui-font);
+        font-size: 0.7em;
         font-weight: 700;
         letter-spacing: 0.14em;
         text-transform: uppercase;
@@ -346,7 +341,7 @@
         padding: 0;
 
         font-family: inherit;
-        font-size: 12px;
+        font-size: 0.8em;
         font-weight: 600;
         color: var(--ui-text);
 
@@ -359,13 +354,6 @@
     }
     .avatar:hover {
         background: var(--ui-hover);
-    }
-
-    :global(.topbar .styleToggle) {
-        color: var(--ui-subtle);
-    }
-    :global(.topbar .styleToggle:hover) {
-        color: var(--ui-text);
     }
 
     @media screen and (max-width: 1120px) {
@@ -412,8 +400,7 @@
             min-width: 32px;
             padding: 0;
         }
-        .avatar,
-        :global(.topbar .styleToggle) {
+        .avatar {
             display: none;
         }
     }

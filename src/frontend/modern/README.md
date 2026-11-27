@@ -6,9 +6,8 @@ same pages, so shows, slides, the drawer, outputs and settings all keep working.
 
 ## Switching
 
-- Press the sparkle button in the top bar (`Classic` or `Modern`, depending on
-  the current style).
-- Or open Settings, then General, then Interface style.
+- Open Settings, then General, then Interface style.
+- Choose Classic or Modern.
 
 The choice is saved as the local setting `uiStyle` (`classic` or `modern`) and
 is not synced to other devices. `App.svelte` renders `ModernLayout` when the
@@ -19,11 +18,11 @@ so existing installs keep their current layout until someone switches.
 
 The modern layout draws on live production language rather than a generic dashboard:
 
-- The top bar carries the FreeShow wordmark in CMGSans, tabs with an accent cue line under the active page, and a broadcast ON AIR pill while presenting.
+- The top bar carries the FreeShow wordmark, tabs with an accent cue line under the active page, and a broadcast ON AIR pill while presenting. All type uses the active theme font.
 - The preview has a LIVE or STANDBY strip with a status LED, so output state is readable at a glance.
 - The workspace uses a soft accent wash and a 26px dot grid behind the slides.
 - Active tabs and rows use channel-strip details: a short accent underline, a small LED, and inset highlights on panels.
-- Timings and shortcut chips use a monospace face.
+- Timings and shortcut chips follow the theme font and size like the rest of the interface.
 
 ## Files
 
@@ -45,7 +44,8 @@ The modern layout draws on live production language rather than a generic dashbo
 
 Tokens are derived from the active theme with `color-mix`, so light, dark and
 custom themes all work. Changing the theme in Settings updates the modern layout
-immediately. The live red, standby amber and success green are semantic colors
+immediately. Type uses `--ui-font`, which starts with the theme family and falls
+back to the system sans stack when that family is not installed. The live red, standby amber and success green are semantic colors
 and stay fixed, as does the app icon. `modern.css` defines:
 
 - surfaces: `--ui-panel`, `--ui-panel-deep`, `--ui-panel-raised`
