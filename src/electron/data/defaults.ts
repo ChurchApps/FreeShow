@@ -54,6 +54,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     language: null,
     customFonts: [],
     labelsDisabled: false,
+    uiStyle: "classic",
     groupNumbers: true,
     fullColors: false,
     formatNewShow: false,

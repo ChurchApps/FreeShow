@@ -5,7 +5,11 @@ import * as Sentry from "@sentry/electron/renderer"
 import "svelte"
 import { set_raf } from "svelte/internal"
 import App from "./App.svelte"
+import { applyUIStyle } from "./utils/interfaceStyle"
 import { ERROR_FILTER } from "./utils/common"
+
+// classic layout until the saved setting is loaded
+applyUIStyle()
 
 // error reporting (production only)
 // if autoErrorReporting is false, electron reporting will not start and this will fail with an error which is expected

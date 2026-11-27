@@ -4,6 +4,7 @@
     import { getCloudUsers } from "../../utils/cloudSync"
     import { translateText } from "../../utils/language"
     import { DEFAULT_DISPLAY_NAME } from "../../utils/SocketHelper"
+    import { toggleUIStyle } from "../../utils/interfaceStyle"
     import { settingsTabs } from "../../values/tabs"
     import Icon from "../helpers/Icon.svelte"
     import { toggleOutputs } from "../helpers/output"
@@ -117,6 +118,10 @@
         {#if !settingsDisabled}
             <TopButton id="settings" hideLabel />
         {/if}
+
+        <Button title={translateText("settings.ui_style_modern", $dictionary)} on:click={toggleUIStyle} style="padding: 0 0.6em;">
+            <Icon id="stars" white />
+        </Button>
 
         <!-- <MaterialButton id="output_window_button" class="context #output display {$outputDisplay ? 'on' : 'off'}" title="menu.{$outputDisplay ? (confirm ? 'again_confirm' : '_title_display_stop') : '_title_display'} [Ctrl+O]" style={$outputDisplay || disableClick ? "" : "border-bottom: 2px solid var(--secondary);"} on:click={toggleOutput} disabled={(!$outputDisplay && !physicalOutputWindows.length) || disableClick} red={$outputDisplay}>
             {#if $outputDisplay}

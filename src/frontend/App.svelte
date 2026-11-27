@@ -1,5 +1,6 @@
 <script lang="ts">
     import MainLayout from "./MainLayout.svelte"
+    import ModernLayout from "./modern/ModernLayout.svelte"
     import MainOutput from "./MainOutput.svelte"
     import MediaSource from "./components/output/layers/MediaSource.svelte"
     import ContextMenu from "./components/context/ContextMenu.svelte"
@@ -19,7 +20,7 @@
     import TooltipManager from "./components/main/TooltipManager.svelte"
     import QuickSearch from "./components/quicksearch/QuickSearch.svelte"
     import Center from "./components/system/Center.svelte"
-    import { activeProfile, activeTimers, closeAd, currentWindow, disabledServers, events, language, loaded, localeDirection, os, outputDisplay, outputs, profiles, theme, themes, timers } from "./stores"
+    import { activeProfile, activeTimers, closeAd, currentWindow, disabledServers, events, language, loaded, localeDirection, os, outputDisplay, outputs, profiles, theme, themes, timers, uiStyle } from "./stores"
     import { focusArea, logerror, mainClick, toggleRemoteStream } from "./utils/common"
     import { keydown } from "./utils/shortcuts"
     import { startup } from "./utils/startup"
@@ -92,7 +93,11 @@
             <Guide />
             <ProgressPanel />
 
-            <MainLayout />
+            {#if $uiStyle === "modern"}
+                <ModernLayout />
+            {:else}
+                <MainLayout />
+            {/if}
 
             {#if ready && Object.keys($profiles).filter((a) => a !== "admin").length && $activeProfile === null}
                 <ProfileSelector />

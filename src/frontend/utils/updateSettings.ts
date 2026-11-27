@@ -100,6 +100,7 @@ import {
     version,
     videoMarkers
 } from "./../stores"
+import { applyUIStyle } from "./interfaceStyle"
 import { checkForUpdates } from "./checkForUpdates"
 import { isMainWindow, startAutosave } from "./common"
 import { setLanguage } from "./language"
@@ -381,6 +382,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     formatNewShow: (v: any) => formatNewShow.set(v),
     groups: (v: any) => groups.set(v),
     labelsDisabled: (v: any) => labelsDisabled.set(v),
+    uiStyle: (v: any) => applyUIStyle(v),
     mediaFolders: (v: any) => mediaFolders.set(v),
     mediaOptions: (v: any) => mediaOptions.set(v),
     openedFolders: (v: any) => openedFolders.set(v),
