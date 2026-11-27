@@ -1,4 +1,4 @@
-import axios from "axios"
+import { fetchRequest } from "../utils/requests"
 import crypto from "crypto"
 import { app } from "electron"
 import fs from "fs"
@@ -205,7 +205,7 @@ class ChurchAppsSyncManager {
 
             // Church's own storage (e.g. a Google Drive upload session): send the bytes as-is
             if (presigned.rawBody) {
-                await axios.request({ method: presigned.method || "PUT", url: presigned.url, data: fileBuffer, headers: { "Content-Type": ZIP_TYPE, ...presigned.headers }, timeout: 60000, maxBodyLength: Infinity })
+                await fetchRequest(presigned.url, { method: presigned.method || "PUT", body: fileBuffer, headers: { "Content-Type": ZIP_TYPE, ...presigned.headers }, timeout: 60000 })
                 if (fileName === "current.zip") await this.setCache(teamId, filePath)
                 return true
             }
@@ -221,7 +221,7 @@ class ChurchAppsSyncManager {
 
             console.log("Uploading data...")
             formData.append("file", blob, fileName)
-            await axios.post(presigned.url, formData, { headers: { "Content-Type": "multipart/form-data" }, timeout: 60000 })
+            await fetchRequest(presigned.url, { method: "POST", body: formData, timeout: 60000 })
 
             if (fileName === "current.zip") await this.setCache(teamId, filePath)
             return true

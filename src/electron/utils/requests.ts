@@ -182,3 +182,45 @@ export function httpsRequest(hostname: string, path: string, method: "POST" | "G
         cb(err, null)
     }
 }
+
+export interface FetchRequestOptions {
+    method?: string
+    headers?: Record<string, string>
+    body?: any
+    timeout?: number
+    signal?: AbortSignal
+}
+
+export async function fetchRequest<T = any>(url: string, options: FetchRequestOptions = {}): Promise<{ status: number; data: T; headers: Headers }> {
+    const headers: Record<string, string> = { ...options.headers }
+    let body = options.body
+
+    const isPlainObject = body !== null && typeof body === "object" && !(body instanceof Buffer) && !(body instanceof Uint8Array) && !(body instanceof FormData) && !(body instanceof URLSearchParams)
+    if (isPlainObject) {
+        body = JSON.stringify(body)
+        if (!Object.keys(headers).some((k) => k.toLowerCase() === "content-type")) headers["content-type"] = "application/json"
+    }
+
+    const signals: AbortSignal[] = []
+    if (options.signal) signals.push(options.signal)
+    if (options.timeout) signals.push(AbortSignal.timeout(options.timeout))
+    const signal = signals.length > 1 ? (AbortSignal as any).any(signals) : signals[0]
+
+    const res = await fetch(url, { method: options.method || (body !== undefined ? "POST" : "GET"), headers, body, signal })
+    const contentType = res.headers.get("content-type") || ""
+    const text = await res.text()
+    let data: any = text
+    if (contentType.includes("application/json") && text) {
+        try {
+            data = JSON.parse(text)
+        } catch {}
+    }
+
+    if (!res.ok) {
+        const err: any = new Error(`HTTP ${res.status}`)
+        err.response = { status: res.status, data }
+        throw err
+    }
+
+    return { status: res.status, data, headers: res.headers }
+}

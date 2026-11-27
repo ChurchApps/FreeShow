@@ -1,5 +1,5 @@
-import axios from "axios"
 import type { LLMCompletionOptions } from "../../../../types/ai/Ai"
+import { fetchRequest } from "../../../utils/requests"
 import { APIModel, type ModelOption } from "./APIProvider"
 
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
@@ -23,7 +23,7 @@ class GoogleProvider extends APIModel {
     async fetchModels(apiKey: string): Promise<ModelOption[]> {
         if (!apiKey) return []
         try {
-            const { data } = await axios.get(API_BASE, { headers: this.getHeaders(apiKey), timeout: this.REQUEST_TIMEOUT })
+            const { data } = await fetchRequest(API_BASE, { headers: this.getHeaders(apiKey), timeout: this.REQUEST_TIMEOUT })
             return (Array.isArray(data?.models) ? data.models : [])
                 .filter((m: any) => m.supportedGenerationMethods?.includes("generateContent"))
                 .map((m: any) => ({
@@ -61,7 +61,9 @@ class GoogleProvider extends APIModel {
         }
 
         try {
-            const { data } = await axios.post(`${API_BASE}/${encodeURIComponent(targetModel)}:generateContent`, body, {
+            const { data } = await fetchRequest(`${API_BASE}/${encodeURIComponent(targetModel)}:generateContent`, {
+                method: "POST",
+                body,
                 headers: this.getHeaders(apiKey),
                 timeout: this.REQUEST_TIMEOUT,
                 signal: options.signal

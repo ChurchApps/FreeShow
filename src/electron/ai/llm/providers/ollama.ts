@@ -1,5 +1,5 @@
-import axios from "axios"
 import type { LLMCompletionOptions } from "../../../../types/ai/Ai"
+import { fetchRequest } from "../../../utils/requests"
 import { APIModel, buildMessages, type ModelOption } from "./APIProvider"
 
 const API_URL = "http://127.0.0.1:11434"
@@ -10,7 +10,7 @@ class OllamaProvider extends APIModel {
 
     async fetchModels(): Promise<ModelOption[]> {
         try {
-            const { data } = await axios.get(`${API_URL}/api/tags`, { timeout: 10000 })
+            const { data } = await fetchRequest(`${API_URL}/api/tags`, { timeout: 10000 })
             const models = Array.isArray(data?.models) ? data.models : []
             return models.map((m: any) => ({ id: m.name, name: m.name }))
         } catch {
@@ -40,7 +40,7 @@ class OllamaProvider extends APIModel {
         if (options.jsonSchema) body.format = options.jsonSchema
 
         try {
-            const { data } = await axios.post(`${API_URL}/api/chat`, body, { timeout: 30000, signal: options.signal })
+            const { data } = await fetchRequest(`${API_URL}/api/chat`, { method: "POST", body, timeout: 30000, signal: options.signal })
             return data?.message?.content || ""
         } catch (err) {
             throw this.toLLMError(err)

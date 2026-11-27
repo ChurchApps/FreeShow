@@ -1,5 +1,5 @@
-import axios from "axios"
 import type { LLMCompletionOptions } from "../../../../types/ai/Ai"
+import { fetchRequest } from "../../../utils/requests"
 
 export const LLM_API_TIMEOUT = 12000
 
@@ -26,10 +26,8 @@ export abstract class APIModel {
     abstract complete(apiKey: string, model: string, options: LLMCompletionOptions): Promise<string>
 
     protected toLLMError(err: unknown): Error {
-        if (err instanceof Error) return err
-
         const e = err as any
-        if (["ECONNABORTED", "ETIMEDOUT", "ERR_CANCELED"].includes(e?.code)) {
+        if (e?.name === "TimeoutError" || e?.name === "AbortError" || ["ECONNABORTED", "ETIMEDOUT", "ERR_CANCELED"].includes(e?.code)) {
             return new Error(e.message || "Request timed out")
         }
 
@@ -47,13 +45,13 @@ export abstract class APIModel {
             return new Error(`HTTP ${status}`)
         }
 
+        if (err instanceof Error) return err
         return new Error(e?.message || "Network error")
     }
 
     protected async testEndpoint(url: string, headers: Record<string, string>, method: "GET" | "POST" = "GET", body?: any): Promise<{ ok: true } | { ok: false; error: string }> {
         try {
-            const request = method === "POST" ? axios.post : axios.get
-            await request(url, method === "POST" ? body : { headers, timeout: this.REQUEST_TIMEOUT }, { headers, timeout: this.REQUEST_TIMEOUT })
+            await fetchRequest(url, { method, headers, body, timeout: this.REQUEST_TIMEOUT })
             return { ok: true }
         } catch (err) {
             return { ok: false, error: this.toLLMError(err).message }

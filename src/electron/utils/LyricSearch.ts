@@ -1,4 +1,4 @@
-import axios from "axios"
+import { fetchRequest } from "./requests"
 import { net } from "electron"
 import type { LyricSearchResult } from "../../types/Main"
 
@@ -85,7 +85,7 @@ export class LyricSearch {
     private static searchHymnary = async (title: string) => {
         try {
             const url = `https://hymnary.org/search?qu=%20tuneTitle%3A${encodeURIComponent(title)}%20media%3Atext%20in%3Atexts&export=csv`
-            const response = await axios.get(url, { timeout: 10000 })
+            const response = await fetchRequest(url, { timeout: 10000 })
             const csv = await response.data
             if (typeof csv !== "string") return []
             const songs = LyricSearch.csvToArray(csv, ",")
@@ -102,7 +102,7 @@ export class LyricSearch {
     private static getHymnary = async (song: LyricSearchResult) => {
         try {
             const url = `https://hymnary.org/text/${song.key}`
-            const response = await axios.get(url, { timeout: 10000 })
+            const response = await fetchRequest(url, { timeout: 10000 })
             const html = await response.data
             if (typeof html !== "string") return ""
             return this.getLyricFromHtml(html, /<div property=['"]text['"]>([\s\S]*?)<\/div>/g)
@@ -126,7 +126,7 @@ export class LyricSearch {
     private static searchLetras = async (title: string) => {
         try {
             const url = `https://solr.sscdn.co/letras/m1/?q=${encodeURIComponent(title)}`
-            const response = await axios.get(url, { timeout: 10000 })
+            const response = await fetchRequest(url, { timeout: 10000 })
             const data = response.data
             if (typeof data !== "string") return []
             const json = JSON.parse(data.replace("LetrasSug(", "").slice(0, -2))

@@ -1,5 +1,5 @@
-import axios from "axios"
 import type { LLMCompletionOptions } from "../../../../types/ai/Ai"
+import { fetchRequest } from "../../../utils/requests"
 import { APIModel, type ModelOption } from "./APIProvider"
 
 const API_URL = "https://api.anthropic.com/v1/messages"
@@ -16,7 +16,7 @@ class AnthropicProvider extends APIModel {
     async fetchModels(apiKey: string): Promise<ModelOption[]> {
         if (!apiKey) return []
         try {
-            const { data } = await axios.get(MODELS_URL, {
+            const { data } = await fetchRequest(MODELS_URL, {
                 headers: this.getHeaders(apiKey),
                 timeout: this.REQUEST_TIMEOUT
             })
@@ -48,7 +48,9 @@ class AnthropicProvider extends APIModel {
         if (options.jsonSchema) body.output_config = { format: { type: "json_schema", schema: options.jsonSchema } }
 
         try {
-            const { data } = await axios.post(API_URL, body, {
+            const { data } = await fetchRequest(API_URL, {
+                method: "POST",
+                body,
                 headers: this.getHeaders(apiKey),
                 timeout: this.REQUEST_TIMEOUT,
                 signal: options.signal

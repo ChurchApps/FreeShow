@@ -1,5 +1,5 @@
-import axios from "axios"
 import type { LLMCompletionOptions } from "../../../../types/ai/Ai"
+import { fetchRequest } from "../../../utils/requests"
 import { APIModel, buildMessages, type ModelOption } from "./APIProvider"
 
 const API_URL = "https://api.openai.com/v1/chat/completions"
@@ -16,7 +16,7 @@ class OpenAIProvider extends APIModel {
     async fetchModels(apiKey: string): Promise<ModelOption[]> {
         if (!apiKey) return []
         try {
-            const { data } = await axios.get(MODELS_URL, { headers: this.getHeaders(apiKey), timeout: this.REQUEST_TIMEOUT })
+            const { data } = await fetchRequest(MODELS_URL, { headers: this.getHeaders(apiKey), timeout: this.REQUEST_TIMEOUT })
             return (Array.isArray(data?.data) ? data.data : [])
                 .filter((m: any) => m?.id && /^(gpt-|o1|o3)/.test(m.id))
                 .map((m: any) => ({ id: m.id, name: m.id }))
@@ -45,7 +45,7 @@ class OpenAIProvider extends APIModel {
         }
 
         try {
-            const { data } = await axios.post(API_URL, body, { headers: this.getHeaders(apiKey), timeout: this.REQUEST_TIMEOUT, signal: options.signal })
+            const { data } = await fetchRequest(API_URL, { method: "POST", body, headers: this.getHeaders(apiKey), timeout: this.REQUEST_TIMEOUT, signal: options.signal })
             const choice = data?.choices?.[0]
 
             if (choice?.message?.refusal) throw new Error(`Request was refused by the model: ${choice.message.refusal}`)
