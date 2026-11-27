@@ -123,13 +123,20 @@ import { autoDisableRemoteController, stopRemoteController } from "./remoteContr
 
 let savePromise: Promise<void> | null = null
 let resolveSave: (() => void) | null = null
+let pendingSave: { closeWhenFinished: boolean; customTriggers: SaveActions } | null = null
 
 export function save(closeWhenFinished = false, customTriggers: SaveActions = {}) {
     updateSyncedOutputs()
     startAutosave() // reset auto save timer
 
     // don't save again while saving
-    if (get(statusIndicator) === "saving") return savePromise || Promise.resolve()
+    if (get(statusIndicator) === "saving") {
+        pendingSave = {
+            closeWhenFinished: !!(pendingSave?.closeWhenFinished || closeWhenFinished),
+            customTriggers: { ...pendingSave?.customTriggers, ...customTriggers }
+        }
+        return savePromise || Promise.resolve()
+    }
 
     console.info("SAVING...")
     if ((!customTriggers.autosave || !get(saved)) && !customTriggers.backup) {
@@ -305,6 +312,14 @@ export function getSyncedSettings(): { [key in SaveListSyncedSettings]: any } {
 export async function saveComplete({ closeWhenFinished, customTriggers }: { closeWhenFinished: boolean; customTriggers?: SaveActions }) {
     resolveSave?.()
 
+    if (pendingSave) {
+        const next = pendingSave
+        pendingSave = null
+        setStatus("")
+        await save(next.closeWhenFinished || closeWhenFinished, next.customTriggers)
+        return
+    }
+
     const alreadySaved = get(saved)
     if (!closeWhenFinished) {
         if ((!customTriggers?.autosave || !alreadySaved) && !customTriggers?.backup) setStatus("saved", 1)
@@ -352,7 +367,7 @@ export function initializeClosing(skipPopup = false) {
     // don't save automatically if an error has happened in case it breaks something
     if (!skipPopup && (get(special).showClosePopup || get(errorHasOccurred))) activePopup.set("unsaved")
     // "saved" does not count for all minor changes, but should be fine
-    else if (get(saved)) saveComplete({ closeWhenFinished: true })
+    else if (get(saved) && get(statusIndicator) !== "saving") saveComplete({ closeWhenFinished: true })
     else save(true)
 }
 
