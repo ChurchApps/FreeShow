@@ -9,12 +9,15 @@ files:
     - build/types/**
     - public/**
     - "!node_modules/@napi-rs"
-    - "!**/node_modules/*/{CHANGELOG*,README*,test*,example*,docs}"
-    - "!**/node_modules/*/{*.d.ts,*.ts,*.map}"
+    - "!**/node_modules/**/{CHANGELOG*,README*,test,tests,__tests__,example,examples,docs}"
+    - "!**/node_modules/**/*.{map,d.ts,d.cts,d.mts,ts}"
     - "!**/node_modules/{@types,typescript}/**"
     - "!**/node_modules/**/*.{pdb,iobj,ipdb,obj,lib,exp,a,o,c,cc,cpp,h,hpp,gyp*,vcxproj*,filters,sln}"
     - "!**/node_modules/**/prebuild/node-v*"
     - "!**/node_modules/grandiose/ndi/**"
+    - "!**/node_modules/openmediatransport/lib/**"
+    - "!**/node_modules/node-hid/hidapi/**"
+    - "!**/node_modules/@discordjs/opus/deps/**"
     - "!**/node_modules/osr-capture/**/on12_harness.exe"
     - "!**/node_modules/@sentry/*/build/esm/**"
 

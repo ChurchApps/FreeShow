@@ -20,8 +20,6 @@ exports.default = async function afterPack(context) {
     if (!fs.existsSync(unpackedModules)) return
 
     // strip redundant unpacked native prebuilds that don't match the exact target OS and arch
-    const omtTarget = platform === "darwin" ? "macos" : `${platform === "win32" ? "win" : "linux"}-${arch}`
-    keepMatching(path.join(unpackedModules, "openmediatransport", "lib"), (e) => e === omtTarget)
     keepMatching(path.join(unpackedModules, "better-sqlite3", "prebuilds"), (e) => e.startsWith(`${platform}-${arch}`))
     keepMatching(path.join(unpackedModules, "koffi", "build", "koffi"), (e) => e === `${platform}_${arch}`)
     keepMatching(path.join(unpackedModules, "@julusian", "jpeg-turbo", "prebuilds"), (e) => e === `jpeg-turbo-${platform}-${arch}`)
