@@ -174,7 +174,6 @@
 
         border-radius: 8px;
         overflow: hidden;
-        box-shadow: 0 0 0 1px var(--ui-border);
     }
     .brand img {
         width: 100%;

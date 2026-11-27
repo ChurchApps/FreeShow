@@ -103,7 +103,6 @@
 
         border-radius: 13px;
         overflow: hidden;
-        box-shadow: 0 0 0 1px var(--ui-border);
     }
     .mark img {
         width: 100%;

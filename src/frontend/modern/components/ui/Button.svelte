@@ -130,7 +130,6 @@
 
     .ui-button.active {
         background: var(--ui-accent-soft);
-        border-color: var(--ui-accent-border);
         color: var(--ui-text);
     }
 
