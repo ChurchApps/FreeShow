@@ -110,7 +110,7 @@ export class LocalModelManager {
     static deleteModel = (engineId: string, modelId: string) => this.removePath(this.getModelPath(engineId, modelId))
     static deleteEngine = (engineId: string) => this.removePath(this.getEngineDir(engineId), true)
 
-    private static ENGINES = ["nemotron"]
+    private static ENGINES = ["nemotron", "sherpa-onnx"]
     static async getDownloadedBinFiles() {
         const files = this.ENGINES.map((engineFolder) => {
             const filePath = path.join(BIN_DIR, engineFolder)

@@ -3,6 +3,7 @@ import path from "path"
 import { ToMain } from "../../../../types/IPC/ToMain"
 import { sendToMain } from "../../../IPC/main"
 import { DownloadManager } from "../DownloadManager"
+import { ensureSherpaRuntime, isSherpaPlatformSupported, isSherpaRuntimeReady } from "../sherpa-onnx"
 
 // int8 export of NVIDIA's Nemotron 3.5 streaming transducer, multilingual. Chosen over the
 // English-only 0.6b on 19 sermon excerpts: same CPU cost, better accuracy, fewer repeated words,
@@ -29,9 +30,7 @@ export type ModelIntegrity = "ok" | "missing" | "outdated"
 
 export class NemotronSetupManager {
     static isPlatformSupported(): boolean {
-        // sherpa-onnx-node does not work on Intel macOS (darwin-x64)
-        if (process.platform === "darwin" && process.arch === "x64") return false
-        return true
+        return isSherpaPlatformSupported()
     }
 
     static getBinaryName() {
@@ -90,6 +89,13 @@ export class NemotronSetupManager {
             completedBytes = base + fs.statSync(target).size
         }
 
+        try {
+            await ensureSherpaRuntime(path.resolve(outputFolder, "..", "..", "sherpa-onnx"), dlm)
+        } catch (err) {
+            if (dlm.isAbortError(err)) return { ok: false, error: "Download was cancelled." }
+            return dlm.reportError(`Failed to download Nemotron runtime: ${dlm.errorMessage(err)}`)
+        }
+
         await this.checkIntegrity(outputFolder, digests)
         return dlm.reportComplete()
     }
@@ -103,6 +109,7 @@ export class NemotronSetupManager {
     }
 
     static async checkIntegrity(modelDir: string, knownDigests?: Record<string, string>): Promise<ModelIntegrity> {
+        if (!isSherpaRuntimeReady(path.resolve(modelDir, "..", "..", "sherpa-onnx"))) return "missing"
         if (!knownDigests && this.isStampValid(modelDir)) return "ok"
 
         const files: Record<string, { sha256: string; size: number; mtimeMs: number }> = {}

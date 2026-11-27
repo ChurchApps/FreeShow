@@ -1,4 +1,5 @@
 import path from "path"
+import { loadSherpa } from "../../setup/sherpa-onnx"
 import type { DriverCallbacks, TranscriberSegment, TranscriptionDriver } from "../sttHelper"
 import { findRepeatedTail, isMusicAnnotation, segmentConfidence } from "../sttHelper"
 
@@ -10,7 +11,7 @@ const NEMOTRON_FILES = {
     vad: "silero_vad.onnx"
 } as const
 
-export type NemotronWorkerRequest = { type: "start"; language?: string; decodeLanguage?: string; modelDir?: string } | { type: "audio"; data: Uint8Array } | { type: "stop" }
+export type NemotronWorkerRequest = { type: "start"; language?: string; decodeLanguage?: string; modelDir?: string; runtimeDir?: string } | { type: "audio"; data: Uint8Array } | { type: "stop" }
 export type NemotronWorkerResponse = { type: "ready" } | { type: "segment"; segment: TranscriberSegment } | { type: "interim"; text: string } | { type: "error"; message: string } | { type: "stopped" } | { type: "alive" }
 
 const SAMPLE_RATE = 16000
@@ -38,7 +39,7 @@ interface Hypothesis {
     blanks: number
 }
 
-type NemotronOptions = DriverCallbacks & { language?: string; decodeLanguage?: string; modelDir?: string; sherpa?: any }
+type NemotronOptions = DriverCallbacks & { language?: string; decodeLanguage?: string; modelDir?: string; runtimeDir?: string; sherpa?: any }
 
 export class NemotronDriver implements TranscriptionDriver {
     private options: NemotronOptions
@@ -62,9 +63,10 @@ export class NemotronDriver implements TranscriptionDriver {
     async start(): Promise<void> {
         if (this.stopped) throw new Error("Driver already stopped")
 
-        const sherpa = this.options.sherpa || require("sherpa-onnx-node")
-        const { modelDir } = this.options
+        const { modelDir, runtimeDir } = this.options
         if (!modelDir) throw new Error("Nemotron model files are missing")
+
+        const sherpa = this.options.sherpa || loadSherpa(runtimeDir)
 
         this.recognizer = new sherpa.OnlineRecognizer({
             featConfig: { sampleRate: SAMPLE_RATE, featureDim: 128 },
@@ -283,6 +285,7 @@ if (parentPort) {
                     language: data.language,
                     decodeLanguage: data.decodeLanguage,
                     modelDir: data.modelDir,
+                    runtimeDir: data.runtimeDir,
                     onSegment: (segment) => post({ type: "segment", segment }),
                     onInterim: (text) => post({ type: "interim", text }),
                     onError: (message) => post({ type: "error", message })

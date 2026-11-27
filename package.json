@@ -163,7 +163,6 @@
         "yazl": "^3.3.1"
     },
     "optionalDependencies": {
-        "libspotifyctl": "^0.3.4",
-        "sherpa-onnx-node": "^2.0.1"
+        "libspotifyctl": "^0.3.4"
     }
 }

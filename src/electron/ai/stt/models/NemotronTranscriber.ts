@@ -1,6 +1,8 @@
 import path from "path"
 import type { SttEngineOptions } from "../../../../types/ai/AiSettings"
 import { LocalModelManager } from "../../setup/LocalModelManager"
+import { NemotronSetupManager } from "../../setup/models/nemotron"
+import { ensureSherpaRuntime, getSherpaWorkerEnv, isSherpaRuntimeReady } from "../../setup/sherpa-onnx"
 import type { TranscriberSegment } from "../sttHelper"
 import { NemotronDriver, type NemotronWorkerRequest, type NemotronWorkerResponse } from "./nemotronWorker"
 
@@ -27,6 +29,7 @@ export class NemotronTranscriber {
     private stallTimer: NodeJS.Timeout | null = null
     private restarting = false
     private modelDir = ""
+    private runtimeDir = ""
 
     constructor(options: SttEngineOptions, onSegment: (segment: TranscriberSegment) => void, onError: (message: string) => void, onInterim?: (text: string) => void) {
         this.options = options
@@ -37,6 +40,8 @@ export class NemotronTranscriber {
 
     async start() {
         this.modelDir = LocalModelManager.getModelDir("nemotron")
+        this.runtimeDir = LocalModelManager.getEngineDir("sherpa-onnx")
+        if (!isSherpaRuntimeReady(this.runtimeDir)) await ensureSherpaRuntime(this.runtimeDir, NemotronSetupManager.getDownloadManager())
         if (await this.startWorker()) return true
         if (this.startErrorMessage) throw new Error(this.startErrorMessage)
 
@@ -44,6 +49,7 @@ export class NemotronTranscriber {
             language: this.options.language || "en",
             decodeLanguage: this.options.language,
             modelDir: this.modelDir,
+            runtimeDir: this.runtimeDir,
             onSegment: this.onSegment,
             onInterim: this.onInterim,
             onError: this.onError
@@ -97,7 +103,7 @@ export class NemotronTranscriber {
         try {
             const { utilityProcess } = require("electron") as typeof import("electron")
             if (!utilityProcess?.fork) return false
-            child = utilityProcess.fork(path.join(__dirname, "./nemotronWorker.js"), [], { serviceName: "FreeShow AI transcription" })
+            child = utilityProcess.fork(path.join(__dirname, "./nemotronWorker.js"), [], { serviceName: "FreeShow AI transcription", env: getSherpaWorkerEnv(this.runtimeDir) })
         } catch (err) {
             console.error("[nemotron] Could not spawn the decode process:", err)
             return false
@@ -116,7 +122,7 @@ export class NemotronTranscriber {
             if (!this.stopped) this.onError(`Nemotron transcription process exited unexpectedly (code ${code})`)
         })
 
-        this.post(child, { type: "start", language: this.options.language || "en", decodeLanguage: this.options.language, modelDir: this.modelDir })
+        this.post(child, { type: "start", language: this.options.language || "en", decodeLanguage: this.options.language, modelDir: this.modelDir, runtimeDir: this.runtimeDir })
 
         const ok = await new Promise<boolean>((resolve) => {
             const timer = setTimeout(() => {
