@@ -1,13 +1,14 @@
 <script lang="ts">
     import type { Output } from "../../../types/Output"
     import type { LayoutRef } from "../../../types/Show"
-    import { activeEdit, activePage, activePopup, activeShow, outLocked, popupData, showsCache } from "../../stores"
+    import { activeEdit, activePage, activePopup, activeShow, outLocked, playerVideos, popupData, showsCache } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import { refreshOut, setOutput } from "../helpers/output"
     import { OutputHelper } from "../helpers/OutputHelper"
     import { getLayoutRef } from "../helpers/show"
     import { checkActionTrigger, updateOut } from "../helpers/showActions"
     import MaterialButton from "../inputs/MaterialButton.svelte"
+    import { clearSlide } from "./clear"
 
     export let currentOutput: Output
     export let ref: (LayoutRef | { temp: boolean; items: any; id: string })[]
@@ -43,14 +44,18 @@
     // $: activeMediaId = currentOutput?.out?.background
     // $: mediaActive = activeMediaId && activeMediaId === currentMedia
 
+    // website
+    $: currentWebsite = !isEdit && $activeShow?.type === "player" && $playerVideos[$activeShow.id]?.type === "website" ? $activeShow.id : ""
+    $: websiteActive = !!(currentWebsite && currentOutput?.out?.background?.id === currentWebsite)
+
     // slide
     $: currentShow = ($activeShow?.type || "show") === "show" ? $activeShow : null
     $: showActive = outSlide?.id && outSlide.id === currentShow?.id && outSlide.layout === $showsCache[currentShow?.id || ""]?.settings?.activeLayout
     $: slideActive = showActive && (isEdit ? outSlide?.index === $activeEdit.slide : true)
 
     // PLAY OR REFRESH
-    $: shouldRefresh = !!(overlayActive || slideActive) // || audioActive || mediaActive
-    $: shouldPlay = !!(currentOverlay || currentShow) // || currentAudio || currentMedia
+    $: shouldRefresh = !!(overlayActive || slideActive || websiteActive) // || audioActive || mediaActive
+    $: shouldPlay = !!(currentOverlay || currentShow || currentWebsite) // || currentAudio || currentMedia
 
     function playCurrent(e: any) {
         if (currentOverlay) {
@@ -70,6 +75,12 @@
         //     // setOutput("background", { path: currentMedia, ...mediaStyle })
         //     return
         // }
+
+        if (currentWebsite) {
+            clearSlide(true)
+            setOutput("background", { id: currentWebsite, type: "player", muted: false, loop: false, startAt: 0, ignoreLayer: true })
+            return
+        }
 
         if (!currentShow || !$showsCache[currentShow.id]?.settings) return
 

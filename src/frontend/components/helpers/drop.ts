@@ -4,7 +4,7 @@ import { Main } from "../../../types/IPC/Main"
 import type { DropData, SelectIds } from "../../../types/Main"
 import type { ProjectShowRef } from "../../../types/Projects"
 import { requestMain } from "../../IPC/main"
-import { activePage, activeProject, projects, selected } from "../../stores"
+import { activePage, activeProject, playerVideos, projects, selected } from "../../stores"
 import { dropActions } from "./dropActions"
 import { history } from "./history"
 import { addToPos } from "./mover"
@@ -37,6 +37,9 @@ const areaChildren = {
 }
 
 export function validateDrop(id: string, selectedId: SelectIds | null, children = false): boolean {
+    // global websites can currently not be dropped into show (as it's only controllable from the preview)
+    if (selectedId === "player" && id !== "project" && get(playerVideos)[get(selected).data?.[0]]?.type === "website") return false
+
     return areas[id]?.includes(selectedId) || (children && areaChildren[id]?.includes(selectedId))
 }
 
