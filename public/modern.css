@@ -19,8 +19,9 @@ html[data-ui="modern"] {
     --ui-active: color-mix(in srgb, var(--text) 10%, transparent);
 
     --ui-accent: var(--secondary);
-    --ui-accent-soft: color-mix(in srgb, var(--secondary) 15%, transparent);
+    --ui-accent-soft: color-mix(in srgb, var(--secondary) 11%, transparent);
     --ui-accent-border: color-mix(in srgb, var(--secondary) 45%, transparent);
+    --ui-selection: color-mix(in srgb, var(--secondary) 22%, var(--primary));
 
     --ui-radius: 10px;
     --ui-radius-sm: 7px;
@@ -93,7 +94,7 @@ html[data-ui="modern"] button:not(.contained) {
 }
 
 html[data-ui="modern"] button.isActive {
-    background-color: var(--ui-accent-soft) !important;
+    background-color: var(--ui-selection) !important;
     border-block-end-color: transparent !important;
     color: var(--ui-text) !important;
 }
@@ -103,17 +104,12 @@ html[data-ui="modern"] button:not(.contained):not(.isActive):not(:disabled):hove
 }
 
 html[data-ui="modern"] button.contained:not(:disabled) {
-    box-shadow:
-        inset 0 1px 0 rgb(255 255 255 / 0.24),
-        0 8px 22px -10px var(--ui-accent-glow);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.2);
 }
 
 html[data-ui="modern"] button.tab:not(.outlined) {
     border-radius: var(--ui-radius-sm) !important;
-    border-inline-start-color: transparent !important;
-}
-html[data-ui="modern"] button.tab.isActive {
-    border-inline-start-color: var(--ui-accent) !important;
+    border-inline-start-width: 0 !important;
 }
 
 /* ---------- input fields ---------- */
@@ -231,28 +227,26 @@ html[data-ui="modern"] section.drawer .top::after {
 
 html[data-ui="modern"] section.drawer .top .tabs button {
     position: relative;
-    height: 34px;
-    margin: 3px 2px;
-    padding: 0 11px !important;
+    height: 40px;
+    margin: 0;
+    padding: 0 12px !important;
     border: none !important;
-    border-radius: 8px !important;
+    border-radius: 0 !important;
     color: var(--ui-muted);
     font-family: var(--ui-font-display);
     letter-spacing: 0.015em;
 }
-html[data-ui="modern"] section.drawer .top .tabs button.isActive::after {
-    content: "";
-    position: absolute;
-    inset-inline: 10px;
-    bottom: 2px;
-    height: 2px;
-    border-radius: 2px;
-    background: var(--ui-accent);
-    box-shadow: 0 0 8px var(--ui-accent-glow);
-}
 html[data-ui="modern"] section.drawer .top .tabs button.isActive {
     color: var(--ui-text) !important;
     background-color: var(--ui-accent-soft) !important;
+}
+html[data-ui="modern"] section.drawer .top .tabs button.isActive::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    height: 2px;
+    background: var(--ui-accent);
 }
 
 html[data-ui="modern"] section.drawer .search {
@@ -304,21 +298,20 @@ html[data-ui="modern"] .slide + .label {
 /* ---------- settings & draw navigation ---------- */
 
 html[data-ui="modern"] .main > button#button {
-    margin: 1px 6px;
-    padding: 8px 10px !important;
+    margin: 1px 0;
+    padding: 8px 12px !important;
     background-color: transparent !important;
-    border-radius: 8px;
+    border-radius: 0;
 }
 html[data-ui="modern"] .main > button#button.active {
-    background-color: var(--ui-accent-soft) !important;
+    background-color: var(--ui-selection) !important;
+    box-shadow: inset 3px 0 0 var(--ui-accent);
 }
 
 /* ---------- workspace surface ---------- */
 
 html[data-ui="modern"] .workspace > .body > .center {
     background-color: var(--ui-panel-deep);
-    background-image: radial-gradient(color-mix(in srgb, var(--text) 4%, transparent) 1px, transparent 1px);
-    background-size: 26px 26px;
 }
 
 /* ---------- panel headers ---------- */
@@ -375,14 +368,12 @@ html[data-ui="modern"] #projectArea .listSection {
     overflow: hidden;
 }
 html[data-ui="modern"] #projectArea .listSection button.tab {
-    width: calc(100% - 8px) !important;
-    margin: 2px 4px;
-    border-radius: 7px !important;
-    border-start-end-radius: 7px !important;
-    border-end-end-radius: 7px !important;
+    width: 100% !important;
+    margin: 1px 0;
+    border-radius: 0 !important;
 }
 html[data-ui="modern"] #projectArea .listSection button.tab.isActive {
-    box-shadow: inset 2px 0 0 var(--ui-accent);
+    box-shadow: inset 3px 0 0 var(--ui-accent);
 }
 html[data-ui="modern"] #projectArea .listSection button.section {
     margin: 0;
@@ -400,14 +391,14 @@ html[data-ui="modern"] #projectArea .listSection button.section {
 /* drawer category rows */
 
 html[data-ui="modern"] .categories .selectElem button {
-    width: calc(100% - 12px) !important;
-    margin: 1px 6px;
-    border-radius: 7px !important;
+    width: 100% !important;
+    margin: 1px 0;
+    border-radius: 0 !important;
     border-inline-start: 0 !important;
 }
 html[data-ui="modern"] .categories .selectElem button.isActive {
-    background-color: var(--ui-accent-soft) !important;
-    box-shadow: inset 2px 0 0 var(--ui-accent);
+    background-color: var(--ui-selection) !important;
+    box-shadow: inset 3px 0 0 var(--ui-accent);
 }
 html[data-ui="modern"] .categories .title {
     font-size: 9.5px;
@@ -466,11 +457,6 @@ html[data-ui="modern"] #showArea .main.active .slide {
 html[data-ui="modern"] #showArea .main.active {
     outline: none !important;
 }
-html[data-ui="modern"] #showArea .main.active .slide {
-    box-shadow:
-        0 0 0 2px var(--ui-accent-soft),
-        0 0 0 3px var(--ui-accent-border);
-}
 
 /* left panel headers (projects list, project content) */
 
@@ -494,17 +480,6 @@ html[data-ui="modern"] .panelCard .header p {
     text-transform: uppercase;
     color: var(--ui-muted);
     text-align: start;
-}
-html[data-ui="modern"] .panelCard .header p::before {
-    content: "";
-    display: inline-block;
-    width: 5px;
-    height: 5px;
-    margin-inline-end: 8px;
-    border-radius: 50%;
-    background: var(--ui-accent);
-    box-shadow: 0 0 7px var(--ui-accent-glow);
-    vertical-align: middle;
 }
 html[data-ui="modern"] .panelCard .header .left,
 html[data-ui="modern"] .panelCard .header .right {
@@ -579,7 +554,6 @@ html[data-ui="modern"] .grid > .main .slide {
 }
 html[data-ui="modern"] .grid > .main.active .slide {
     border-color: var(--ui-accent-border);
-    box-shadow: 0 0 0 2px var(--ui-accent-soft);
 }
 html[data-ui="modern"] .grid > .main.active {
     outline: none !important;

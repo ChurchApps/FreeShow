@@ -58,7 +58,6 @@
         <button class="tile" type="button" on:click={createProject}>
             <span class="tileTop">
                 <span class="tileIcon"><Icon id="project" size={1.1} white /></span>
-                <Icon id="forward" size={0.8} white />
             </span>
             <span class="tileLabel">{translateText("new.project", $dictionary)}</span>
             <span class="tileMeta">{translateText("tooltip.project", $dictionary)}</span>
@@ -67,16 +66,10 @@
         <button class="tile" type="button" on:click={createShow}>
             <span class="tileTop">
                 <span class="tileIcon"><Icon id="add" size={1.15} white /></span>
-                <Icon id="forward" size={0.8} white />
             </span>
             <span class="tileLabel">{translateText("new.show", $dictionary)}</span>
             <span class="tileMeta">{translateText("tooltip.show", $dictionary)}</span>
         </button>
-    </div>
-
-    <div class="footer">
-        <span class="hint"><Kbd>Ctrl F</Kbd> {translateText("main.search", $dictionary)}</span>
-        <span class="hint"><Kbd>Ctrl O</Kbd> {translateText("menu._title_display", $dictionary)}</span>
     </div>
 </div>
 
@@ -110,9 +103,7 @@
 
         border-radius: 13px;
         overflow: hidden;
-        box-shadow:
-            0 0 0 1px var(--ui-border),
-            0 12px 40px -14px var(--ui-accent-glow);
+        box-shadow: 0 0 0 1px var(--ui-border);
     }
     .mark img {
         width: 100%;
@@ -191,9 +182,6 @@
     .tile:hover {
         transform: translateY(-2px);
         border-color: var(--ui-accent-border);
-        box-shadow:
-            inset 0 1px 0 color-mix(in srgb, var(--text) 8%, transparent),
-            0 14px 34px -22px var(--ui-accent-glow);
     }
     .tile:focus-visible {
         outline: none;
@@ -234,21 +222,6 @@
         font-size: 12px;
         line-height: 1.45;
         color: var(--ui-muted);
-    }
-
-    .footer {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 18px;
-    }
-
-    .hint {
-        display: flex;
-        align-items: center;
-        gap: 7px;
-        font-size: 11.5px;
-        color: var(--ui-subtle);
     }
 
     @media (max-width: 860px) {

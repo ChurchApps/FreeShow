@@ -179,9 +179,7 @@
 
         border-radius: 8px;
         overflow: hidden;
-        box-shadow:
-            0 0 0 1px var(--ui-border),
-            0 0 16px -6px var(--ui-accent-glow);
+        box-shadow: 0 0 0 1px var(--ui-border);
     }
     .brand img {
         width: 100%;
@@ -224,23 +222,12 @@
         letter-spacing: 0.015em;
     }
 
-    :global(.topbar .tab.active::after) {
-        content: "";
-        position: absolute;
-        inset-inline: 9px;
-        bottom: 3px;
-        height: 2px;
-        border-radius: 2px;
-        background: var(--ui-accent);
-        box-shadow: 0 0 8px var(--ui-accent-glow);
-    }
     :global(.topbar .tab:hover) {
         color: var(--ui-text);
     }
     :global(.topbar .tab.active) {
         color: var(--ui-text);
-        background: var(--ui-accent-soft);
-        box-shadow: inset 0 0 0 1px var(--ui-accent-border);
+        background: var(--ui-selection);
     }
     :global(.topbar .tab.active svg) {
         fill: var(--ui-accent);
