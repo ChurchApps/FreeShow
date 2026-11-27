@@ -550,3 +550,14 @@ html[data-ui="modern"] .toolsCard .bottom button {
         max-width: 26vw;
     }
 }
+
+/* preview controls: flat, square, full width */
+html[data-ui="modern"] #previewArea .section:not(.float) {
+    margin: 4px 0;
+    background-color: var(--ui-panel-deep);
+    border: none;
+    border-radius: 0;
+}
+html[data-ui="modern"] #previewArea .section button {
+    border-radius: 0 !important;
+}
