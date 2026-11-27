@@ -1,6 +1,8 @@
 appId: app.freeshow
 productName: FreeShow
 artifactName: FreeShow-${version}-${arch}.${ext}
+electronLanguages:
+    - en-US
 
 files:
     - build/electron/**
@@ -14,6 +16,8 @@ files:
     - "!**/node_modules/**/prebuild/node-v*"
     - "!**/node_modules/grandiose/ndi/**"
     - "!**/node_modules/osr-capture/**/on12_harness.exe"
+    - "!**/node_modules/@img/sharp-wasm32/**"
+    - "!**/node_modules/koffi/build/koffi/{freebsd_*,openbsd_*,linux_ia32,linux_armhf,linux_loong64,linux_riscv64d,musl_*}/**"
 
 extraResources:
     - from: node_modules/slideshow/
@@ -29,6 +33,7 @@ win:
     files:
         - "!**/node_modules/openmediatransport/lib/{macos,linux-*,win-arm64}/**"
         - "!**/node_modules/better-sqlite3/prebuilds/{darwin-*,linux*,win32-arm64}.node"
+        - "!**/node_modules/koffi/build/koffi/{darwin_*,linux_*,win32_arm64}/**"
     asarUnpack:
         - "**/node_modules/macadam/**/*.node"
         - "**/node_modules/libspotifyctl/**/*"
@@ -48,6 +53,7 @@ linux:
     files:
         - "!**/node_modules/openmediatransport/lib/{macos,win-*}/**"
         - "!**/node_modules/better-sqlite3/prebuilds/{darwin-*,linuxmusl-*,win32-*}.node"
+        - "!**/node_modules/koffi/build/koffi/{darwin_*,win32_*}/**"
     asarUnpack:
         - "**/node_modules/grandiose/**"
         - "**/node_modules/openmediatransport/**"
@@ -76,6 +82,7 @@ mac:
     files:
         - "!**/node_modules/openmediatransport/lib/{linux-*,win-*}/**"
         - "!**/node_modules/better-sqlite3/prebuilds/{linux*,win32-*}.node"
+        - "!**/node_modules/koffi/build/koffi/{linux_*,win32_*}/**"
     asarUnpack:
         - "**/node_modules/macadam/**/*.node"
         - "**/node_modules/openmediatransport/**"
