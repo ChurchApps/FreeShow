@@ -109,7 +109,7 @@ function checkStores(dataPath: string) {
 export const _store: { [key in keyof typeof storeFilesData]?: Store<any> } = {}
 
 export function createStores(previousLocation?: string | null, setup = false) {
-    const configFolderPath = getWritableConfigPath(previousLocation, setup)
+    const configFolderPath = getWritableConfigPath(previousLocation)
     if (!configFolderPath) return
     if (previousLocation === configFolderPath) previousLocation = ""
 
@@ -141,10 +141,7 @@ export function createStores(previousLocation?: string | null, setup = false) {
     })
 }
 
-function getWritableConfigPath(previousLocation?: string | null, setup = false): string | null {
-    // in setup previous path is the app data path
-    if (setup && previousLocation) return previousLocation
-
+function getWritableConfigPath(previousLocation?: string | null): string | null {
     const downloadsPath = getMediaFolderPath("downloads")
     const downloadsDataPath = downloadsPath ? path.join(downloadsPath, "FreeShow") : ""
 
