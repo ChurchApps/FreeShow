@@ -139,6 +139,10 @@
         transform: rotate(180deg);
     }
 
+    .row.gradient {
+        overflow: visible;
+    }
+
     .row.gradient :global(button) {
         font-size: 1em;
 
