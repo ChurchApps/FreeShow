@@ -142,6 +142,17 @@
     .row.gradient {
         overflow: visible;
     }
+    .row.gradient:has(.addButton) {
+        max-width: none;
+    }
+    .row.gradient :global(button.addButton) {
+        flex-shrink: 0;
+    }
+    @media (max-width: 300px) {
+        .row.gradient.right:has(.addButton) {
+            right: 4px;
+        }
+    }
 
     .row.gradient :global(button) {
         font-size: 1em;
