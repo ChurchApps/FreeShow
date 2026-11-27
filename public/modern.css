@@ -3,7 +3,9 @@
    The classic layout is intentionally left untouched. */
 
 html[data-ui="modern"] {
-    /* surfaces (derived from the active theme) */
+    /* Every surface, border, text and accent token below derives from the active
+       theme, so Settings > Theme updates the modern layout without a reload.
+       Live, standby and success colors are semantic and stay fixed. */
     --ui-rail: color-mix(in srgb, var(--primary-darkest) 62%, var(--primary-darker));
     --ui-panel: var(--primary);
     --ui-panel-deep: var(--primary-darker);
@@ -27,7 +29,6 @@ html[data-ui="modern"] {
     --ui-radius-sm: 7px;
     --ui-shadow: 0 22px 50px -24px rgb(0 0 0 / 0.65);
     --ui-shadow-sm: 0 6px 18px -12px rgb(0 0 0 / 0.5);
-    --ui-accent-glow: color-mix(in srgb, var(--secondary) 42%, transparent);
 
     --ui-font-display: "CMGSans", var(--font-family);
     --ui-font-mono: ui-monospace, "SFMono-Regular", "Cascadia Mono", Menlo, Consolas, monospace;
@@ -232,7 +233,7 @@ html[data-ui="modern"] section.drawer .top .tabs button {
     padding: 0 12px !important;
     border: none !important;
     border-radius: 0 !important;
-    color: var(--ui-muted);
+    color: var(--ui-muted) !important;
     font-family: var(--ui-font-display);
     letter-spacing: 0.015em;
 }
@@ -579,13 +580,4 @@ html[data-ui="modern"] .toolsCard .bottom button {
     html[data-ui="modern"] #rightPanel {
         max-width: 26vw;
     }
-}
-
-/* neutral icons in the drawer tabs, accent only for the active one */
-html[data-ui="modern"] section.drawer .top .tabs button:not(.isActive) svg {
-    filter: grayscale(1) brightness(1.6);
-    opacity: 0.55;
-}
-html[data-ui="modern"] section.drawer .top .tabs button:not(.isActive):hover svg {
-    opacity: 0.85;
 }

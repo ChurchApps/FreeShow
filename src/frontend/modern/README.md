@@ -44,7 +44,9 @@ The modern layout draws on live production language rather than a generic dashbo
 ## Design tokens
 
 Tokens are derived from the active theme with `color-mix`, so light, dark and
-custom themes all work. `modern.css` defines:
+custom themes all work. Changing the theme in Settings updates the modern layout
+immediately. The live red, standby amber and success green are semantic colors
+and stay fixed, as does the app icon. `modern.css` defines:
 
 - surfaces: `--ui-panel`, `--ui-panel-deep`, `--ui-panel-raised`
 - text: `--ui-text`, `--ui-muted`, `--ui-subtle`

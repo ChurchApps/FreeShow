@@ -69,7 +69,7 @@
     }
     .checked .thumb {
         transform: translateX(14px);
-        background: #fff;
+        background: var(--secondary-text);
     }
 
     .ui-switch:focus-visible {
