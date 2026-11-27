@@ -29,7 +29,7 @@
         justify-content: center;
         gap: 7px;
 
-        height: 34px;
+        height: 32px;
         padding: 0 13px;
 
         font-family: inherit;
@@ -63,8 +63,8 @@
     }
 
     .ui-button.icon {
-        width: 34px;
-        min-width: 34px;
+        width: 32px;
+        min-width: 32px;
         padding: 0;
     }
 

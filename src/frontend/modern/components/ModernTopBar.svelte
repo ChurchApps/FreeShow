@@ -202,7 +202,7 @@
         display: flex;
         align-items: center;
         gap: 2px;
-        padding: 3px;
+        padding: 2px;
 
         background: var(--ui-panel-deep);
         border: 1px solid var(--ui-border);
@@ -211,8 +211,8 @@
 
     :global(.topbar .tab) {
         position: relative;
-        height: 30px;
-        padding: 0 11px;
+        height: 32px !important;
+        padding: 0 11px !important;
         border-radius: 7px;
         color: var(--ui-muted);
         gap: 6px;
@@ -341,8 +341,8 @@
         justify-content: center;
         flex-shrink: 0;
 
-        width: 30px;
-        height: 30px;
+        width: 32px;
+        height: 32px;
         padding: 0;
 
         font-family: inherit;
@@ -408,8 +408,8 @@
             display: none;
         }
         :global(.topbar .present) {
-            width: 34px;
-            min-width: 34px;
+            width: 32px;
+            min-width: 32px;
             padding: 0;
         }
         .avatar,
