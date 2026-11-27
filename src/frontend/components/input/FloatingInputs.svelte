@@ -144,25 +144,19 @@
 
         border-radius: 50px;
 
-        /* gradient border */
-        background:
-            linear-gradient(var(--background), var(--background)) padding-box,
-            linear-gradient(160deg, #8000f0 0%, #9000f0 10%, #b300f0 20%, #d100db 35%, var(--secondary) 100%) border-box !important;
-        border: 2px solid transparent;
+        background: var(--background) !important;
+        border: 2px solid var(--secondary) !important;
 
-        transition: 0.4s filter ease;
+        transition:
+            filter 0.2s ease,
+            box-shadow 0.2s ease;
     }
-    .row.gradient :global(button:not(.isActive):not(:disabled):hover),
-    .row.gradient :global(button:not(.isActive):not(:disabled):active),
-    .row.gradient :global(button:not(.isActive):not(:disabled):hover:active) {
-        background:
-            linear-gradient(var(--background), var(--background)) padding-box,
-            linear-gradient(160deg, #8000f0 0%, #9000f0 10%, #b300f0 20%, #d100db 35%, var(--secondary) 100%) border-box !important;
-
-        filter: hue-rotate(15deg);
+    .row.gradient :global(button:not(.isActive):not(:disabled):hover) {
+        filter: brightness(1.08);
+        box-shadow: 0 0 0 2px var(--secondary-opacity);
     }
     .row.gradient :global(button:not(.isActive):not(:disabled):active) {
-        filter: hue-rotate(30deg);
+        filter: brightness(1.14);
     }
 
     .menu {
