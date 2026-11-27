@@ -333,10 +333,10 @@ export class BibleSearchDetector {
             return { match: null, hasAnyCandidates: false, isAmbiguous: false }
         }
 
+        const oovIdf = Math.min(5.0, Math.log(this.cacheData.totalVerses + 1) * 0.5)
         const recentHighValueIdfSum = inputTokens.reduce((sum, token, index) => {
             const wordId = this.cacheData.vocabToIdMap.get(token)
-            if (wordId === undefined) return sum
-            const idf = this.cacheData.wordIdf[wordId]
+            const idf = wordId === undefined ? oovIdf : this.cacheData.wordIdf[wordId]
             if (idf <= tokenThreshold) return sum
             const distanceFromEnd = totalTokensCount - 1 - index
             return sum + idf * Math.pow(0.98, distanceFromEnd)
@@ -352,7 +352,7 @@ export class BibleSearchDetector {
 
         const currentVerseId = currentlyOutputted ? this.cacheData.verseToIdMap.get(currentlyOutputted.toLowerCase()) : undefined
         const queryWords = new Set(highValueTokensWithWeight.map((item) => item.wordId))
-        const queryWordIds = inputTokens.map((t) => this.cacheData.vocabToIdMap.get(t)).filter((id): id is number => id !== undefined)
+        const queryWordIds = inputTokens.map((t) => this.cacheData.vocabToIdMap.get(t) ?? -1)
 
         for (const [verseId, accumulatedIdf] of candidateScores.entries()) {
             const matchCount = candidateMatchedCount.get(verseId) || 0
@@ -379,8 +379,13 @@ export class BibleSearchDetector {
             // For short inputs (e.g. 4 tokens like "In the beginning God"), require consecutive phrase match (at least 3 contiguous tokens or exact match)
             if (allTokens.length <= 4 && phraseMatch.maxRun < 3 && !isCurrent) continue
 
+            // Require sufficient information content (total matched IDF) so a few common words don't get inflated to high confidence
+            const isExactPhrase = phraseMatch.maxRun === queryWordIds.length
+            const minIdfForFullConfidence = isCurrent || upcomingDist === 1 ? 8 : isExactPhrase ? 10 : 16
+            scoreRatio *= Math.min(1, accumulatedIdf / minIdfForFullConfidence)
+
             // a handful of common words can match a long verse completely; the match is worth what it covers of the verse
-            const coverageTarget = Math.min(0.25, Math.max(0.08, queryWords.size * 0.03))
+            const coverageTarget = Math.min(0.35, Math.max(0.18, queryWords.size * 0.04))
             scoreRatio *= Math.min(1, this.verseCoverage(verseId, queryWords) / coverageTarget)
             const candidateParsed = this.parseReference(ref)
 
@@ -454,7 +459,7 @@ export class BibleSearchDetector {
         let baseConfidence = topMatch.finalScore * 100 * ambiguityPenalty * uniquenessMultiplier
 
         // If a candidate uniquely stands out with high score and minimal ambiguity, ensure high confidence so it can suggest/autoplay
-        if (!isAmbiguous && uniquenessMultiplier > 1.0 && topMatch.finalScore >= 0.5) {
+        if (!isAmbiguous && uniquenessMultiplier > 1.0 && topMatch.finalScore >= 0.65) {
             baseConfidence = Math.max(baseConfidence, 80)
         }
 
